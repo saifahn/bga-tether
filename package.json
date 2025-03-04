@@ -1,0 +1,25 @@
+{
+  "name": "tethergame",
+  "version": "1.0.0",
+  "main": "tethergame.js",
+  "scripts": {
+    "init": "npm install bga-ts-template && npx bga-init TetherGame \"Sean Li 9913851+saifahn@users.noreply.github.com\" source --typescript --scss --vscode-extension-pack --gameinfos.jsonc --gameoptions.jsonc --gamepreferences.jsonc --stats.jsonc --gamestates.jsonc",
+    "build": "npx bga-build",
+    "watch": "npx bga-build --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saifahn/bga-tether.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/saifahn/bga-tether/issues"
+  },
+  "homepage": "https://github.com/saifahn/bga-tether#readme",
+  "description": "",
+  "dependencies": {
+    "bga-ts-template": "^2.0.6",
+    "typescript": "^5.8.2"
+  }
+}
