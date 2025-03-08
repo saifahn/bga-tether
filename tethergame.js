@@ -27,20 +27,29 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             return _this;
         }
         TetherGame.prototype.setup = function (gamedatas) {
-            var _a;
             console.log('Starting game setup');
-            (_a = document
-                .getElementById('game_play_area')) === null || _a === void 0 ? void 0 : _a.insertAdjacentHTML('beforeend', "<div id=\"adrift-zone\"></div>");
-            for (var player_id in gamedatas.players) {
-                var player = gamedatas.players[player_id];
+            var gamePlayArea = document.getElementById('game_play_area');
+            if (!gamePlayArea) {
+                throw new Error('game_play_area not found');
             }
-            var adriftZone = document.getElementById('adrift-zone');
-            console.log('adrift data', gamedatas.adrift);
-            for (var card in gamedatas.adrift) {
+            var adriftZone = document.createElement('div');
+            adriftZone.id = 'adrift-zone';
+            gamePlayArea.appendChild(adriftZone);
+            var hand = document.createElement('div');
+            hand.id = 'hand';
+            gamePlayArea.appendChild(hand);
+            for (var cardNum in gamedatas.adrift) {
                 var cardElement = document.createElement('div');
-                cardElement.classList.add('adrift-card');
-                cardElement.innerText = card.toString();
-                adriftZone === null || adriftZone === void 0 ? void 0 : adriftZone.appendChild(cardElement);
+                cardElement.classList.add('card');
+                cardElement.classList.add('card--adrift');
+                cardElement.innerText = cardNum.toString();
+                adriftZone.appendChild(cardElement);
+            }
+            for (var cardId in gamedatas.hand) {
+                var cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.innerText = gamedatas.hand[cardId].type_arg;
+                hand.appendChild(cardElement);
             }
             this.setupNotifications();
             console.log('Ending game setup');
