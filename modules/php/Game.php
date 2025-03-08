@@ -25,6 +25,8 @@ require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
 class Game extends \Table
 {
     private static array $CARD_TYPES;
+    private array $card_ids;
+    public mixed $cards;
 
     /**
      * Your global variables labels:
@@ -46,6 +48,11 @@ class Game extends \Table
             "my_first_game_variant" => 100,
             "my_second_game_variant" => 101,
         ]);
+
+        $this->cards = $this->getNew("module.common.deck");
+        $this->cards->init("card");
+
+        $this->card_ids = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13', '14', '15', '16', '17', '18', '19', '22', '23', '24', '25', '26', '27', '28', '29', '33', '34', '35', '36', '37', '38', '39', '44', '45', '46', '47', '48', '49', '55', '56', '57', '58', '59', '66', '67', '68', '69', '77', '78', '79', '88', '89'];
 
         self::$CARD_TYPES = [
             1 => [
@@ -230,6 +237,11 @@ class Game extends \Table
         );
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
+        $result['adrift'] = $this->getCollectionFromDB(
+            "SELECT card_type_arg cardNum
+            FROM card 
+            WHERE card_location = 'adrift'"
+        );
 
         return $result;
     }
@@ -294,9 +306,41 @@ class Game extends \Table
         // $this->initStat("player", "player_teststat1", 0);
 
         // TODO: Setup the initial game situation here.
+        $this->initTables();
 
         // Activate first player once everything has been initialized and ready.
         $this->activeNextPlayer();
+    }
+
+    function initTables()
+    {
+        try {
+            $players = $this->loadPlayersBasicInfos();
+            $this->activeNextPlayer();
+            // TODO $this->initStats();
+            $this->createDeck();
+            $this->drawAdriftCards();
+        } catch (\Exception $e) {
+            $this->error("Error while creating game");
+            $this->dump('err', $e);
+        }
+    }
+
+    function createDeck()
+    {
+        $cards = array();
+        foreach ($this->card_ids as $id) {
+            $cards[] = array('type' => 'upright', 'type_arg' => $id, 'nbr' => 1);
+        }
+        $this->cards->createCards($cards, 'deck');
+    }
+
+    function drawAdriftCards()
+    {
+        $this->cards->pickCardsForLocation(3, 'deck', 'adrift');
+        // $this->notifyAllPlayers('drawAdriftCards', '', array(
+        //     'cards' => $cards
+        // ));
     }
 
     /**
