@@ -8,19 +8,22 @@
  * -----
  */
 declare namespace BGA {
+  /** Goto {@link Gamedatas} or hover name for info. */
+  interface Gamedatas extends Record<string, any> {
+    adrift: {
+      [key: number]: {
+        cardNum: string;
+      };
+    };
+  }
 
-	/** Goto {@link Gamedatas} or hover name for info. */
-	interface Gamedatas extends Record<string, any> {}
+  /** Goto {@link NotifTypes} or hover name for info. */
+  interface NotifTypes {
+    [name: string]: any; // RECOMMENDED: comment out this line to type notifications specific to it's name using BGA.Notif<"name">.
+  }
 
-	/** Goto {@link NotifTypes} or hover name for info. */
-	interface NotifTypes {
-		[name: string]: any; // RECOMMENDED: comment out this line to type notifications specific to it's name using BGA.Notif<"name">.
-	}
-
-	/** Goto {@link GameSpecificIdentifiers} or hover name for info. */
-	interface GameSpecificIdentifiers {
-		// CounterNames: 'foo' | 'bar' | 'bread' | 'butter';
-	}
-
-
+  /** Goto {@link GameSpecificIdentifiers} or hover name for info. */
+  interface GameSpecificIdentifiers {
+    // CounterNames: 'foo' | 'bar' | 'bread' | 'butter';
+  }
 }

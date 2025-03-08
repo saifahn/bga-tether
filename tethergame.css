@@ -39,3 +39,19 @@
 		background-repeat: none;
 	}
 */
+#adrift-zone {
+  padding: 10px;
+  min-height: 100px;
+  min-width: 100px;
+  background-color: azure;
+  border: 1px dashed darksalmon;
+}
+
+.adrift-card {
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  background-color: white;
+  transform: rotateX("90");
+}

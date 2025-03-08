@@ -237,6 +237,11 @@ class Game extends \Table
         );
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
+        $result['adrift'] = $this->getCollectionFromDB(
+            "SELECT card_type_arg cardNum
+            FROM card 
+            WHERE card_location = 'adrift'"
+        );
 
         return $result;
     }
@@ -313,20 +318,29 @@ class Game extends \Table
             $players = $this->loadPlayersBasicInfos();
             $this->activeNextPlayer();
             // TODO $this->initStats();
-            $this->initGameTables();
+            $this->createDeck();
+            $this->drawAdriftCards();
         } catch (\Exception $e) {
             $this->error("Error while creating game");
             $this->dump('err', $e);
         }
     }
 
-    function initGameTables()
+    function createDeck()
     {
         $cards = array();
         foreach ($this->card_ids as $id) {
             $cards[] = array('type' => 'upright', 'type_arg' => $id, 'nbr' => 1);
         }
         $this->cards->createCards($cards, 'deck');
+    }
+
+    function drawAdriftCards()
+    {
+        $this->cards->pickCardsForLocation(3, 'deck', 'adrift');
+        // $this->notifyAllPlayers('drawAdriftCards', '', array(
+        //     'cards' => $cards
+        // ));
     }
 
     /**

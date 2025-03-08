@@ -27,13 +27,23 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             return _this;
         }
         TetherGame.prototype.setup = function (gamedatas) {
-            console.log("Starting game setup");
-            var player_id;
-            for (player_id in gamedatas.players) {
+            var _a;
+            console.log('Starting game setup');
+            (_a = document
+                .getElementById('game_play_area')) === null || _a === void 0 ? void 0 : _a.insertAdjacentHTML('beforeend', "<div id=\"adrift-zone\"></div>");
+            for (var player_id in gamedatas.players) {
                 var player = gamedatas.players[player_id];
             }
+            var adriftZone = document.getElementById('adrift-zone');
+            console.log('adrift data', gamedatas.adrift);
+            for (var card in gamedatas.adrift) {
+                var cardElement = document.createElement('div');
+                cardElement.classList.add('adrift-card');
+                cardElement.innerText = card.toString();
+                adriftZone === null || adriftZone === void 0 ? void 0 : adriftZone.appendChild(cardElement);
+            }
             this.setupNotifications();
-            console.log("Ending game setup");
+            console.log('Ending game setup');
         };
         TetherGame.prototype.onEnteringState = function () {
             var _a = [];

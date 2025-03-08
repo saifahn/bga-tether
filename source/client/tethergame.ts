@@ -17,102 +17,109 @@
 /// <amd-module name="bgagame/tethergame"/>
 
 import Gamegui = require('ebg/core/gamegui');
-import "ebg/counter";
+import 'ebg/counter';
 
 /** See {@link BGA.Gamegui} for more information. */
-class TetherGame extends Gamegui
-{
-	// myGlobalValue: number = 0;
-	// myGlobalArray: string[] = [];
+class TetherGame extends Gamegui {
+  // myGlobalValue: number = 0;
+  // myGlobalArray: string[] = [];
 
-	/** See {@link BGA.Gamegui} for more information. */
-	constructor(){
-		super();
-		console.log('tethergame constructor');
-	}
+  /** See {@link BGA.Gamegui} for more information. */
+  constructor() {
+    super();
+    console.log('tethergame constructor');
+  }
 
-	/** See {@link  BGA.Gamegui#setup} for more information. */
-	override setup(gamedatas: BGA.Gamedatas): void
-	{
-		console.log( "Starting game setup" );
-		
-		// Setting up player boards
-		var player_id: BGA.ID;
-		for(player_id in gamedatas.players)
-		{
-			var player = gamedatas.players[player_id];
-			// TODO: Setting up players boards if needed
-		}
-		
-		// TODO: Set up your game interface here, according to "gamedatas"
+  /** See {@link  BGA.Gamegui#setup} for more information. */
+  override setup(gamedatas: BGA.Gamedatas): void {
+    console.log('Starting game setup');
 
-		// Setup game notifications to handle (see "setupNotifications" method below)
-		this.setupNotifications();
+    document
+      .getElementById('game_play_area')
+      ?.insertAdjacentHTML('beforeend', `<div id="adrift-zone"></div>`);
 
-		console.log( "Ending game setup" );
-	}
+    // Setting up player boards
+    for (const player_id in gamedatas.players) {
+      var player = gamedatas.players[player_id as BGA.ID];
+      // TODO: Setting up players boards if needed
+    }
 
-	///////////////////////////////////////////////////
-	//// Game & client states
-	
-	/** See {@link BGA.Gamegui#onEnteringState} for more information. */
-	override onEnteringState(...[stateName, state]: BGA.GameStateTuple<['name', 'state']>): void
-	{
-		console.log( 'Entering state: ' + stateName );
-		
-		switch( stateName )
-		{
-		case 'dummmy':
-			// enable/disable any user interaction...
-			break;
-		}
-	}
+    const adriftZone = document.getElementById('adrift-zone');
 
-	/** See {@link BGA.Gamegui#onLeavingState} for more information. */
-	override onLeavingState(stateName: BGA.ActiveGameState["name"]): void
-	{
-		console.log( 'Leaving state: ' + stateName );
-		
-		switch( stateName )
-		{
-		case 'dummmy':
-			// enable/disable any user interaction...
-			break;
-		}
-	}
+    console.log('adrift data', gamedatas.adrift);
 
-	/** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
-	override onUpdateActionButtons(...[stateName, args]: BGA.GameStateTuple<['name', 'args']>): void
-	{
-		console.log( 'onUpdateActionButtons: ' + stateName, args );
+    // TODO: Set up your game interface here, according to "gamedatas"
+    for (const card in gamedatas.adrift) {
+      const cardElement = document.createElement('div');
+      cardElement.classList.add('adrift-card');
+      cardElement.innerText = card.toString();
+      adriftZone?.appendChild(cardElement);
+    }
 
-		if(!this.isCurrentPlayerActive())
-			return;
+    // Setup game notifications to handle (see "setupNotifications" method below)
+    this.setupNotifications();
 
-		switch( stateName )
-		{
-		case 'dummmy':
-			// Add buttons to action bar...
-			// this.addActionButton( 'button_id', _('Button label'), this.onButtonClicked );
-			break;
-		}
-	}
+    console.log('Ending game setup');
+  }
 
-	///////////////////////////////////////////////////
-	//// Utility methods
+  ///////////////////////////////////////////////////
+  //// Game & client states
 
-	///////////////////////////////////////////////////
-	//// Player's action
-	
-	/*
+  /** See {@link BGA.Gamegui#onEnteringState} for more information. */
+  override onEnteringState(
+    ...[stateName, state]: BGA.GameStateTuple<['name', 'state']>
+  ): void {
+    console.log('Entering state: ' + stateName);
+
+    switch (stateName) {
+      case 'dummmy':
+        // enable/disable any user interaction...
+        break;
+    }
+  }
+
+  /** See {@link BGA.Gamegui#onLeavingState} for more information. */
+  override onLeavingState(stateName: BGA.ActiveGameState['name']): void {
+    console.log('Leaving state: ' + stateName);
+
+    switch (stateName) {
+      case 'dummmy':
+        // enable/disable any user interaction...
+        break;
+    }
+  }
+
+  /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
+  override onUpdateActionButtons(
+    ...[stateName, args]: BGA.GameStateTuple<['name', 'args']>
+  ): void {
+    console.log('onUpdateActionButtons: ' + stateName, args);
+
+    if (!this.isCurrentPlayerActive()) return;
+
+    switch (stateName) {
+      case 'dummmy':
+        // Add buttons to action bar...
+        // this.addActionButton( 'button_id', _('Button label'), this.onButtonClicked );
+        break;
+    }
+  }
+
+  ///////////////////////////////////////////////////
+  //// Utility methods
+
+  ///////////////////////////////////////////////////
+  //// Player's action
+
+  /*
 		Here, you are defining methods to handle player's action (ex: results of mouse click on game objects).
 		
 		Most of the time, these methods:
 		- check the action is possible at this game state.
 		- make a call to the game server
 	*/
-	
-	/* Example:
+
+  /* Example:
 
 	onButtonClicked( evt: Event )
 	{
@@ -157,32 +164,30 @@ class TetherGame extends Gamegui
 	}
 
 	*/
-	
 
-	///////////////////////////////////////////////////
-	//// Reaction to cometD notifications
+  ///////////////////////////////////////////////////
+  //// Reaction to cometD notifications
 
-	/** See {@link BGA.Gamegui#setupNotifications} for more information. */
-	override setupNotifications = () =>
-	{
-		console.log( 'notifications subscriptions setup' );
-		
-		// TODO: here, associate your game notifications with local methods
-		
-		// Builtin example...
-		// dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
-		// dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
-		// dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
-		// dojo.subscribe( 'cardPlayed_1', this, "ntf_cardPlayed" );
+  /** See {@link BGA.Gamegui#setupNotifications} for more information. */
+  override setupNotifications = () => {
+    console.log('notifications subscriptions setup');
 
-		//	With CommonMixin from 'cookbook/common'...
-		// this.subscribeNotif( "cardPlayed_1", this.ntf_any );
-		// this.subscribeNotif( "actionTaken", this.ntf_actionTaken );
-		// this.subscribeNotif( "cardPlayed_0", this.ntf_cardPlayed );
-		// this.subscribeNotif( "cardPlayed_1", this.ntf_cardPlayed );
-	}
+    // TODO: here, associate your game notifications with local methods
 
-	/* Example:
+    // Builtin example...
+    // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
+    // dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
+    // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
+    // dojo.subscribe( 'cardPlayed_1', this, "ntf_cardPlayed" );
+
+    //	With CommonMixin from 'cookbook/common'...
+    // this.subscribeNotif( "cardPlayed_1", this.ntf_any );
+    // this.subscribeNotif( "actionTaken", this.ntf_actionTaken );
+    // this.subscribeNotif( "cardPlayed_0", this.ntf_cardPlayed );
+    // this.subscribeNotif( "cardPlayed_1", this.ntf_cardPlayed );
+  };
+
+  /* Example:
 
 	ntf_any( notif: BGA.Notif )
 	{
@@ -209,7 +214,6 @@ class TetherGame extends Gamegui
 
 	*/
 }
-
 
 // The global 'bgagame.tethergame' class is instantiated when the page is loaded and used as the Gamegui.
 window.bgagame = { tethergame: TetherGame };
