@@ -34,26 +34,32 @@ class TetherGame extends Gamegui {
   override setup(gamedatas: BGA.Gamedatas): void {
     console.log('Starting game setup');
 
-    document
-      .getElementById('game_play_area')
-      ?.insertAdjacentHTML('beforeend', `<div id="adrift-zone"></div>`);
-
-    // Setting up player boards
-    for (const player_id in gamedatas.players) {
-      var player = gamedatas.players[player_id as BGA.ID];
-      // TODO: Setting up players boards if needed
+    const gamePlayArea = document.getElementById('game_play_area');
+    if (!gamePlayArea) {
+      throw new Error('game_play_area not found');
     }
 
-    const adriftZone = document.getElementById('adrift-zone');
+    const adriftZone = document.createElement('div');
+    adriftZone.id = 'adrift-zone';
+    gamePlayArea.appendChild(adriftZone);
 
-    console.log('adrift data', gamedatas.adrift);
+    const hand = document.createElement('div');
+    hand.id = 'hand';
+    gamePlayArea.appendChild(hand);
 
-    // TODO: Set up your game interface here, according to "gamedatas"
-    for (const card in gamedatas.adrift) {
+    for (const cardNum in gamedatas.adrift) {
       const cardElement = document.createElement('div');
-      cardElement.classList.add('adrift-card');
-      cardElement.innerText = card.toString();
-      adriftZone?.appendChild(cardElement);
+      cardElement.classList.add('card');
+      cardElement.classList.add('card--adrift');
+      cardElement.innerText = cardNum.toString();
+      adriftZone.appendChild(cardElement);
+    }
+
+    for (const cardId in gamedatas.hand) {
+      const cardElement = document.createElement('div');
+      cardElement.classList.add('card');
+      cardElement.innerText = gamedatas.hand[cardId]!.type_arg;
+      hand.appendChild(cardElement);
     }
 
     // Setup game notifications to handle (see "setupNotifications" method below)

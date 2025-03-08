@@ -43,15 +43,29 @@
   padding: 10px;
   min-height: 100px;
   min-width: 100px;
+  width: 50%;
   background-color: azure;
   border: 1px dashed darksalmon;
 }
 
-.adrift-card {
+#hand {
+  display: flex;
+  padding: 10px;
+  min-width: 100px;
+  width: 50%;
+  background-color: cornsilk;
+  border: 1px dashed darkseagreen;
+}
+
+.card {
   border: 1px solid black;
   border-radius: 5px;
   padding: 5px;
   margin: 5px;
+  width: 75px;
+  height: 105px;
   background-color: white;
-  transform: rotateX("90");
+}
+.card--adrift {
+  transform: rotate(90deg);
 }

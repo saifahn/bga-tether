@@ -242,6 +242,7 @@ class Game extends \Table
             FROM card 
             WHERE card_location = 'adrift'"
         );
+        $result['hand'] = $this->cards->getCardsInLocation('hand', $current_player_id);
 
         return $result;
     }
@@ -306,20 +307,20 @@ class Game extends \Table
         // $this->initStat("player", "player_teststat1", 0);
 
         // TODO: Setup the initial game situation here.
-        $this->initTables();
+        $this->initTables($players);
 
         // Activate first player once everything has been initialized and ready.
         $this->activeNextPlayer();
     }
 
-    function initTables()
+    function initTables($players)
     {
         try {
-            $players = $this->loadPlayersBasicInfos();
             $this->activeNextPlayer();
             // TODO $this->initStats();
             $this->createDeck();
             $this->drawAdriftCards();
+            $this->drawInitialCards($players);
         } catch (\Exception $e) {
             $this->error("Error while creating game");
             $this->dump('err', $e);
@@ -333,14 +334,19 @@ class Game extends \Table
             $cards[] = array('type' => 'upright', 'type_arg' => $id, 'nbr' => 1);
         }
         $this->cards->createCards($cards, 'deck');
+        $this->cards->shuffle('deck');
     }
 
     function drawAdriftCards()
     {
         $this->cards->pickCardsForLocation(3, 'deck', 'adrift');
-        // $this->notifyAllPlayers('drawAdriftCards', '', array(
-        //     'cards' => $cards
-        // ));
+    }
+
+    function drawInitialCards($players)
+    {
+        foreach ($players as $player_id => $player) {
+            $this->cards->pickCardsForLocation(5, 'deck', 'hand', $player_id);
+        }
     }
 
     /**
