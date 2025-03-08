@@ -313,14 +313,14 @@ class Game extends \Table
         $this->activeNextPlayer();
     }
 
-    function initTables($players)
+    function initTables()
     {
         try {
             $this->activeNextPlayer();
             // TODO $this->initStats();
             $this->createDeck();
             $this->drawAdriftCards();
-            $this->drawInitialCards($players);
+            $this->drawInitialCards();
         } catch (\Exception $e) {
             $this->error("Error while creating game");
             $this->dump('err', $e);
@@ -342,8 +342,9 @@ class Game extends \Table
         $this->cards->pickCardsForLocation(3, 'deck', 'adrift');
     }
 
-    function drawInitialCards($players)
+    function drawInitialCards()
     {
+        $players = $this->loadPlayersBasicInfos();
         foreach ($players as $player_id => $player) {
             $this->cards->pickCardsForLocation(5, 'deck', 'hand', $player_id);
         }
