@@ -27,22 +27,19 @@ class action_tethergame extends APP_GameAction
 		}
 	}
 
-	public function playCard()
+	public function connectAstronauts()
 	{
 		self::setAjaxMode();
 
-		/** @var int $card_id */
-		$card_id = self::getArg('card_id', AT_int, true);
-
-		$this->game->playCard( $card_id );
+		$this->game->connectAstronauts(  );
 		self::ajaxResponse();
 	}
 
-	public function pass()
+	public function setAdrift()
 	{
 		self::setAjaxMode();
 
-		$this->game->pass(  );
+		$this->game->setAdrift(  );
 		self::ajaxResponse();
 	}
 }

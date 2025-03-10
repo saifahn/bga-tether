@@ -78,7 +78,7 @@ class TetherGame extends Gamegui {
     console.log('Entering state: ' + stateName);
 
     switch (stateName) {
-      case 'dummmy':
+      default:
         // enable/disable any user interaction...
         break;
     }
@@ -89,7 +89,7 @@ class TetherGame extends Gamegui {
     console.log('Leaving state: ' + stateName);
 
     switch (stateName) {
-      case 'dummmy':
+      default:
         // enable/disable any user interaction...
         break;
     }
@@ -104,7 +104,7 @@ class TetherGame extends Gamegui {
     if (!this.isCurrentPlayerActive()) return;
 
     switch (stateName) {
-      case 'dummmy':
+      default:
         // Add buttons to action bar...
         // this.addActionButton( 'button_id', _('Button label'), this.onButtonClicked );
         break;

@@ -18,18 +18,29 @@ interface DefinedGameStates extends ValidateGameStates<{
 		'type': 'manager',
 		'action': 'stGameSetup',
 		'transitions': {
-			'': 2,
+			'': 10,
 		},
 	},
-	2: {
-		'name': 'dummmy',
-		'description': '${actplayer} must play a card or pass',
-		'descriptionmyturn': '${you} must play a card or pass',
+	10: {
+		'name': 'playerTurn',
+		'description': '${actplayer} must connect astronauts or set an astronaut adrift',
+		'descriptionmyturn': '${you} must connect astronauts or set an astronaut adrift',
 		'type': 'activeplayer',
-		'possibleactions': ['playCard', 'pass'],
+		'possibleactions': ['connectAstronauts', 'setAdrift'],
 		'transitions': {
-			'playCard': 2,
-			'pass': 2,
+			'connectAstronauts': 20,
+			'setAdrift': 20,
+		},
+	},
+	20: {
+		'name': 'nextPlayer',
+		'description': '',
+		'type': 'game',
+		'action': 'stNextPlayer',
+		'updateGameProgression': true,
+		'transitions': {
+			'endGame': 99,
+			'nextPlayer': 10,
 		},
 	},
 	99: {
@@ -44,10 +55,8 @@ interface DefinedGameStates extends ValidateGameStates<{
 interface GameStateArgs {}
 
 interface GameStatePossibleActions {
-	'playCard': {
-		'card_id': number,
-	},
-	'pass': {},
+	'connectAstronauts': {},
+	'setAdrift': {},
 }
 
 }

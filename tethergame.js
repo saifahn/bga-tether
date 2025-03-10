@@ -62,14 +62,14 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             var stateName = _a[0], state = _a[1];
             console.log('Entering state: ' + stateName);
             switch (stateName) {
-                case 'dummmy':
+                default:
                     break;
             }
         };
         TetherGame.prototype.onLeavingState = function (stateName) {
             console.log('Leaving state: ' + stateName);
             switch (stateName) {
-                case 'dummmy':
+                default:
                     break;
             }
         };
@@ -83,7 +83,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             if (!this.isCurrentPlayerActive())
                 return;
             switch (stateName) {
-                case 'dummmy':
+                default:
                     break;
             }
         };

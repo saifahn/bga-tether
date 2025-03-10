@@ -18,7 +18,7 @@ declare(strict_types=1);
  */
 if (false) {
 	/** @var tethergame $game */
-	
+	$game->stNextPlayer();
 }
 
 $machinestates = array(
@@ -28,18 +28,29 @@ $machinestates = array(
 		'type' => 'manager',
 		'action' => 'stGameSetup',
 		'transitions' => array(
-			'' => 2,
+			'' => 10,
 		),
 	),
-	2 => array(
-		'name' => 'dummmy',
-		'description' => clienttranslate('${actplayer} must play a card or pass'),
-		'descriptionmyturn' => clienttranslate('${you} must play a card or pass'),
+	10 => array(
+		'name' => 'playerTurn',
+		'description' => clienttranslate('${actplayer} must connect astronauts or set an astronaut adrift'),
+		'descriptionmyturn' => clienttranslate('${you} must connect astronauts or set an astronaut adrift'),
 		'type' => 'activeplayer',
-		'possibleactions' => ['playCard', 'pass'],
+		'possibleactions' => ['connectAstronauts', 'setAdrift'],
 		'transitions' => array(
-			'playCard' => 2,
-			'pass' => 2,
+			'connectAstronauts' => 20,
+			'setAdrift' => 20,
+		),
+	),
+	20 => array(
+		'name' => 'nextPlayer',
+		'description' => '',
+		'type' => 'game',
+		'action' => 'stNextPlayer',
+		'updateGameProgression' => true,
+		'transitions' => array(
+			'endGame' => 99,
+			'nextPlayer' => 10,
 		),
 	),
 	99 => array(
