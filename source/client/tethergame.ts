@@ -27,6 +27,10 @@ class TetherGame extends Gamegui {
     handler: EventListener;
   }[] = [];
 
+  // TODO: check if it's worthwhile to make this every possible card number, i.e.
+  // one of the 53 cards. Can we use template literal type?
+  cardSetAdrift: string | null = null;
+
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
     super();
@@ -46,6 +50,11 @@ class TetherGame extends Gamegui {
     adriftZone.id = 'adrift-zone';
     gamePlayArea.appendChild(adriftZone);
 
+    const deck = document.createElement('div');
+    deck.id = 'deck';
+    deck.classList.add('deck');
+    adriftZone.appendChild(deck);
+
     const hand = document.createElement('div');
     hand.id = 'hand';
     gamePlayArea.appendChild(hand);
@@ -54,7 +63,9 @@ class TetherGame extends Gamegui {
       const cardElement = document.createElement('div');
       cardElement.classList.add('card');
       cardElement.classList.add('card--adrift');
-      cardElement.innerText = cardNum.toString();
+      cardElement.classList.add('js-adrift');
+      cardElement.dataset['cardNumber'] = cardNum;
+      cardElement.innerText = cardNum;
       adriftZone.appendChild(cardElement);
     }
 
@@ -62,8 +73,8 @@ class TetherGame extends Gamegui {
       const cardElement = document.createElement('div');
       const cardNumber = gamedatas.hand[cardId]!.type_arg;
       cardElement.dataset['cardNumber'] = cardNumber;
-      cardElement.classList.add('card');
       cardElement.innerText = cardNumber;
+      cardElement.classList.add('card');
       hand.appendChild(cardElement);
     }
 
@@ -141,6 +152,15 @@ class TetherGame extends Gamegui {
           false,
           'red'
         );
+      // @ts-expect-error
+      case 'client_setAdriftChooseDraw':
+        this.addActionButton(
+          'draw-from-deck-button',
+          _('Draw from deck'),
+          (e) => {
+            this.drawFromDeck(e);
+          }
+        );
     }
   }
 
@@ -166,16 +186,29 @@ class TetherGame extends Gamegui {
     return hand.childNodes;
   }
 
-  cancelSetAdriftAction() {
+  clearSelectedCards() {
     const selectedCards = document.querySelectorAll('.card--selected');
     selectedCards.forEach((card) => {
       card.classList.remove('card--selected');
     });
+  }
+
+  clearSelectableCards() {
     const selectableCards = document.querySelectorAll('.card--selectable');
     selectableCards.forEach((card) => {
       card.classList.remove('card--selectable');
     });
+  }
+
+  cancelSetAdriftAction() {
+    this.clearSelectedCards();
+    this.clearSelectableCards();
+    this.cardSetAdrift = null;
     this.restoreServerGameState();
+  }
+
+  drawFromDeck(e: Event) {
+    console.log('drawFromDeck must be implemented');
   }
 
   onSetAdriftHandClick(e: Event) {
@@ -186,15 +219,54 @@ class TetherGame extends Gamegui {
     }
     e.target.classList.add('card--selected');
 
-    this.getCardElementsFromHand().forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.classList.remove('card--selectable');
-      }
-    });
+    this.cardSetAdrift = e.target.dataset['cardNumber']!;
+    this.clearSelectableCards();
 
     for (const handler of this.eventHandlers) {
       handler.element.removeEventListener(handler.event, handler.handler);
     }
+    this.setClientState('client_setAdriftChooseDraw', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must choose to take an astronaut from the adrift zone or draw from the deck.'
+      ),
+    });
+
+    // add click handlers to each of the adrift cards and the deck
+    const adriftCards = document.querySelectorAll('.js-adrift');
+    const adriftHandler = (e: Event) => this.onAdriftCardDrawClick(e);
+    adriftCards.forEach((card) => {
+      if (card instanceof HTMLElement) {
+        card.classList.add('card--selectable');
+        card.addEventListener('click', adriftHandler);
+        this.eventHandlers.push({
+          element: card,
+          event: 'click',
+          handler: adriftHandler,
+        });
+      }
+    });
+  }
+
+  onAdriftCardDrawClick(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error("onAdriftCardClick called when it shouldn't have been");
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!e.target.dataset['cardNumber'] || !this.cardSetAdrift) {
+      throw new Error('cardNumber or cardSetAdrift not set properly');
+    }
+    this.clearSelectableCards();
+    this.clearSelectedCards();
+
+    this.bgaPerformAction('setAdrift', {
+      cardDrawn: e.target.dataset['cardNumber'],
+      cardSetAdrift: this.cardSetAdrift,
+    });
+
+    this.cardSetAdrift = null;
   }
 
   onSetAdriftClick(e: Event) {
@@ -211,7 +283,6 @@ class TetherGame extends Gamegui {
     });
 
     const handler = (e: Event) => this.onSetAdriftHandClick(e);
-
     this.getCardElementsFromHand().forEach((card) => {
       if (card instanceof HTMLElement) {
         card.classList.add('card--selectable');

@@ -21,6 +21,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
         function TetherGame() {
             var _this = _super.call(this) || this;
             _this.eventHandlers = [];
+            _this.cardSetAdrift = null;
             _this.setupNotifications = function () {
                 console.log('notifications subscriptions setup');
             };
@@ -36,6 +37,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             var adriftZone = document.createElement('div');
             adriftZone.id = 'adrift-zone';
             gamePlayArea.appendChild(adriftZone);
+            var deck = document.createElement('div');
+            deck.id = 'deck';
+            deck.classList.add('deck');
+            adriftZone.appendChild(deck);
             var hand = document.createElement('div');
             hand.id = 'hand';
             gamePlayArea.appendChild(hand);
@@ -43,15 +48,17 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                 var cardElement = document.createElement('div');
                 cardElement.classList.add('card');
                 cardElement.classList.add('card--adrift');
-                cardElement.innerText = cardNum.toString();
+                cardElement.classList.add('js-adrift');
+                cardElement.dataset['cardNumber'] = cardNum;
+                cardElement.innerText = cardNum;
                 adriftZone.appendChild(cardElement);
             }
             for (var cardId in gamedatas.hand) {
                 var cardElement = document.createElement('div');
                 var cardNumber = gamedatas.hand[cardId].type_arg;
                 cardElement.dataset['cardNumber'] = cardNumber;
-                cardElement.classList.add('card');
                 cardElement.innerText = cardNumber;
+                cardElement.classList.add('card');
                 hand.appendChild(cardElement);
             }
             this.setupNotifications();
@@ -99,6 +106,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelSetAdriftAction();
                     }, undefined, false, 'red');
+                case 'client_setAdriftChooseDraw':
+                    this.addActionButton('draw-from-deck-button', _('Draw from deck'), function (e) {
+                        _this.drawFromDeck(e);
+                    });
             }
         };
         TetherGame.prototype.getCardElementsFromHand = function () {
@@ -108,31 +119,72 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             }
             return hand.childNodes;
         };
-        TetherGame.prototype.cancelSetAdriftAction = function () {
+        TetherGame.prototype.clearSelectedCards = function () {
             var selectedCards = document.querySelectorAll('.card--selected');
             selectedCards.forEach(function (card) {
                 card.classList.remove('card--selected');
             });
+        };
+        TetherGame.prototype.clearSelectableCards = function () {
             var selectableCards = document.querySelectorAll('.card--selectable');
             selectableCards.forEach(function (card) {
                 card.classList.remove('card--selectable');
             });
+        };
+        TetherGame.prototype.cancelSetAdriftAction = function () {
+            this.clearSelectedCards();
+            this.clearSelectableCards();
+            this.cardSetAdrift = null;
             this.restoreServerGameState();
         };
+        TetherGame.prototype.drawFromDeck = function (e) {
+            console.log('drawFromDeck must be implemented');
+        };
         TetherGame.prototype.onSetAdriftHandClick = function (e) {
+            var _this = this;
             if (!(e.target instanceof HTMLElement)) {
                 throw new Error("onSetAdriftHandClick called when it shouldn't have been");
             }
             e.target.classList.add('card--selected');
-            this.getCardElementsFromHand().forEach(function (card) {
-                if (card instanceof HTMLElement) {
-                    card.classList.remove('card--selectable');
-                }
-            });
+            this.cardSetAdrift = e.target.dataset['cardNumber'];
+            this.clearSelectableCards();
             for (var _i = 0, _a = this.eventHandlers; _i < _a.length; _i++) {
                 var handler = _a[_i];
                 handler.element.removeEventListener(handler.event, handler.handler);
             }
+            this.setClientState('client_setAdriftChooseDraw', {
+                descriptionmyturn: _('${you} must choose to take an astronaut from the adrift zone or draw from the deck.'),
+            });
+            var adriftCards = document.querySelectorAll('.js-adrift');
+            var adriftHandler = function (e) { return _this.onAdriftCardDrawClick(e); };
+            adriftCards.forEach(function (card) {
+                if (card instanceof HTMLElement) {
+                    card.classList.add('card--selectable');
+                    card.addEventListener('click', adriftHandler);
+                    _this.eventHandlers.push({
+                        element: card,
+                        event: 'click',
+                        handler: adriftHandler,
+                    });
+                }
+            });
+        };
+        TetherGame.prototype.onAdriftCardDrawClick = function (e) {
+            if (!(e.target instanceof HTMLElement)) {
+                throw new Error("onAdriftCardClick called when it shouldn't have been");
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            if (!e.target.dataset['cardNumber'] || !this.cardSetAdrift) {
+                throw new Error('cardNumber or cardSetAdrift not set properly');
+            }
+            this.clearSelectableCards();
+            this.clearSelectedCards();
+            this.bgaPerformAction('setAdrift', {
+                cardDrawn: e.target.dataset['cardNumber'],
+                cardSetAdrift: this.cardSetAdrift,
+            });
+            this.cardSetAdrift = null;
         };
         TetherGame.prototype.onSetAdriftClick = function (e) {
             var _this = this;

@@ -57,6 +57,16 @@
   border: 1px dashed darkseagreen;
 }
 
+.deck {
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  width: 75px;
+  height: 105px;
+  background-color: steelblue;
+}
+
 .card {
   border: 1px solid black;
   border-radius: 5px;
