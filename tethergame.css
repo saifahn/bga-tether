@@ -69,3 +69,10 @@
 .card--adrift {
   transform: rotate(90deg);
 }
+.card--selectable {
+  outline: 0.1rem dashed black;
+  cursor: pointer;
+}
+.card--selected {
+  outline: 0.25rem solid yellowgreen;
+}

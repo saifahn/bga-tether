@@ -71,4 +71,13 @@
   &--adrift {
     transform: rotate(90deg);
   }
+
+  &--selectable {
+    outline: 0.1rem dashed black;
+    cursor: pointer;
+  }
+
+  &--selected {
+    outline: 0.25rem solid yellowgreen;
+  }
 }

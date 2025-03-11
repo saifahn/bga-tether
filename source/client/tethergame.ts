@@ -21,8 +21,11 @@ import 'ebg/counter';
 
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
-  // myGlobalValue: number = 0;
-  // myGlobalArray: string[] = [];
+  eventHandlers: {
+    element: HTMLElement;
+    event: string;
+    handler: EventListener;
+  }[] = [];
 
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
@@ -57,8 +60,10 @@ class TetherGame extends Gamegui {
 
     for (const cardId in gamedatas.hand) {
       const cardElement = document.createElement('div');
+      const cardNumber = gamedatas.hand[cardId]!.type_arg;
+      cardElement.dataset['cardNumber'] = cardNumber;
       cardElement.classList.add('card');
-      cardElement.innerText = gamedatas.hand[cardId]!.type_arg;
+      cardElement.innerText = cardNumber;
       hand.appendChild(cardElement);
     }
 
@@ -104,10 +109,38 @@ class TetherGame extends Gamegui {
     if (!this.isCurrentPlayerActive()) return;
 
     switch (stateName) {
-      default:
+      case 'playerTurn':
         // Add buttons to action bar...
-        // this.addActionButton( 'button_id', _('Button label'), this.onButtonClicked );
+        this.addActionButton(
+          'connect-astronauts-button',
+          _('Connect Astronauts'),
+          () => {
+            console.log('not implemented yet');
+          },
+          undefined,
+          false,
+          'gray'
+        );
+        this.addActionButton(
+          'set-adrift-button',
+          _('Set Astronauts Adrift'),
+          (e) => {
+            this.onSetAdriftClick(e);
+          }
+        );
         break;
+      // @ts-expect-error
+      case 'client_setAdriftChooseFromHand':
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelSetAdriftAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
     }
   }
 
@@ -124,6 +157,76 @@ class TetherGame extends Gamegui {
 		- check the action is possible at this game state.
 		- make a call to the game server
 	*/
+
+  getCardElementsFromHand() {
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    return hand.childNodes;
+  }
+
+  cancelSetAdriftAction() {
+    const selectedCards = document.querySelectorAll('.card--selected');
+    selectedCards.forEach((card) => {
+      card.classList.remove('card--selected');
+    });
+    const selectableCards = document.querySelectorAll('.card--selectable');
+    selectableCards.forEach((card) => {
+      card.classList.remove('card--selectable');
+    });
+    this.restoreServerGameState();
+  }
+
+  onSetAdriftHandClick(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error(
+        "onSetAdriftHandClick called when it shouldn't have been"
+      );
+    }
+    e.target.classList.add('card--selected');
+
+    this.getCardElementsFromHand().forEach((card) => {
+      if (card instanceof HTMLElement) {
+        card.classList.remove('card--selectable');
+      }
+    });
+
+    for (const handler of this.eventHandlers) {
+      handler.element.removeEventListener(handler.event, handler.handler);
+    }
+  }
+
+  onSetAdriftClick(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error("onSetAdriftClick called when it shouldn't have been");
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    this.setClientState('client_setAdriftChooseFromHand', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must select an astronaut from your hand to set adrift.'
+      ),
+    });
+
+    const handler = (e: Event) => this.onSetAdriftHandClick(e);
+
+    this.getCardElementsFromHand().forEach((card) => {
+      if (card instanceof HTMLElement) {
+        card.classList.add('card--selectable');
+        card.addEventListener('click', handler);
+        this.eventHandlers.push({
+          element: card,
+          event: 'click',
+          handler,
+        });
+      }
+    });
+    // when clicked, store the id and move to the next client state
+    // in the next client state, the player can choose to draw from the adrift zone or deck
+    // then send everything to server and update
+  }
 
   /* Example:
 
