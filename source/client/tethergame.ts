@@ -320,56 +320,7 @@ class TetherGame extends Gamegui {
         });
       }
     });
-    // when clicked, store the id and move to the next client state
-    // in the next client state, the player can choose to draw from the adrift zone or deck
-    // then send everything to server and update
   }
-
-  /* Example:
-
-	onButtonClicked( evt: Event )
-	{
-		console.log( 'onButtonClicked' );
-
-		// Preventing default browser reaction
-		evt.preventDefault();
-
-		// Builtin example...
-		if(this.checkAction( 'myAction' ))
-		{
-			this.ajaxcall(
-				`/${this.game_name!}/${this.game_name!}/myAction.html`,
-				{
-					lock: true, 
-					myArgument1: arg1,
-					myArgument2: arg2,
-				},
-				this,
-				function( server_response: unknown ) {
-					// Callback only on success (no error)
-					// (for player actions, this is almost always empty)
-				}, function(error: boolean, errorMessage?: string, errorCode?: number) {
-					// What to do after the server call in anyway (success or failure)
-					// (usually catch unexpected server errors)
-				},
-			);
-		}
-
-		// Builtin example with new BGA wrapper...
-		this.bgaPerformAction( 'myAction', { myArgument1: arg1, myArgument2: arg2 } );
-
-		//	With CommonMixin from 'cookbook/common'...
-		this.ajaxAction(
-			'myAction',
-			{ myArgument1: arg1, myArgument2: arg2 },
-			function(error: boolean, errorMessage?: string, errorCode?: number) {
-				// What to do after the server call in anyway (success or failure)
-				// (usually catch unexpected server errors)
-			}
-		);
-	}
-
-	*/
 
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications

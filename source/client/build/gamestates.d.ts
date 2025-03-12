@@ -29,7 +29,16 @@ interface DefinedGameStates extends ValidateGameStates<{
 		'possibleactions': ['connectAstronauts', 'actSetAdrift'],
 		'transitions': {
 			'finishConnectingAstronauts': 30,
-			'finishSettingAdrift': 30,
+			'drawAtEndOfTurn': 25,
+		},
+	},
+	25: {
+		'name': 'drawAtEndOfTurn',
+		'description': '${actplayer} draws a card if they have fewer than 6 cards in hand',
+		'type': 'game',
+		'action': 'stDrawAtEndOfTurn',
+		'transitions': {
+			'nextPlayer': 30,
 		},
 	},
 	30: {

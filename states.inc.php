@@ -18,6 +18,7 @@ declare(strict_types=1);
  */
 if (false) {
 	/** @var tethergame $game */
+	$game->stDrawAtEndOfTurn();
 	$game->stNextPlayer();
 }
 
@@ -39,7 +40,16 @@ $machinestates = array(
 		'possibleactions' => ['connectAstronauts', 'actSetAdrift'],
 		'transitions' => array(
 			'finishConnectingAstronauts' => 30,
-			'finishSettingAdrift' => 30,
+			'drawAtEndOfTurn' => 25,
+		),
+	),
+	25 => array(
+		'name' => 'drawAtEndOfTurn',
+		'description' => clienttranslate('${actplayer} draws a card if they have fewer than 6 cards in hand'),
+		'type' => 'game',
+		'action' => 'stDrawAtEndOfTurn',
+		'transitions' => array(
+			'nextPlayer' => 30,
 		),
 	),
 	30 => array(

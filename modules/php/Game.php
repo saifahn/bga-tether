@@ -180,9 +180,18 @@ class Game extends \Table
 
         $this->activeNextPlayer();
 
-        // Go to another gamestate
-        // Here, we would detect if the game is over, and in this case use "endGame" transition instead 
-        $this->gamestate->nextState("nextPlayer");
+        $this->gamestate->nextState('goToNextPlayerTurn');
+    }
+
+    public function stDrawAtEndOfTurn(): void
+    {
+        $player_id = (int)$this->getActivePlayerId();
+        $hand = $this->cards->getCardsInLocation('hand', $player_id);
+        if (count($hand) < 6) {
+            $this->cards->pickCardForLocation('deck', 'hand', $player_id);
+        }
+
+        $this->gamestate->nextState('nextPlayer');
     }
 
     /**
@@ -360,8 +369,7 @@ class Game extends \Table
         }
         $this->cards->moveCard($cardSetAdrift, 'adrift');
 
-        // $this->gamestate->nextState('finishSettingAdrift');
-        // TODO: goto end of turn -> drawing a card
+        $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
     /**
