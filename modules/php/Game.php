@@ -352,9 +352,12 @@ class Game extends \Table
 
     function actSetAdrift(string $cardDrawn, string $cardSetAdrift)
     {
-
         $current_player_id = (int) $this->getCurrentPlayerId();
-        $this->cards->moveCard($cardDrawn, 'hand', $current_player_id);
+        if ($cardDrawn == 'deck') {
+            $this->cards->pickCard('deck', $current_player_id);
+        } else {
+            $this->cards->moveCard($cardDrawn, 'hand', $current_player_id);
+        }
         $this->cards->moveCard($cardSetAdrift, 'adrift');
 
         // $this->gamestate->nextState('finishSettingAdrift');

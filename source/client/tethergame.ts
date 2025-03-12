@@ -51,6 +51,7 @@ class TetherGame extends Gamegui {
     const deck = document.createElement('div');
     deck.id = 'deck';
     deck.classList.add('deck');
+    deck.classList.add('js-deck');
     adriftZone.appendChild(deck);
 
     const hand = document.createElement('div');
@@ -159,8 +160,8 @@ class TetherGame extends Gamegui {
         this.addActionButton(
           'draw-from-deck-button',
           _('Draw from deck'),
-          (e) => {
-            this.drawFromDeck(e);
+          () => {
+            this.performAdriftAction('deck');
           }
         );
         break;
@@ -210,8 +211,10 @@ class TetherGame extends Gamegui {
     this.restoreServerGameState();
   }
 
-  drawFromDeck(e: Event) {
-    console.log('drawFromDeck must be implemented');
+  clearEventListeners() {
+    for (const handler of this.eventHandlers) {
+      handler.element.removeEventListener(handler.event, handler.handler);
+    }
   }
 
   onSetAdriftHandClick(e: Event) {
@@ -225,9 +228,6 @@ class TetherGame extends Gamegui {
     this.cardSetAdrift = e.target.dataset['cardId']!;
     this.clearSelectableCards();
 
-    for (const handler of this.eventHandlers) {
-      handler.element.removeEventListener(handler.event, handler.handler);
-    }
     this.setClientState('client_setAdriftChooseDraw', {
       // @ts-expect-error
       descriptionmyturn: _(
@@ -235,23 +235,34 @@ class TetherGame extends Gamegui {
       ),
     });
 
-    // add click handlers to each of the adrift cards and the deck
+    const deck = document.querySelector('.js-deck');
+    const drawFromDeckHandler = () => this.performAdriftAction('deck');
+    if (deck instanceof HTMLElement) {
+      deck.classList.add('card--selectable');
+      deck.addEventListener('click', drawFromDeckHandler);
+      this.eventHandlers.push({
+        element: deck,
+        event: 'click',
+        handler: drawFromDeckHandler,
+      });
+    }
+
     const adriftCards = document.querySelectorAll('.js-adrift');
-    const adriftHandler = (e: Event) => this.onAdriftCardDrawClick(e);
+    const drawFromAdriftHandler = (e: Event) => this.onAdriftCardDrawClick(e);
     adriftCards.forEach((card) => {
       if (card instanceof HTMLElement) {
         card.classList.add('card--selectable');
-        card.addEventListener('click', adriftHandler);
+        card.addEventListener('click', drawFromAdriftHandler);
         this.eventHandlers.push({
           element: card,
           event: 'click',
-          handler: adriftHandler,
+          handler: drawFromAdriftHandler,
         });
       }
     });
   }
 
-  onAdriftCardDrawClick(e: Event) {
+  async onAdriftCardDrawClick(e: Event) {
     if (!(e.target instanceof HTMLElement)) {
       throw new Error("onAdriftCardClick called when it shouldn't have been");
     }
@@ -261,20 +272,27 @@ class TetherGame extends Gamegui {
     if (!e.target.dataset['cardId'] || !this.cardSetAdrift) {
       throw new Error('id of card to draw or cardSetAdrift not set properly');
     }
-    this.clearSelectableCards();
-    this.clearSelectedCards();
+    this.performAdriftAction(e.target.dataset['cardId']);
+  }
 
-    const cardDrawn = e.target.dataset['cardId'];
-    const cardSetAdrift = this.cardSetAdrift;
+  async performAdriftAction(cardDrawn: string) {
+    if (!this.cardSetAdrift) {
+      throw new Error('performAdriftAction is missing required information');
+    }
 
-    console.table({ cardDrawn, cardSetAdrift });
-
-    this.bgaPerformAction('actSetAdrift', {
-      cardDrawn: e.target.dataset['cardId'],
-      cardSetAdrift: this.cardSetAdrift,
-    });
-
-    this.cardSetAdrift = null;
+    try {
+      this.clearSelectableCards();
+      this.clearSelectedCards();
+      this.clearEventListeners();
+      await this.bgaPerformAction('actSetAdrift', {
+        cardDrawn,
+        cardSetAdrift: this.cardSetAdrift,
+      });
+      this.cardSetAdrift = null;
+    } catch (e) {
+      this.restoreServerGameState();
+      console.log('error while trying to perform actSetAdrift', e);
+    }
   }
 
   onSetAdriftClick(e: Event) {
