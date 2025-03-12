@@ -11,7 +11,8 @@ declare namespace BGA {
   /** Goto {@link Gamedatas} or hover name for info. */
   interface Gamedatas extends Record<string, any> {
     adrift: {
-      [cardNum: string]: {
+      [cardId: string]: {
+        id: string;
         cardNum: string;
       };
     };

@@ -36,21 +36,21 @@ $machinestates = array(
 		'description' => clienttranslate('${actplayer} must connect astronauts or set an astronaut adrift'),
 		'descriptionmyturn' => clienttranslate('${you} must connect astronauts or set an astronaut adrift'),
 		'type' => 'activeplayer',
-		'possibleactions' => ['connectAstronauts', 'setAdrift'],
+		'possibleactions' => ['connectAstronauts', 'actSetAdrift'],
 		'transitions' => array(
-			'connectAstronauts' => 20,
-			'setAdrift' => 20,
+			'finishConnectingAstronauts' => 30,
+			'finishSettingAdrift' => 30,
 		),
 	),
-	20 => array(
+	30 => array(
 		'name' => 'nextPlayer',
 		'description' => '',
 		'type' => 'game',
 		'action' => 'stNextPlayer',
 		'updateGameProgression' => true,
 		'transitions' => array(
-			'endGame' => 99,
-			'nextPlayer' => 10,
+			'goToGameEnd' => 99,
+			'goToNextPlayerTurn' => 10,
 		),
 	),
 	99 => array(

@@ -31,15 +31,20 @@ class action_tethergame extends APP_GameAction
 	{
 		self::setAjaxMode();
 
-		$this->game->connectAstronauts(  );
+		$this->game->connectAstronauts();
 		self::ajaxResponse();
 	}
 
-	public function setAdrift()
+	public function actSetAdrift()
 	{
 		self::setAjaxMode();
 
-		$this->game->setAdrift(  );
+		/** @var string $cardDrawn */
+		$cardDrawn = self::getArg('cardDrawn', AT_alphanum, true);
+		/** @var string $cardSetAdrift */
+		$cardSetAdrift = self::getArg('cardSetAdrift', AT_alphanum, true);
+
+		$this->game->actSetAdrift($cardDrawn, $cardSetAdrift);
 		self::ajaxResponse();
 	}
 }

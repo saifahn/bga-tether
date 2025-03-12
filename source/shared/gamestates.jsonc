@@ -33,18 +33,30 @@
     "type": "activeplayer",
     "possibleactions": {
       "connectAstronauts": [],
-      "setAdrift": []
+      "actSetAdrift": [
+        {
+          "name": "cardDrawn",
+          "type": "AT_alphanum"
+        },
+        {
+          "name": "cardSetAdrift",
+          "type": "AT_alphanum"
+        }
+      ]
     },
-    "transitions": { "connectAstronauts": 20, "setAdrift": 20 }
+    "transitions": {
+      "finishConnectingAstronauts": 30,
+      "finishSettingAdrift": 30
+    }
   },
 
-  "20": {
+  "30": {
     "name": "nextPlayer",
     "description": "",
     "type": "game",
     "action": "stNextPlayer",
     "updateGameProgression": true,
-    "transitions": { "endGame": 99, "nextPlayer": 10 }
+    "transitions": { "goToGameEnd": 99, "goToNextPlayerTurn": 10 }
   },
 
   // Final state.

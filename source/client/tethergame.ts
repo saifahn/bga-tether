@@ -27,8 +27,6 @@ class TetherGame extends Gamegui {
     handler: EventListener;
   }[] = [];
 
-  // TODO: check if it's worthwhile to make this every possible card number, i.e.
-  // one of the 53 cards. Can we use template literal type?
   cardSetAdrift: string | null = null;
 
   /** See {@link BGA.Gamegui} for more information. */
@@ -59,11 +57,13 @@ class TetherGame extends Gamegui {
     hand.id = 'hand';
     gamePlayArea.appendChild(hand);
 
-    for (const cardNum in gamedatas.adrift) {
+    for (const cardId in gamedatas.adrift) {
       const cardElement = document.createElement('div');
       cardElement.classList.add('card');
       cardElement.classList.add('card--adrift');
       cardElement.classList.add('js-adrift');
+      cardElement.dataset['cardId'] = cardId;
+      const cardNum = gamedatas.adrift[cardId]!.cardNum;
       cardElement.dataset['cardNumber'] = cardNum;
       cardElement.innerText = cardNum;
       adriftZone.appendChild(cardElement);
@@ -71,6 +71,7 @@ class TetherGame extends Gamegui {
 
     for (const cardId in gamedatas.hand) {
       const cardElement = document.createElement('div');
+      cardElement.dataset['cardId'] = cardId;
       const cardNumber = gamedatas.hand[cardId]!.type_arg;
       cardElement.dataset['cardNumber'] = cardNumber;
       cardElement.innerText = cardNumber;
@@ -152,6 +153,7 @@ class TetherGame extends Gamegui {
           false,
           'red'
         );
+        break;
       // @ts-expect-error
       case 'client_setAdriftChooseDraw':
         this.addActionButton(
@@ -161,6 +163,7 @@ class TetherGame extends Gamegui {
             this.drawFromDeck(e);
           }
         );
+        break;
     }
   }
 
@@ -219,7 +222,7 @@ class TetherGame extends Gamegui {
     }
     e.target.classList.add('card--selected');
 
-    this.cardSetAdrift = e.target.dataset['cardNumber']!;
+    this.cardSetAdrift = e.target.dataset['cardId']!;
     this.clearSelectableCards();
 
     for (const handler of this.eventHandlers) {
@@ -255,14 +258,19 @@ class TetherGame extends Gamegui {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!e.target.dataset['cardNumber'] || !this.cardSetAdrift) {
-      throw new Error('cardNumber or cardSetAdrift not set properly');
+    if (!e.target.dataset['cardId'] || !this.cardSetAdrift) {
+      throw new Error('id of card to draw or cardSetAdrift not set properly');
     }
     this.clearSelectableCards();
     this.clearSelectedCards();
 
-    this.bgaPerformAction('setAdrift', {
-      cardDrawn: e.target.dataset['cardNumber'],
+    const cardDrawn = e.target.dataset['cardId'];
+    const cardSetAdrift = this.cardSetAdrift;
+
+    console.table({ cardDrawn, cardSetAdrift });
+
+    this.bgaPerformAction('actSetAdrift', {
+      cardDrawn: e.target.dataset['cardId'],
       cardSetAdrift: this.cardSetAdrift,
     });
 
