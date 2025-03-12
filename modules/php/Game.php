@@ -180,9 +180,18 @@ class Game extends \Table
 
         $this->activeNextPlayer();
 
-        // Go to another gamestate
-        // Here, we would detect if the game is over, and in this case use "endGame" transition instead 
-        $this->gamestate->nextState("nextPlayer");
+        $this->gamestate->nextState('goToNextPlayerTurn');
+    }
+
+    public function stDrawAtEndOfTurn(): void
+    {
+        $player_id = (int)$this->getActivePlayerId();
+        $hand = $this->cards->getCardsInLocation('hand', $player_id);
+        if (count($hand) < 6) {
+            $this->cards->pickCardForLocation('deck', 'hand', $player_id);
+        }
+
+        $this->gamestate->nextState('nextPlayer');
     }
 
     /**
@@ -238,7 +247,7 @@ class Game extends \Table
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
         $result['adrift'] = $this->getCollectionFromDB(
-            "SELECT card_type_arg cardNum
+            "SELECT card_id id, card_type_arg cardNum
             FROM card 
             WHERE card_location = 'adrift'"
         );
@@ -348,6 +357,19 @@ class Game extends \Table
         foreach ($players as $player_id => $player) {
             $this->cards->pickCardsForLocation(5, 'deck', 'hand', $player_id);
         }
+    }
+
+    function actSetAdrift(string $cardDrawn, string $cardSetAdrift)
+    {
+        $current_player_id = (int) $this->getCurrentPlayerId();
+        if ($cardDrawn == 'deck') {
+            $this->cards->pickCard('deck', $current_player_id);
+        } else {
+            $this->cards->moveCard($cardDrawn, 'hand', $current_player_id);
+        }
+        $this->cards->moveCard($cardSetAdrift, 'adrift');
+
+        $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
     /**

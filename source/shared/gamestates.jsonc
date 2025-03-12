@@ -15,60 +15,66 @@
  * !! It is not a good idea to modify this file when a game is running !!
  */
 {
-	"$schema": "../../node_modules/bga-ts-template/schema/gamestates.schema.json",
+  "$schema": "../../node_modules/bga-ts-template/schema/gamestates.schema.json",
 
-	// The initial state. Please do not modify.
-	"1": {
-		"name": "gameSetup",
-		"description": "",
-		"type": "manager",
-		"action": "stGameSetup",
-		"transitions": { "": 2 }
-	},
+  // The initial state. Please do not modify.
+  "1": {
+    "name": "gameSetup",
+    "description": "",
+    "type": "manager",
+    "action": "stGameSetup",
+    "transitions": { "": 10 }
+  },
 
-	// Note: ID=2: your first state. If not, change the transition in the gameSetup above.
-	"2": {
-		"name": "dummmy",
-		"description": "${actplayer} must play a card or pass",
-		"descriptionmyturn": "${you} must play a card or pass",
-		"type": "activeplayer",
-		"possibleactions": {
-			"playCard": [{ "name": "card_id", "type": "AT_int" }],
-			"pass": []
-		},
-		"transitions": { "playCard": 2, "pass": 2 }
-	},
+  "10": {
+    "name": "playerTurn",
+    "description": "${actplayer} must connect astronauts or set an astronaut adrift",
+    "descriptionmyturn": "${you} must connect astronauts or set an astronaut adrift",
+    "type": "activeplayer",
+    "possibleactions": {
+      "connectAstronauts": [],
+      "actSetAdrift": [
+        {
+          "name": "cardDrawn",
+          "type": "AT_alphanum"
+        },
+        {
+          "name": "cardSetAdrift",
+          "type": "AT_alphanum"
+        }
+      ]
+    },
+    "transitions": {
+      "finishConnectingAstronauts": 30,
+      "drawAtEndOfTurn": 25
+    }
+  },
 
-/*
-	// Examples:
-	
-	"2": {
-		"name": "nextPlayer",
-		"description": "",
-		"type": "game",
-		"action": "stNextPlayer",
-		"updateGameProgression": true,
-		"transitions": { "endGame": 99, "nextPlayer": 10 }
-	},
+  "25": {
+    "name": "drawAtEndOfTurn",
+    "description": "${actplayer} draws a card if they have fewer than 6 cards in hand",
+    "type": "game",
+    "action": "stDrawAtEndOfTurn",
+    "transitions": { "nextPlayer": 30 }
+  },
 
-	"10": {
-		"name": "playerTurn",
-		"description": "${actplayer} must play a card or pass",
-		"descriptionmyturn": "${you} must play a card or pass",
-		"type": "activeplayer",
-		"possibleactions": [ "playCard", "pass" ],
-		"transitions": { "playCard": 2, "pass": 2 }
-	},
-*/
+  "30": {
+    "name": "nextPlayer",
+    "description": "",
+    "type": "game",
+    "action": "stNextPlayer",
+    "updateGameProgression": true,
+    "transitions": { "goToGameEnd": 99, "goToNextPlayerTurn": 10 }
+  },
 
-	// Final state.
-	// Please do not modify (and do not overload action/args methods}.
-	"99": {
-		"name": "gameEnd",
-		"description": "End of game",
-		"type": "manager",
-		"action": "stGameEnd",
-		"args": "argGameEnd",
-		"argsType": "object" // Automatically typed by framework.
-	}
+  // Final state.
+  // Please do not modify (and do not overload action/args methods}.
+  "99": {
+    "name": "gameEnd",
+    "description": "End of game",
+    "type": "manager",
+    "action": "stGameEnd",
+    "args": "argGameEnd",
+    "argsType": "object" // Automatically typed by framework.
+  }
 }
