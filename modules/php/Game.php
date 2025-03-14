@@ -245,7 +245,6 @@ class Game extends \Table
             "SELECT `player_id` `id`, `player_score` `score` FROM `player`"
         );
 
-        // TODO: Gather all information about current game situation (visible by player $current_player_id).
         $result['adrift'] = $this->getCollectionFromDB(
             "SELECT card_id id, card_type_arg cardNum
             FROM card 
@@ -315,7 +314,6 @@ class Game extends \Table
         // $this->initStat("table", "table_teststat1", 0);
         // $this->initStat("player", "player_teststat1", 0);
 
-        // TODO: Setup the initial game situation here.
         $this->initTables($players);
 
         // Activate first player once everything has been initialized and ready.
@@ -359,15 +357,37 @@ class Game extends \Table
         }
     }
 
-    function actSetAdrift(string $cardDrawn, string $cardSetAdrift)
+    function formatCardName(string $cardNum): string
+    {
+
+        return "$cardNum/" . strrev($cardNum);
+    }
+
+    function actSetAdrift(string $cardDrawnId, string $cardDrawnNum, string $cardSetAdriftId, string $cardSetAdriftNum)
     {
         $current_player_id = (int) $this->getCurrentPlayerId();
-        if ($cardDrawn == 'deck') {
-            $this->cards->pickCard('deck', $current_player_id);
+
+        $this->cards->moveCard($cardSetAdriftId, 'adrift');
+        $cardSetAdriftName = $this->formatCardName($cardSetAdriftNum);
+        $this->notify->all('cardSetAdrift', clienttranslate('${playerName} sets ${cardName} adrift'), [
+            'playerName' => $this->getPlayerNameById($current_player_id),
+            'cardName' => $cardSetAdriftName,
+        ]);
+
+        if ($cardDrawnId == 'deck') {
+            $newCardFromDeck = $this->cards->pickCard('deck', $current_player_id);
+            $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
+            $this->notify->player($current_player_id, 'drawCard', clienttranslate('You drew the card ${newCardName}'), [
+                'newCardName' => $newCardName,
+            ]);
         } else {
-            $this->cards->moveCard($cardDrawn, 'hand', $current_player_id);
+            $this->cards->moveCard($cardDrawnId, 'hand', $current_player_id);
+            $newCardName = $this->formatCardName($cardDrawnNum);
+            $this->notify->player($current_player_id, 'drawCard', clienttranslate('You drew the card ${newCardName}'), [
+                'newCardName' => $newCardName,
+            ]);
         }
-        $this->cards->moveCard($cardSetAdrift, 'adrift');
+
 
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
