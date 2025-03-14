@@ -192,16 +192,18 @@ class Game extends \Table
         if (count($hand) < 6) {
             $newCardFromDeck = $this->cards->pickCardForLocation('deck', 'hand', $current_player_id);
             $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
-            $this->notify->player($current_player_id, 'drawCard', clienttranslate('You drew the card ${newCardName} from the deck at the end of your turn.'), [
-                'newCardName' => $newCardName,
+            $this->notify->player($current_player_id, 'drawCard', clienttranslate('You drew the card ${card} from the deck at the end of your turn.'), [
+                'card' => $newCardName,
             ]);
-            $this->notify->player($opponent_id, 'drawCard', clienttranslate('${playerName} drew a card from the deck to end their turn.'), [
-                'playerName' => $this->getPlayerNameById($current_player_id),
+            $this->notify->player($opponent_id, 'drawCard', clienttranslate('${player_name} drew a card from the deck to end their turn.'), [
+                'player_id' => $current_player_id,
+                'player_name' => $this->getPlayerNameById($current_player_id),
             ]);
         } else {
             $this->notify->player($current_player_id, 'dontDrawHandLimit', clienttranslate('You didn\'t draw a card at the end of your turn because you already had 6 cards in hand.'));
-            $this->notify->player($opponent_id, 'dontDrawHandLimit', clienttranslate('${playerName} already has 6 cards in hand so they don\'t draw a card at the end of their turn.'), [
-                'playerName' => $this->getPlayerNameById($current_player_id),
+            $this->notify->player($opponent_id, 'dontDrawHandLimit', clienttranslate('${player_name} already has 6 cards in hand so they don\'t draw a card at the end of their turn.'), [
+                'player_id' => $current_player_id,
+                'player_name' => $this->getPlayerNameById($current_player_id),
             ]);
         }
         $this->gamestate->nextState('nextPlayer');
@@ -383,26 +385,35 @@ class Game extends \Table
 
         $this->cards->moveCard($cardSetAdriftId, 'adrift');
         $cardSetAdriftName = $this->formatCardName($cardSetAdriftNum);
-        $this->notify->all('cardSetAdrift', clienttranslate('${playerName} sets ${cardName} adrift.'), [
-            'playerName' => $this->getPlayerNameById($current_player_id),
-            'cardName' => $cardSetAdriftName,
+        $this->notify->all('cardSetAdrift', clienttranslate('${player_name} sets ${card} adrift.'), [
+            'player_id' => $current_player_id,
+            'player_name' => $this->getPlayerNameById($current_player_id),
+            'card' => $cardSetAdriftName,
+            'card_id' => $cardSetAdriftId,
+            'card_num' => $cardSetAdriftNum,
         ]);
 
         if ($cardDrawnId == 'deck') {
             $newCardFromDeck = $this->cards->pickCard('deck', $current_player_id);
             $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
-            $this->notify->player($current_player_id, 'drawCard', clienttranslate('You drew the card ${newCardName} from the deck.'), [
-                'newCardName' => $newCardName,
+            $this->notify->player($current_player_id, 'drawCardKnown', clienttranslate('You drew the card ${card} from the deck.'), [
+                'card' => $newCardName,
+                'card_id' => $newCardFromDeck['id'],
+                'card_num' => $newCardFromDeck['type_arg'],
             ]);
-            $this->notify->player($opponent_id, 'drawCard', clienttranslate('${playerName} drew a card from the deck.'), [
-                'playerName' => $this->getPlayerNameById($current_player_id),
+            $this->notify->player($opponent_id, 'drawCardUnknown', clienttranslate('${player_name} drew a card from the deck.'), [
+                'player_id' => $current_player_id,
+                'player_name' => $this->getPlayerNameById($current_player_id),
             ]);
         } else {
             $this->cards->moveCard($cardDrawnId, 'hand', $current_player_id);
             $newCardName = $this->formatCardName($cardDrawnNum);
-            $this->notify->all('drawCard', clienttranslate('${playerName} drew the card ${newCardName} from the adrift zone.'), [
-                'playerName' => $this->getPlayerNameById($current_player_id),
-                'newCardName' => $newCardName,
+            $this->notify->all('drawCardKnown', clienttranslate('${player_name} drew the card ${card} from the adrift zone.'), [
+                'player_id' => $current_player_id,
+                'player_name' => $this->getPlayerNameById($current_player_id),
+                'card' => $newCardName,
+                'card_id' => $cardDrawnId,
+                'card_num' => $cardDrawnNum,
             ]);
         }
 
