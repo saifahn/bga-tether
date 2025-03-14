@@ -60,6 +60,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             _this.cardSetAdrift = null;
             _this.setupNotifications = function () {
                 console.log('notifications subscriptions setup');
+                dojo.subscribe('cardSetAdrift', _this, 'notif_cardSetAdrift');
+                _this.notifqueue.setSynchronous('cardSetAdrift', 500);
             };
             console.log('tethergame constructor');
             return _this;
@@ -301,6 +303,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                     }
                 });
             });
+        };
+        TetherGame.prototype.notif_cardSetAdrift = function (notif) {
+            var cardElement = document.createElement('div');
+            cardElement.classList.add('card');
+            cardElement.classList.add('card--adrift');
+            cardElement.classList.add('js-adrift');
+            cardElement.dataset['cardId'] = notif.args.card_id;
+            cardElement.dataset['cardNumber'] = notif.args.card_num;
+            cardElement.innerText = notif.args.card_num;
+            var adriftZone = document.getElementById('adrift-zone');
+            if (!adriftZone) {
+                throw new Error('adrift-zone not found');
+            }
+            adriftZone.appendChild(cardElement);
         };
         return TetherGame;
     }(Gamegui));

@@ -345,6 +345,7 @@ class TetherGame extends Gamegui {
       console.log('error while trying to perform actSetAdrift', e);
     }
   }
+  // #endregion
 
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications
@@ -356,6 +357,8 @@ class TetherGame extends Gamegui {
     // TODO: here, associate your game notifications with local methods
 
     // Builtin example...
+    dojo.subscribe('cardSetAdrift', this, 'notif_cardSetAdrift');
+    this.notifqueue.setSynchronous('cardSetAdrift', 500);
     // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
     // dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
     // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
@@ -394,6 +397,21 @@ class TetherGame extends Gamegui {
 	}
 
 	*/
+
+  notif_cardSetAdrift(notif: BGA.Notif<'cardSetAdrift'>) {
+    const cardElement = document.createElement('div');
+    cardElement.classList.add('card');
+    cardElement.classList.add('card--adrift');
+    cardElement.classList.add('js-adrift');
+    cardElement.dataset['cardId'] = notif.args.card_id;
+    cardElement.dataset['cardNumber'] = notif.args.card_num;
+    cardElement.innerText = notif.args.card_num;
+    const adriftZone = document.getElementById('adrift-zone');
+    if (!adriftZone) {
+      throw new Error('adrift-zone not found');
+    }
+    adriftZone.appendChild(cardElement);
+  }
 }
 
 // The global 'bgagame.tethergame' class is instantiated when the page is loaded and used as the Gamegui.
