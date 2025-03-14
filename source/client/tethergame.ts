@@ -359,6 +359,17 @@ class TetherGame extends Gamegui {
     // Builtin example...
     dojo.subscribe('cardSetAdrift', this, 'notif_cardSetAdrift');
     this.notifqueue.setSynchronous('cardSetAdrift', 500);
+
+    dojo.subscribe('drawSelf', this, 'notif_drawSelf');
+    this.notifqueue.setSynchronous('drawSelf', 500);
+
+    dojo.subscribe('drawOtherPlayer', this, 'notif_drawOtherPlayer');
+    this.notifqueue.setIgnoreNotificationCheck(
+      'drawOtherPlayer',
+      (notif) => notif.args.player_id === this.player_id
+    );
+    this.notifqueue.setSynchronous('drawOtherPlayer', 500);
+
     // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
     // dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
     // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
@@ -399,18 +410,53 @@ class TetherGame extends Gamegui {
 	*/
 
   notif_cardSetAdrift(notif: BGA.Notif<'cardSetAdrift'>) {
+    const {
+      card_id: cardId,
+      card_num: cardNum,
+      player_id: playerId,
+    } = notif.args;
+    if (playerId !== this.player_id) {
+      return;
+    }
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    const cardSetAdrift = hand.querySelector(`[data-card-id="${cardId}"]`);
+    if (!cardSetAdrift) {
+      throw new Error('cardSetAdrift not found');
+    }
+    hand.removeChild(cardSetAdrift);
+
     const cardElement = document.createElement('div');
     cardElement.classList.add('card');
     cardElement.classList.add('card--adrift');
     cardElement.classList.add('js-adrift');
-    cardElement.dataset['cardId'] = notif.args.card_id;
-    cardElement.dataset['cardNumber'] = notif.args.card_num;
-    cardElement.innerText = notif.args.card_num;
+    cardElement.dataset['cardId'] = cardId;
+    cardElement.dataset['cardNumber'] = cardNum;
+    cardElement.innerText = cardNum;
     const adriftZone = document.getElementById('adrift-zone');
     if (!adriftZone) {
       throw new Error('adrift-zone not found');
     }
     adriftZone.appendChild(cardElement);
+  }
+
+  notif_drawSelf(notif: BGA.Notif<'drawSelf'>) {
+    const cardElement = document.createElement('div');
+    cardElement.dataset['cardId'] = notif.args.card_id;
+    cardElement.dataset['cardNumber'] = notif.args.card_num;
+    cardElement.innerText = notif.args.card_num;
+    cardElement.classList.add('card');
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    hand.appendChild(cardElement);
+  }
+
+  notif_drawOtherPlayer(notif: BGA.Notif<'drawOtherPlayer'>) {
+    console.log('this one is just going to increase the card hand count');
   }
 }
 
