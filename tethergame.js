@@ -71,6 +71,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             console.log('tethergame constructor');
             return _this;
         }
+        TetherGame.prototype.createCardElement = function (cardId, cardNum) {
+            var cardElement = document.createElement('div');
+            cardElement.classList.add('card');
+            cardElement.dataset['cardId'] = cardId;
+            cardElement.dataset['cardNumber'] = cardNum;
+            cardElement.id = "card-".concat(cardNum);
+            return cardElement;
+        };
+        TetherGame.prototype.createAdriftCardElement = function (cardId, cardNum) {
+            var cardElement = this.createCardElement(cardId, cardNum);
+            cardElement.classList.add('card--adrift');
+            cardElement.classList.add('js-adrift');
+            return cardElement;
+        };
         TetherGame.prototype.setup = function (gamedatas) {
             console.log('Starting game setup');
             var gamePlayArea = document.getElementById('game_play_area');
@@ -89,24 +103,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             hand.id = 'hand';
             gamePlayArea.appendChild(hand);
             for (var cardId in gamedatas.adrift) {
-                var cardElement = document.createElement('div');
-                cardElement.classList.add('card');
-                cardElement.classList.add('card--adrift');
-                cardElement.classList.add('js-adrift');
-                cardElement.dataset['cardId'] = cardId;
-                var cardNum = gamedatas.adrift[cardId].cardNum;
-                cardElement.dataset['cardNumber'] = cardNum;
-                cardElement.innerText = cardNum;
-                adriftZone.appendChild(cardElement);
+                var cardEl = this.createAdriftCardElement(cardId, gamedatas.adrift[cardId].cardNum);
+                adriftZone.appendChild(cardEl);
             }
             for (var cardId in gamedatas.hand) {
-                var cardElement = document.createElement('div');
-                cardElement.dataset['cardId'] = cardId;
-                var cardNumber = gamedatas.hand[cardId].type_arg;
-                cardElement.dataset['cardNumber'] = cardNumber;
-                cardElement.innerText = cardNumber;
-                cardElement.classList.add('card');
-                hand.appendChild(cardElement);
+                var cardEl = this.createCardElement(cardId, gamedatas.hand[cardId].type_arg);
+                hand.appendChild(cardEl);
             }
             this.setupNotifications();
             console.log('Ending game setup');
@@ -323,30 +325,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                 throw new Error('cardSetAdrift not found');
             }
             hand.removeChild(cardSetAdrift);
-            var cardElement = document.createElement('div');
-            cardElement.classList.add('card');
-            cardElement.classList.add('card--adrift');
-            cardElement.classList.add('js-adrift');
-            cardElement.dataset['cardId'] = cardId;
-            cardElement.dataset['cardNumber'] = cardNum;
-            cardElement.innerText = cardNum;
+            var cardEl = this.createAdriftCardElement(cardId, cardNum);
             var adriftZone = document.getElementById('adrift-zone');
             if (!adriftZone) {
                 throw new Error('adrift-zone not found');
             }
-            adriftZone.appendChild(cardElement);
+            adriftZone.appendChild(cardEl);
         };
         TetherGame.prototype.notif_drawSelf = function (notif) {
-            var cardElement = document.createElement('div');
-            cardElement.dataset['cardId'] = notif.args.card_id;
-            cardElement.dataset['cardNumber'] = notif.args.card_num;
-            cardElement.innerText = notif.args.card_num;
-            cardElement.classList.add('card');
+            var cardEl = this.createCardElement(notif.args.card_id, notif.args.card_num);
             var hand = document.getElementById('hand');
             if (!hand) {
                 throw new Error('hand not found');
             }
-            hand.appendChild(cardElement);
+            hand.appendChild(cardEl);
         };
         TetherGame.prototype.notif_drawOtherPlayer = function (notif) {
             console.log('this one is just going to increase the card hand count');
