@@ -35,11 +35,19 @@
       "connectAstronauts": [],
       "actSetAdrift": [
         {
-          "name": "cardDrawn",
+          "name": "cardDrawnId",
           "type": "AT_alphanum"
         },
         {
-          "name": "cardSetAdrift",
+          "name": "cardDrawnNum",
+          "type": "AT_alphanum"
+        },
+        {
+          "name": "cardSetAdriftId",
+          "type": "AT_alphanum"
+        },
+        {
+          "name": "cardSetAdriftNum",
           "type": "AT_alphanum"
         }
       ]

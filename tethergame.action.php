@@ -39,12 +39,16 @@ class action_tethergame extends APP_GameAction
 	{
 		self::setAjaxMode();
 
-		/** @var string $cardDrawn */
-		$cardDrawn = self::getArg('cardDrawn', AT_alphanum, true);
-		/** @var string $cardSetAdrift */
-		$cardSetAdrift = self::getArg('cardSetAdrift', AT_alphanum, true);
+		/** @var string $cardDrawnId */
+		$cardDrawnId = self::getArg('cardDrawnId', AT_alphanum, true);
+		/** @var string $cardDrawnNum */
+		$cardDrawnNum = self::getArg('cardDrawnNum', AT_alphanum, true);
+		/** @var string $cardSetAdriftId */
+		$cardSetAdriftId = self::getArg('cardSetAdriftId', AT_alphanum, true);
+		/** @var string $cardSetAdriftNum */
+		$cardSetAdriftNum = self::getArg('cardSetAdriftNum', AT_alphanum, true);
 
-		$this->game->actSetAdrift( $cardDrawn, $cardSetAdrift );
+		$this->game->actSetAdrift( $cardDrawnId, $cardDrawnNum, $cardSetAdriftId, $cardSetAdriftNum );
 		self::ajaxResponse();
 	}
 }

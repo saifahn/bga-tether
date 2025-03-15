@@ -27,7 +27,10 @@ class TetherGame extends Gamegui {
     handler: EventListener;
   }[] = [];
 
-  cardSetAdrift: string | null = null;
+  cardSetAdrift: {
+    id: string;
+    number: string;
+  } | null = null;
 
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
@@ -138,7 +141,7 @@ class TetherGame extends Gamegui {
           'set-adrift-button',
           _('Set Astronauts Adrift'),
           (e) => {
-            this.onSetAdriftClick(e);
+            this.handleChooseSetAdriftAction(e);
           }
         );
         break;
@@ -161,7 +164,7 @@ class TetherGame extends Gamegui {
           'draw-from-deck-button',
           _('Draw from deck'),
           () => {
-            this.performAdriftAction('deck');
+            this.performAdriftAction('deck', 'deck');
           }
         );
         break;
@@ -174,14 +177,7 @@ class TetherGame extends Gamegui {
   ///////////////////////////////////////////////////
   //// Player's action
 
-  /*
-		Here, you are defining methods to handle player's action (ex: results of mouse click on game objects).
-		
-		Most of the time, these methods:
-		- check the action is possible at this game state.
-		- make a call to the game server
-	*/
-
+  // #region Shared methods
   getCardElementsFromHand() {
     const hand = document.getElementById('hand');
     if (!hand) {
@@ -204,6 +200,14 @@ class TetherGame extends Gamegui {
     });
   }
 
+  clearEventListeners() {
+    for (const handler of this.eventHandlers) {
+      handler.element.removeEventListener(handler.event, handler.handler);
+    }
+  }
+  // #endregion
+
+  // #region Set Adrift Action methods
   cancelSetAdriftAction() {
     this.clearSelectedCards();
     this.clearSelectableCards();
@@ -211,91 +215,10 @@ class TetherGame extends Gamegui {
     this.restoreServerGameState();
   }
 
-  clearEventListeners() {
-    for (const handler of this.eventHandlers) {
-      handler.element.removeEventListener(handler.event, handler.handler);
-    }
-  }
-
-  onSetAdriftHandClick(e: Event) {
-    if (!(e.target instanceof HTMLElement)) {
-      throw new Error(
-        "onSetAdriftHandClick called when it shouldn't have been"
-      );
-    }
-    e.target.classList.add('card--selected');
-
-    this.cardSetAdrift = e.target.dataset['cardId']!;
-    this.clearSelectableCards();
-
-    this.setClientState('client_setAdriftChooseDraw', {
-      // @ts-expect-error
-      descriptionmyturn: _(
-        '${you} must choose to take an astronaut from the adrift zone or draw from the deck.'
-      ),
-    });
-
-    const deck = document.querySelector('.js-deck');
-    const drawFromDeckHandler = () => this.performAdriftAction('deck');
-    if (deck instanceof HTMLElement) {
-      deck.classList.add('card--selectable');
-      deck.addEventListener('click', drawFromDeckHandler);
-      this.eventHandlers.push({
-        element: deck,
-        event: 'click',
-        handler: drawFromDeckHandler,
-      });
-    }
-
-    const adriftCards = document.querySelectorAll('.js-adrift');
-    const drawFromAdriftHandler = (e: Event) => this.onAdriftCardDrawClick(e);
-    adriftCards.forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.classList.add('card--selectable');
-        card.addEventListener('click', drawFromAdriftHandler);
-        this.eventHandlers.push({
-          element: card,
-          event: 'click',
-          handler: drawFromAdriftHandler,
-        });
-      }
-    });
-  }
-
-  async onAdriftCardDrawClick(e: Event) {
-    if (!(e.target instanceof HTMLElement)) {
-      throw new Error("onAdriftCardClick called when it shouldn't have been");
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.target.dataset['cardId'] || !this.cardSetAdrift) {
-      throw new Error('id of card to draw or cardSetAdrift not set properly');
-    }
-    this.performAdriftAction(e.target.dataset['cardId']);
-  }
-
-  async performAdriftAction(cardDrawn: string) {
-    if (!this.cardSetAdrift) {
-      throw new Error('performAdriftAction is missing required information');
-    }
-
-    try {
-      this.clearSelectableCards();
-      this.clearSelectedCards();
-      this.clearEventListeners();
-      await this.bgaPerformAction('actSetAdrift', {
-        cardDrawn,
-        cardSetAdrift: this.cardSetAdrift,
-      });
-      this.cardSetAdrift = null;
-    } catch (e) {
-      this.restoreServerGameState();
-      console.log('error while trying to perform actSetAdrift', e);
-    }
-  }
-
-  onSetAdriftClick(e: Event) {
+  /**
+   * Handles the click event for the "Set astronaut adrift" action button.
+   */
+  handleChooseSetAdriftAction(e: Event) {
     if (!(e.target instanceof HTMLElement)) {
       throw new Error("onSetAdriftClick called when it shouldn't have been");
     }
@@ -308,7 +231,7 @@ class TetherGame extends Gamegui {
       ),
     });
 
-    const handler = (e: Event) => this.onSetAdriftHandClick(e);
+    const handler = (e: Event) => this.handleChooseCardFromHandSetAdrift(e);
     this.getCardElementsFromHand().forEach((card) => {
       if (card instanceof HTMLElement) {
         card.classList.add('card--selectable');
@@ -322,6 +245,108 @@ class TetherGame extends Gamegui {
     });
   }
 
+  /**
+   * Handles the selection of a card to set adrift from hand.
+   */
+  handleChooseCardFromHandSetAdrift(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error(
+        "onSetAdriftHandClick called when it shouldn't have been"
+      );
+    }
+    e.target.classList.add('card--selected');
+
+    this.cardSetAdrift = {
+      id: e.target.dataset['cardId']!,
+      number: e.target.dataset['cardNumber']!,
+    };
+    this.clearSelectableCards();
+
+    this.setClientState('client_setAdriftChooseDraw', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must choose to take an astronaut from the adrift zone or draw from the deck.'
+      ),
+    });
+
+    const deck = document.querySelector('.js-deck');
+    const drawFromDeckHandler = () => this.performAdriftAction('deck', 'deck');
+    if (deck instanceof HTMLElement) {
+      deck.classList.add('card--selectable');
+      deck.addEventListener('click', drawFromDeckHandler);
+      this.eventHandlers.push({
+        element: deck,
+        event: 'click',
+        handler: drawFromDeckHandler,
+      });
+    }
+
+    const adriftCards = document.querySelectorAll('.js-adrift');
+    const drawFromAdriftHandler = (e: Event) =>
+      this.handleChooseCardToDrawFromAdrift(e);
+    adriftCards.forEach((card) => {
+      if (card instanceof HTMLElement) {
+        card.classList.add('card--selectable');
+        card.addEventListener('click', drawFromAdriftHandler);
+        this.eventHandlers.push({
+          element: card,
+          event: 'click',
+          handler: drawFromAdriftHandler,
+        });
+      }
+    });
+  }
+
+  /**
+   * Handles clicking a card to draw from the adrift zone.
+   */
+  async handleChooseCardToDrawFromAdrift(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error("onAdriftCardClick called when it shouldn't have been");
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (
+      !e.target.dataset['cardId'] ||
+      !e.target.dataset['cardNumber'] ||
+      !this.cardSetAdrift
+    ) {
+      throw new Error('id of card to draw or cardSetAdrift not set properly');
+    }
+    this.performAdriftAction(
+      e.target.dataset['cardId'],
+      e.target.dataset['cardNumber']
+    );
+  }
+
+  /**
+   * Sends the actSetAdrift action to the server after cleaning up the UI styling
+   * and event listeners.
+   */
+  async performAdriftAction(cardDrawnId: string, cardDrawnNum: string) {
+    if (!this.cardSetAdrift) {
+      throw new Error('performAdriftAction is missing required information');
+    }
+
+    try {
+      this.clearSelectableCards();
+      this.clearSelectedCards();
+      this.clearEventListeners();
+      await this.bgaPerformAction('actSetAdrift', {
+        cardDrawnId,
+        cardDrawnNum,
+        cardSetAdriftId: this.cardSetAdrift.id,
+        cardSetAdriftNum: this.cardSetAdrift.number,
+      });
+      this.cardSetAdrift = null;
+    } catch (e) {
+      this.restoreServerGameState();
+      console.log('error while trying to perform actSetAdrift', e);
+    }
+  }
+  // #endregion
+
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications
 
@@ -332,6 +357,19 @@ class TetherGame extends Gamegui {
     // TODO: here, associate your game notifications with local methods
 
     // Builtin example...
+    dojo.subscribe('cardSetAdrift', this, 'notif_cardSetAdrift');
+    this.notifqueue.setSynchronous('cardSetAdrift', 500);
+
+    dojo.subscribe('drawSelf', this, 'notif_drawSelf');
+    this.notifqueue.setSynchronous('drawSelf', 500);
+
+    dojo.subscribe('drawOtherPlayer', this, 'notif_drawOtherPlayer');
+    this.notifqueue.setIgnoreNotificationCheck(
+      'drawOtherPlayer',
+      (notif) => notif.args.player_id === this.player_id
+    );
+    this.notifqueue.setSynchronous('drawOtherPlayer', 500);
+
     // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
     // dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
     // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
@@ -370,6 +408,56 @@ class TetherGame extends Gamegui {
 	}
 
 	*/
+
+  notif_cardSetAdrift(notif: BGA.Notif<'cardSetAdrift'>) {
+    const {
+      card_id: cardId,
+      card_num: cardNum,
+      player_id: playerId,
+    } = notif.args;
+    if (playerId !== this.player_id) {
+      return;
+    }
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    const cardSetAdrift = hand.querySelector(`[data-card-id="${cardId}"]`);
+    if (!cardSetAdrift) {
+      throw new Error('cardSetAdrift not found');
+    }
+    hand.removeChild(cardSetAdrift);
+
+    const cardElement = document.createElement('div');
+    cardElement.classList.add('card');
+    cardElement.classList.add('card--adrift');
+    cardElement.classList.add('js-adrift');
+    cardElement.dataset['cardId'] = cardId;
+    cardElement.dataset['cardNumber'] = cardNum;
+    cardElement.innerText = cardNum;
+    const adriftZone = document.getElementById('adrift-zone');
+    if (!adriftZone) {
+      throw new Error('adrift-zone not found');
+    }
+    adriftZone.appendChild(cardElement);
+  }
+
+  notif_drawSelf(notif: BGA.Notif<'drawSelf'>) {
+    const cardElement = document.createElement('div');
+    cardElement.dataset['cardId'] = notif.args.card_id;
+    cardElement.dataset['cardNumber'] = notif.args.card_num;
+    cardElement.innerText = notif.args.card_num;
+    cardElement.classList.add('card');
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    hand.appendChild(cardElement);
+  }
+
+  notif_drawOtherPlayer(notif: BGA.Notif<'drawOtherPlayer'>) {
+    console.log('this one is just going to increase the card hand count');
+  }
 }
 
 // The global 'bgagame.tethergame' class is instantiated when the page is loaded and used as the Gamegui.
