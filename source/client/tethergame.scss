@@ -51,10 +51,12 @@ $card-height: math.div(1955px, 7);
   border-radius: 5px;
   width: $card-width;
   height: $card-height;
+  zoom: 0.75;
   background-color: steelblue;
 }
 
 .card {
+  zoom: 0.75;
   border-radius: 10px;
   width: $card-width;
   height: $card-height;

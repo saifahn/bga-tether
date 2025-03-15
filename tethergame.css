@@ -43,10 +43,12 @@
   border-radius: 5px;
   width: 200px;
   height: 279.2857142857px;
+  zoom: 0.75;
   background-color: steelblue;
 }
 
 .card {
+  zoom: 0.75;
   border-radius: 10px;
   width: 200px;
   height: 279.2857142857px;
