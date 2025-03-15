@@ -451,6 +451,8 @@ class TetherGame extends Gamegui {
   }
 
   notif_drawFromDeck(notif: BGA.Notif<'drawFromDeck'>) {
+    console.log('notif_drawFromDeck', notif);
+
     const cardEl = this.createCardElement(
       notif.args.card_id,
       notif.args.card_num

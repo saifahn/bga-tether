@@ -192,10 +192,12 @@ class Game extends \Table
         if (count($hand) < 6) {
             $newCardFromDeck = $this->cards->pickCardForLocation('deck', 'hand', $current_player_id);
             $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
-            $this->notify->player($current_player_id, 'drawCard', clienttranslate('You drew the card ${card} from the deck at the end of your turn.'), [
+            $this->notify->player($current_player_id, 'drawFromDeck', clienttranslate('You drew the card ${card} from the deck at the end of your turn.'), [
                 'card' => $newCardName,
+                'card_id' => $newCardFromDeck['id'],
+                'card_num' => $newCardFromDeck['type_arg'],
             ]);
-            $this->notify->player($opponent_id, 'drawCard', clienttranslate('${player_name} drew a card from the deck to end their turn.'), [
+            $this->notify->player($opponent_id, 'drawOtherPlayer', clienttranslate('${player_name} drew a card from the deck to end their turn.'), [
                 'player_id' => $current_player_id,
                 'player_name' => $this->getPlayerNameById($current_player_id),
             ]);

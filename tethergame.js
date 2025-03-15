@@ -335,6 +335,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             hand.removeChild(cardSetAdrift);
         };
         TetherGame.prototype.notif_drawFromDeck = function (notif) {
+            console.log('notif_drawFromDeck', notif);
             var cardEl = this.createCardElement(notif.args.card_id, notif.args.card_num);
             var hand = document.getElementById('hand');
             if (!hand) {
