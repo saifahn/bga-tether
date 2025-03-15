@@ -370,8 +370,11 @@ class TetherGame extends Gamegui {
     dojo.subscribe('cardSetAdrift', this, 'notif_cardSetAdrift');
     this.notifqueue.setSynchronous('cardSetAdrift', 500);
 
-    dojo.subscribe('drawSelf', this, 'notif_drawSelf');
-    this.notifqueue.setSynchronous('drawSelf', 500);
+    dojo.subscribe('drawFromDeck', this, 'notif_drawFromDeck');
+    this.notifqueue.setSynchronous('drawFromDeck', 500);
+
+    dojo.subscribe('drawFromAdrift', this, 'notif_drawFromAdrift');
+    this.notifqueue.setSynchronous('drawFromAdrift', 500);
 
     dojo.subscribe('drawOtherPlayer', this, 'notif_drawOtherPlayer');
     this.notifqueue.setIgnoreNotificationCheck(
@@ -425,6 +428,14 @@ class TetherGame extends Gamegui {
       card_num: cardNum,
       player_id: playerId,
     } = notif.args;
+
+    const cardEl = this.createAdriftCardElement(cardId, cardNum);
+    const adriftZone = document.getElementById('adrift-zone');
+    if (!adriftZone) {
+      throw new Error('adrift-zone not found');
+    }
+    adriftZone.appendChild(cardEl);
+
     if (playerId !== this.player_id) {
       return;
     }
@@ -437,16 +448,9 @@ class TetherGame extends Gamegui {
       throw new Error('cardSetAdrift not found');
     }
     hand.removeChild(cardSetAdrift);
-
-    const cardEl = this.createAdriftCardElement(cardId, cardNum);
-    const adriftZone = document.getElementById('adrift-zone');
-    if (!adriftZone) {
-      throw new Error('adrift-zone not found');
-    }
-    adriftZone.appendChild(cardEl);
   }
 
-  notif_drawSelf(notif: BGA.Notif<'drawSelf'>) {
+  notif_drawFromDeck(notif: BGA.Notif<'drawFromDeck'>) {
     const cardEl = this.createCardElement(
       notif.args.card_id,
       notif.args.card_num
@@ -460,6 +464,33 @@ class TetherGame extends Gamegui {
 
   notif_drawOtherPlayer(notif: BGA.Notif<'drawOtherPlayer'>) {
     console.log('this one is just going to increase the card hand count');
+  }
+
+  notif_drawFromAdrift(notif: BGA.Notif<'drawFromAdrift'>) {
+    const adriftZone = document.getElementById('adrift-zone');
+    if (!adriftZone) {
+      throw new Error('adrift-zone not found');
+    }
+    const cardToRemove = adriftZone.querySelector(
+      `[data-card-id="${notif.args.card_id}"]`
+    );
+    if (!cardToRemove) {
+      throw new Error('card to remove not found');
+    }
+    adriftZone.removeChild(cardToRemove);
+
+    if (notif.args.player_id !== this.player_id) {
+      return;
+    }
+    const cardEl = this.createCardElement(
+      notif.args.card_id,
+      notif.args.card_num
+    );
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    hand.appendChild(cardEl);
   }
 }
 
