@@ -22,37 +22,18 @@
 
 	3°) ... anything else: It is really easy to add and remove CSS classes dynamically from your Javascript with dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why, very often, using CSS classes for the logic of your user interface allow you to do complex thing easily.
 */
-/*
-	Example of CSS sprites (a black token and a white token, 20x20px each, embedded in the same "tokens.png" 40x20px image):
-
-	.white_token {
-		background-image: url('img/tokens.png');
-		background-position: 0px 0px;
-	}
-	.black_token {
-		background-image: url('img/tokens.png');
-		background-position: -20px 0px;
-	}
-	.token {
-		width: 20px;
-		height: 20px;
-		background-repeat: none;
-	}
-*/
 #adrift-zone {
-  padding: 10px;
-  min-height: 100px;
-  min-width: 100px;
-  width: 50%;
+  padding: 40px;
+  margin-left: 20px;
   background-color: azure;
   border: 1px dashed darksalmon;
 }
 
 #hand {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 10px;
-  min-width: 100px;
-  width: 50%;
   background-color: cornsilk;
   border: 1px dashed darkseagreen;
 }
@@ -60,24 +41,23 @@
 .deck {
   border: 1px solid black;
   border-radius: 5px;
-  padding: 5px;
-  margin: 5px;
-  width: 75px;
-  height: 105px;
+  width: 200px;
+  height: 279.2857142857px;
+  zoom: 0.75;
+  transform: rotate(90deg);
   background-color: steelblue;
+  margin: -60px 20px;
 }
 
 .card {
-  border: 1px solid black;
-  border-radius: 5px;
-  padding: 5px;
-  margin: 5px;
-  width: 75px;
-  height: 105px;
-  background-color: white;
+  zoom: 0.75;
+  border-radius: 10px;
+  width: 200px;
+  height: 279.2857142857px;
 }
 .card--adrift {
   transform: rotate(90deg);
+  margin: -60px 20px;
 }
 .card--selectable {
   outline: 0.1rem dashed black;
@@ -85,4 +65,269 @@
 }
 .card--selected {
   outline: 0.25rem solid yellowgreen;
+}
+
+#card-01 {
+  background-image: url("img/cards.jpg");
+  background-position: left 0% top 0%;
+}
+
+#card-02 {
+  background-image: url("img/cards.jpg");
+  background-position: left 14.2857142857% top 0%;
+}
+
+#card-03 {
+  background-image: url("img/cards.jpg");
+  background-position: left 28.5714285714% top 0%;
+}
+
+#card-04 {
+  background-image: url("img/cards.jpg");
+  background-position: left 42.8571428571% top 0%;
+}
+
+#card-05 {
+  background-image: url("img/cards.jpg");
+  background-position: left 57.1428571429% top 0%;
+}
+
+#card-06 {
+  background-image: url("img/cards.jpg");
+  background-position: left 71.4285714286% top 0%;
+}
+
+#card-07 {
+  background-image: url("img/cards.jpg");
+  background-position: left 85.7142857143% top 0%;
+}
+
+#card-08 {
+  background-image: url("img/cards.jpg");
+  background-position: left 100% top 0%;
+}
+
+#card-09 {
+  background-image: url("img/cards.jpg");
+  background-position: left 0% top 16.6666666667%;
+}
+
+#card-11 {
+  background-image: url("img/cards.jpg");
+  background-position: left 14.2857142857% top 16.6666666667%;
+}
+
+#card-12 {
+  background-image: url("img/cards.jpg");
+  background-position: left 28.5714285714% top 16.6666666667%;
+}
+
+#card-13 {
+  background-image: url("img/cards.jpg");
+  background-position: left 42.8571428571% top 16.6666666667%;
+}
+
+#card-14 {
+  background-image: url("img/cards.jpg");
+  background-position: left 57.1428571429% top 16.6666666667%;
+}
+
+#card-15 {
+  background-image: url("img/cards.jpg");
+  background-position: left 71.4285714286% top 16.6666666667%;
+}
+
+#card-16 {
+  background-image: url("img/cards.jpg");
+  background-position: left 85.7142857143% top 16.6666666667%;
+}
+
+#card-17 {
+  background-image: url("img/cards.jpg");
+  background-position: left 100% top 16.6666666667%;
+}
+
+#card-18 {
+  background-image: url("img/cards.jpg");
+  background-position: left 0% top 33.3333333333%;
+}
+
+#card-19 {
+  background-image: url("img/cards.jpg");
+  background-position: left 14.2857142857% top 33.3333333333%;
+}
+
+#card-22 {
+  background-image: url("img/cards.jpg");
+  background-position: left 28.5714285714% top 33.3333333333%;
+}
+
+#card-23 {
+  background-image: url("img/cards.jpg");
+  background-position: left 42.8571428571% top 33.3333333333%;
+}
+
+#card-24 {
+  background-image: url("img/cards.jpg");
+  background-position: left 57.1428571429% top 33.3333333333%;
+}
+
+#card-25 {
+  background-image: url("img/cards.jpg");
+  background-position: left 71.4285714286% top 33.3333333333%;
+}
+
+#card-26 {
+  background-image: url("img/cards.jpg");
+  background-position: left 85.7142857143% top 33.3333333333%;
+}
+
+#card-27 {
+  background-image: url("img/cards.jpg");
+  background-position: left 100% top 33.3333333333%;
+}
+
+#card-28 {
+  background-image: url("img/cards.jpg");
+  background-position: left 0% top 50%;
+}
+
+#card-29 {
+  background-image: url("img/cards.jpg");
+  background-position: left 14.2857142857% top 50%;
+}
+
+#card-33 {
+  background-image: url("img/cards.jpg");
+  background-position: left 28.5714285714% top 50%;
+}
+
+#card-34 {
+  background-image: url("img/cards.jpg");
+  background-position: left 42.8571428571% top 50%;
+}
+
+#card-35 {
+  background-image: url("img/cards.jpg");
+  background-position: left 57.1428571429% top 50%;
+}
+
+#card-36 {
+  background-image: url("img/cards.jpg");
+  background-position: left 71.4285714286% top 50%;
+}
+
+#card-37 {
+  background-image: url("img/cards.jpg");
+  background-position: left 85.7142857143% top 50%;
+}
+
+#card-38 {
+  background-image: url("img/cards.jpg");
+  background-position: left 100% top 50%;
+}
+
+#card-39 {
+  background-image: url("img/cards.jpg");
+  background-position: left 0% top 66.6666666667%;
+}
+
+#card-44 {
+  background-image: url("img/cards.jpg");
+  background-position: left 14.2857142857% top 66.6666666667%;
+}
+
+#card-45 {
+  background-image: url("img/cards.jpg");
+  background-position: left 28.5714285714% top 66.6666666667%;
+}
+
+#card-46 {
+  background-image: url("img/cards.jpg");
+  background-position: left 42.8571428571% top 66.6666666667%;
+}
+
+#card-47 {
+  background-image: url("img/cards.jpg");
+  background-position: left 57.1428571429% top 66.6666666667%;
+}
+
+#card-48 {
+  background-image: url("img/cards.jpg");
+  background-position: left 71.4285714286% top 66.6666666667%;
+}
+
+#card-49 {
+  background-image: url("img/cards.jpg");
+  background-position: left 85.7142857143% top 66.6666666667%;
+}
+
+#card-55 {
+  background-image: url("img/cards.jpg");
+  background-position: left 100% top 66.6666666667%;
+}
+
+#card-56 {
+  background-image: url("img/cards.jpg");
+  background-position: left 0% top 83.3333333333%;
+}
+
+#card-57 {
+  background-image: url("img/cards.jpg");
+  background-position: left 14.2857142857% top 83.3333333333%;
+}
+
+#card-58 {
+  background-image: url("img/cards.jpg");
+  background-position: left 28.5714285714% top 83.3333333333%;
+}
+
+#card-59 {
+  background-image: url("img/cards.jpg");
+  background-position: left 42.8571428571% top 83.3333333333%;
+}
+
+#card-66 {
+  background-image: url("img/cards.jpg");
+  background-position: left 57.1428571429% top 83.3333333333%;
+}
+
+#card-67 {
+  background-image: url("img/cards.jpg");
+  background-position: left 71.4285714286% top 83.3333333333%;
+}
+
+#card-68 {
+  background-image: url("img/cards.jpg");
+  background-position: left 85.7142857143% top 83.3333333333%;
+}
+
+#card-69 {
+  background-image: url("img/cards.jpg");
+  background-position: left 100% top 83.3333333333%;
+}
+
+#card-77 {
+  background-image: url("img/cards.jpg");
+  background-position: left 0% top 100%;
+}
+
+#card-78 {
+  background-image: url("img/cards.jpg");
+  background-position: left 14.2857142857% top 100%;
+}
+
+#card-79 {
+  background-image: url("img/cards.jpg");
+  background-position: left 28.5714285714% top 100%;
+}
+
+#card-88 {
+  background-image: url("img/cards.jpg");
+  background-position: left 42.8571428571% top 100%;
+}
+
+#card-89 {
+  background-image: url("img/cards.jpg");
+  background-position: left 57.1428571429% top 100%;
 }

@@ -23,38 +23,25 @@
 	3°) ... anything else: It is really easy to add and remove CSS classes dynamically from your Javascript with dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why, very often, using CSS classes for the logic of your user interface allow you to do complex thing easily.
 */
 
-/*
-	Example of CSS sprites (a black token and a white token, 20x20px each, embedded in the same "tokens.png" 40x20px image):
+@use 'sass:math';
+@use 'sass:list';
 
-	.white_token {
-		background-image: url('img/tokens.png');
-		background-position: 0px 0px;
-	}
-	.black_token {
-		background-image: url('img/tokens.png');
-		background-position: -20px 0px;
-	}
-	.token {
-		width: 20px;
-		height: 20px;
-		background-repeat: none;
-	}
-*/
+// calculated from the cards.jpg sprite sheet
+$card-width: math.div(1600px, 8);
+$card-height: math.div(1955px, 7);
 
 #adrift-zone {
-  padding: 10px;
-  min-height: 100px;
-  min-width: 100px;
-  width: 50%;
+  padding: 40px;
+  margin-left: 20px;
   background-color: azure;
   border: 1px dashed darksalmon;
 }
 
 #hand {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 10px;
-  min-width: 100px;
-  width: 50%;
   background-color: cornsilk;
   border: 1px dashed darkseagreen;
 }
@@ -62,24 +49,23 @@
 .deck {
   border: 1px solid black;
   border-radius: 5px;
-  padding: 5px;
-  margin: 5px;
-  width: 75px;
-  height: 105px;
+  width: $card-width;
+  height: $card-height;
+  zoom: 0.75;
+  transform: rotate(90deg);
   background-color: steelblue;
+  margin: -60px 20px;
 }
 
 .card {
-  border: 1px solid black;
-  border-radius: 5px;
-  padding: 5px;
-  margin: 5px;
-  width: 75px;
-  height: 105px;
-  background-color: white;
+  zoom: 0.75;
+  border-radius: 10px;
+  width: $card-width;
+  height: $card-height;
 
   &--adrift {
     transform: rotate(90deg);
+    margin: -60px 20px;
   }
 
   &--selectable {
@@ -89,5 +75,26 @@
 
   &--selected {
     outline: 0.25rem solid yellowgreen;
+  }
+}
+
+$id-list: '01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13',
+  '14', '15', '16', '17', '18', '19', '22', '23', '24', '25', '26', '27', '28',
+  '29', '33', '34', '35', '36', '37', '38', '39', '44', '45', '46', '47', '48',
+  '49', '55', '56', '57', '58', '59', '66', '67', '68', '69', '77', '78', '79',
+  '88', '89';
+
+@for $i from 1 through list.length($id-list) {
+  $id: list.nth($id-list, $i);
+  // 0-indexed
+  $column: ($i - 1) % 8;
+  $row: math.floor(calc(($i - 1) / 8));
+
+  #card-#{$id} {
+    background-image: url('img/cards.jpg');
+    background-position: left
+      calc($column / 7 * 100%)
+      top
+      calc($row / 6 * 100%);
   }
 }

@@ -62,8 +62,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                 console.log('notifications subscriptions setup');
                 dojo.subscribe('cardSetAdrift', _this, 'notif_cardSetAdrift');
                 _this.notifqueue.setSynchronous('cardSetAdrift', 500);
-                dojo.subscribe('drawSelf', _this, 'notif_drawSelf');
-                _this.notifqueue.setSynchronous('drawSelf', 500);
+                dojo.subscribe('drawFromDeck', _this, 'notif_drawFromDeck');
+                _this.notifqueue.setSynchronous('drawFromDeck', 500);
+                dojo.subscribe('drawFromAdrift', _this, 'notif_drawFromAdrift');
+                _this.notifqueue.setSynchronous('drawFromAdrift', 500);
                 dojo.subscribe('drawOtherPlayer', _this, 'notif_drawOtherPlayer');
                 _this.notifqueue.setIgnoreNotificationCheck('drawOtherPlayer', function (notif) { return notif.args.player_id === _this.player_id; });
                 _this.notifqueue.setSynchronous('drawOtherPlayer', 500);
@@ -71,6 +73,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             console.log('tethergame constructor');
             return _this;
         }
+        TetherGame.prototype.createCardElement = function (cardId, cardNum) {
+            var cardElement = document.createElement('div');
+            cardElement.classList.add('card');
+            cardElement.dataset['cardId'] = cardId;
+            cardElement.dataset['cardNumber'] = cardNum;
+            cardElement.id = "card-".concat(cardNum);
+            return cardElement;
+        };
+        TetherGame.prototype.createAdriftCardElement = function (cardId, cardNum) {
+            var cardElement = this.createCardElement(cardId, cardNum);
+            cardElement.classList.add('card--adrift');
+            cardElement.classList.add('js-adrift');
+            return cardElement;
+        };
         TetherGame.prototype.setup = function (gamedatas) {
             console.log('Starting game setup');
             var gamePlayArea = document.getElementById('game_play_area');
@@ -89,24 +105,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             hand.id = 'hand';
             gamePlayArea.appendChild(hand);
             for (var cardId in gamedatas.adrift) {
-                var cardElement = document.createElement('div');
-                cardElement.classList.add('card');
-                cardElement.classList.add('card--adrift');
-                cardElement.classList.add('js-adrift');
-                cardElement.dataset['cardId'] = cardId;
-                var cardNum = gamedatas.adrift[cardId].cardNum;
-                cardElement.dataset['cardNumber'] = cardNum;
-                cardElement.innerText = cardNum;
-                adriftZone.appendChild(cardElement);
+                var cardEl = this.createAdriftCardElement(cardId, gamedatas.adrift[cardId].cardNum);
+                adriftZone.appendChild(cardEl);
             }
             for (var cardId in gamedatas.hand) {
-                var cardElement = document.createElement('div');
-                cardElement.dataset['cardId'] = cardId;
-                var cardNumber = gamedatas.hand[cardId].type_arg;
-                cardElement.dataset['cardNumber'] = cardNumber;
-                cardElement.innerText = cardNumber;
-                cardElement.classList.add('card');
-                hand.appendChild(cardElement);
+                var cardEl = this.createCardElement(cardId, gamedatas.hand[cardId].type_arg);
+                hand.appendChild(cardEl);
             }
             this.setupNotifications();
             console.log('Ending game setup');
@@ -311,6 +315,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
         };
         TetherGame.prototype.notif_cardSetAdrift = function (notif) {
             var _a = notif.args, cardId = _a.card_id, cardNum = _a.card_num, playerId = _a.player_id;
+            var cardEl = this.createAdriftCardElement(cardId, cardNum);
+            var adriftZone = document.getElementById('adrift-zone');
+            if (!adriftZone) {
+                throw new Error('adrift-zone not found');
+            }
+            adriftZone.appendChild(cardEl);
             if (playerId !== this.player_id) {
                 return;
             }
@@ -323,33 +333,38 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                 throw new Error('cardSetAdrift not found');
             }
             hand.removeChild(cardSetAdrift);
-            var cardElement = document.createElement('div');
-            cardElement.classList.add('card');
-            cardElement.classList.add('card--adrift');
-            cardElement.classList.add('js-adrift');
-            cardElement.dataset['cardId'] = cardId;
-            cardElement.dataset['cardNumber'] = cardNum;
-            cardElement.innerText = cardNum;
-            var adriftZone = document.getElementById('adrift-zone');
-            if (!adriftZone) {
-                throw new Error('adrift-zone not found');
-            }
-            adriftZone.appendChild(cardElement);
         };
-        TetherGame.prototype.notif_drawSelf = function (notif) {
-            var cardElement = document.createElement('div');
-            cardElement.dataset['cardId'] = notif.args.card_id;
-            cardElement.dataset['cardNumber'] = notif.args.card_num;
-            cardElement.innerText = notif.args.card_num;
-            cardElement.classList.add('card');
+        TetherGame.prototype.notif_drawFromDeck = function (notif) {
+            console.log('notif_drawFromDeck', notif);
+            var cardEl = this.createCardElement(notif.args.card_id, notif.args.card_num);
             var hand = document.getElementById('hand');
             if (!hand) {
                 throw new Error('hand not found');
             }
-            hand.appendChild(cardElement);
+            hand.appendChild(cardEl);
         };
         TetherGame.prototype.notif_drawOtherPlayer = function (notif) {
             console.log('this one is just going to increase the card hand count');
+        };
+        TetherGame.prototype.notif_drawFromAdrift = function (notif) {
+            var adriftZone = document.getElementById('adrift-zone');
+            if (!adriftZone) {
+                throw new Error('adrift-zone not found');
+            }
+            var cardToRemove = adriftZone.querySelector("[data-card-id=\"".concat(notif.args.card_id, "\"]"));
+            if (!cardToRemove) {
+                throw new Error('card to remove not found');
+            }
+            adriftZone.removeChild(cardToRemove);
+            if (notif.args.player_id !== this.player_id) {
+                return;
+            }
+            var cardEl = this.createCardElement(notif.args.card_id, notif.args.card_num);
+            var hand = document.getElementById('hand');
+            if (!hand) {
+                throw new Error('hand not found');
+            }
+            hand.appendChild(cardEl);
         };
         return TetherGame;
     }(Gamegui));
