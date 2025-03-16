@@ -60,11 +60,11 @@
   margin: -60px 20px;
 }
 .card--selectable {
-  outline: 0.1rem dashed black;
+  outline: 0.25rem dashed black;
   cursor: pointer;
 }
 .card--selected {
-  outline: 0.25rem solid yellowgreen;
+  outline: 0.4rem solid yellowgreen;
 }
 
 #card-01 {

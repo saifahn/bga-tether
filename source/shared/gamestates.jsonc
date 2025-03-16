@@ -31,6 +31,7 @@
     "description": "${actplayer} must connect astronauts or set an astronaut adrift",
     "descriptionmyturn": "${you} must connect astronauts or set an astronaut adrift",
     "type": "activeplayer",
+    "args": "argPlayerTurn",
     "possibleactions": {
       "connectAstronauts": [],
       "actSetAdrift": [

@@ -106,7 +106,7 @@ class TetherGame extends Gamegui {
   override onEnteringState(
     ...[stateName, state]: BGA.GameStateTuple<['name', 'state']>
   ): void {
-    console.log('Entering state: ' + stateName);
+    console.log('Entering state: ' + stateName, state);
 
     switch (stateName) {
       default:
@@ -126,6 +126,11 @@ class TetherGame extends Gamegui {
     }
   }
 
+  canConnectAstronauts(playerId: string, args: Record<string, any>) {
+    console.log('canConnectAstronauts', playerId, args);
+    return args['_private'].length > 0;
+  }
+
   /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
   override onUpdateActionButtons(
     ...[stateName, args]: BGA.GameStateTuple<['name', 'args']>
@@ -142,11 +147,15 @@ class TetherGame extends Gamegui {
           _('Connect Astronauts'),
           () => {
             console.log('not implemented yet');
-          },
-          undefined,
-          false,
-          'gray'
+          }
         );
+        if (!this.canConnectAstronauts(this.player_id?.toString()!, args)) {
+          console.log('disabling connect astronauts button', this.player_id);
+          document
+            .getElementById('connect-astronauts-button')
+            ?.classList.add('disabled');
+        }
+
         this.addActionButton(
           'set-adrift-button',
           _('Set Astronauts Adrift'),
@@ -176,6 +185,16 @@ class TetherGame extends Gamegui {
           () => {
             this.performAdriftAction('deck', 'deck');
           }
+        );
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelSetAdriftAction();
+          },
+          undefined,
+          false,
+          'red'
         );
         break;
     }

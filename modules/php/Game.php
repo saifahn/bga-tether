@@ -54,15 +54,6 @@ class Game extends \Table
 
         $this->card_ids = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13', '14', '15', '16', '17', '18', '19', '22', '23', '24', '25', '26', '27', '28', '29', '33', '34', '35', '36', '37', '38', '39', '44', '45', '46', '47', '48', '49', '55', '56', '57', '58', '59', '66', '67', '68', '69', '77', '78', '79', '88', '89'];
 
-        self::$CARD_TYPES = [
-            1 => [
-                "card_name" => clienttranslate('Troll'), // ...
-            ],
-            2 => [
-                "card_name" => clienttranslate('Goblin'), // ...
-            ],
-            // ...
-        ];
 
         /* example of notification decorator.
         // automatically complete notification args when needed
@@ -81,57 +72,6 @@ class Game extends \Table
     }
 
     /**
-     * Player action, example content.
-     *
-     * In this scenario, each time a player plays a card, this method will be called. This method is called directly
-     * by the action trigger on the front side with `bgaPerformAction`.
-     *
-     * @throws BgaUserException
-     */
-    public function actPlayCard(int $card_id): void
-    {
-        // Retrieve the active player ID.
-        $player_id = (int)$this->getActivePlayerId();
-
-        // check input values
-        $args = $this->argPlayerTurn();
-        $playableCardsIds = $args['playableCardsIds'];
-        if (!in_array($card_id, $playableCardsIds)) {
-            throw new \BgaUserException('Invalid card choice');
-        }
-
-        // Add your game logic to play a card here.
-        $card_name = self::$CARD_TYPES[$card_id]['card_name'];
-
-        // Notify all players about the card played.
-        $this->notify->all("cardPlayed", clienttranslate('${player_name} plays ${card_name}'), [
-            "player_id" => $player_id,
-            "player_name" => $this->getActivePlayerName(), // remove this line if you uncomment notification decorator
-            "card_name" => $card_name, // remove this line if you uncomment notification decorator
-            "card_id" => $card_id,
-            "i18n" => ['card_name'], // remove this line if you uncomment notification decorator
-        ]);
-
-        // at the end of the action, move to the next state
-        $this->gamestate->nextState("playCard");
-    }
-
-    public function actPass(): void
-    {
-        // Retrieve the active player ID.
-        $player_id = (int)$this->getActivePlayerId();
-
-        // Notify all players about the choice to pass.
-        $this->notify->all("pass", clienttranslate('${player_name} passes'), [
-            "player_id" => $player_id,
-            "player_name" => $this->getActivePlayerName(), // remove this line if you uncomment notification decorator
-        ]);
-
-        // at the end of the action, move to the next state
-        $this->gamestate->nextState("pass");
-    }
-
-    /**
      * Game state arguments, example content.
      *
      * This method returns some additional information that is very specific to the `playerTurn` game state.
@@ -141,11 +81,54 @@ class Game extends \Table
      */
     public function argPlayerTurn(): array
     {
-        // Get some values from the current game situation from the database.
+        $res = array('_private' => array());
+        // can't call getCurrentPlayer or getActivePlayer here because this is
+        // happening in a transition for all players
+        $players = $this->loadPlayersBasicInfos();
 
-        return [
-            "playableCardsIds" => [1, 2],
-        ];
+
+        foreach ($players as $player_id => $player_info) {
+            $possibleMoves = $this->getPossibleConnections($player_id);
+            $res['_private'][$player_id] = $possibleMoves;
+        }
+
+        return $res;
+    }
+
+    protected function canCardsBeConnected(string $cardNum, mixed $cardToCompare)
+    {
+        $cardToCompareNum = $cardToCompare['type_arg'];
+        $cardToCompareNumReversed = strrev($cardToCompareNum);
+        return $cardToCompareNum == $cardNum + 1 || $cardToCompareNum == $cardNum - 1 || $cardToCompareNumReversed == $cardNum + 1 || $cardToCompareNumReversed == $cardNum - 1;
+    }
+
+    public function getPossibleConnections(int $player_id): array
+    {
+        // TODO: improve this with a better SQL call that gets all the necessary data in one go
+        // adrift + hand
+        $hand = $this->cards->getCardsInLocation('hand', $player_id);
+        $adrift = $this->cards->getCardsInLocation('adrift');
+        $relevantCards = array_merge($hand, $adrift);
+        $viableCards = [];
+        foreach ($hand as $card) {
+            // check both sides of the card
+            $cardNum = $card['type_arg'];
+            foreach ($relevantCards as $otherCard) {
+                if ($this->canCardsBeConnected($cardNum, $otherCard)) {
+                    array_push($viableCards, $cardNum);
+                    break;
+                }
+            }
+
+            $cardNumReversed = strrev($cardNum);
+            foreach ($relevantCards as $otherCard) {
+                if ($this->canCardsBeConnected($cardNumReversed, $otherCard)) {
+                    array_push($viableCards, $cardNumReversed);
+                    break;
+                }
+            }
+        }
+        return $viableCards;
     }
 
     /**
@@ -172,10 +155,7 @@ class Game extends \Table
      */
     public function stNextPlayer(): void
     {
-        // Retrieve the active player ID.
         $player_id = (int)$this->getActivePlayerId();
-
-        // Give some extra time to the active player when he completed an action
         $this->giveExtraTime($player_id);
 
         $this->activeNextPlayer();
