@@ -69,12 +69,12 @@ $card-height: math.div(1955px, 7);
   }
 
   &--selectable {
-    outline: 0.1rem dashed black;
+    outline: 0.25rem dashed black;
     cursor: pointer;
   }
 
   &--selected {
-    outline: 0.25rem solid yellowgreen;
+    outline: 0.4rem solid yellowgreen;
   }
 }
 

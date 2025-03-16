@@ -121,7 +121,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                 _a[_i] = arguments[_i];
             }
             var stateName = _a[0], state = _a[1];
-            console.log('Entering state: ' + stateName);
+            console.log('Entering state: ' + stateName, state);
             switch (stateName) {
                 default:
                     break;
@@ -134,13 +134,18 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                     break;
             }
         };
+        TetherGame.prototype.canConnectAstronauts = function (playerId, args) {
+            console.log('canConnectAstronauts', playerId, args);
+            return args['_private'].length > 0;
+        };
         TetherGame.prototype.onUpdateActionButtons = function () {
             var _this = this;
-            var _a = [];
+            var _a, _b;
+            var _c = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                _a[_i] = arguments[_i];
+                _c[_i] = arguments[_i];
             }
-            var stateName = _a[0], args = _a[1];
+            var stateName = _c[0], args = _c[1];
             console.log('onUpdateActionButtons: ' + stateName, args);
             if (!this.isCurrentPlayerActive())
                 return;
@@ -148,7 +153,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                 case 'playerTurn':
                     this.addActionButton('connect-astronauts-button', _('Connect Astronauts'), function () {
                         console.log('not implemented yet');
-                    }, undefined, false, 'gray');
+                    });
+                    if (!this.canConnectAstronauts((_a = this.player_id) === null || _a === void 0 ? void 0 : _a.toString(), args)) {
+                        console.log('disabling connect astronauts button', this.player_id);
+                        (_b = document
+                            .getElementById('connect-astronauts-button')) === null || _b === void 0 ? void 0 : _b.classList.add('disabled');
+                    }
                     this.addActionButton('set-adrift-button', _('Set Astronauts Adrift'), function (e) {
                         _this.handleChooseSetAdriftAction(e);
                     });
@@ -162,6 +172,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                     this.addActionButton('draw-from-deck-button', _('Draw from deck'), function () {
                         _this.performAdriftAction('deck', 'deck');
                     });
+                    this.addActionButton('cancel-button', _('Restart turn'), function () {
+                        _this.cancelSetAdriftAction();
+                    }, undefined, false, 'red');
                     break;
             }
         };
