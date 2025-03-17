@@ -24,9 +24,10 @@
 */
 #adrift-zone {
   padding: 40px;
-  margin-left: 20px;
-  background-color: azure;
-  border: 1px dashed darksalmon;
+  margin: 20px;
+  display: inline-block;
+  background-color: darksalmon;
+  border-radius: 4px;
 }
 
 #hand {

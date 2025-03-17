@@ -42,6 +42,7 @@ class TetherGame extends Gamegui {
     | {
         status: 'played';
         id: string;
+        number: string; // this is the lower number of the card, not necessarily what it was played as
         flipped: boolean;
       }
     | null = null;
@@ -52,21 +53,32 @@ class TetherGame extends Gamegui {
     console.log('tethergame constructor');
   }
 
-  createCardElement(cardId: string, cardNum: string) {
+  createCardElement({
+    id,
+    number,
+    flipped,
+  }: {
+    id: string;
+    number: string;
+    flipped: boolean;
+  }) {
     const cardElement = document.createElement('div');
     cardElement.classList.add('card');
-    cardElement.dataset['cardId'] = cardId;
-    cardElement.dataset['cardNumber'] = cardNum;
-    cardElement.dataset['cardNumReversed'] = cardNum
+    cardElement.dataset['cardId'] = id;
+    cardElement.dataset['cardNumber'] = number;
+    cardElement.dataset['cardNumReversed'] = number
       .split('')
       .reverse()
       .join('');
-    cardElement.id = `card-${cardNum}`;
+    cardElement.id = `card-${number}`;
+    if (flipped) {
+      cardElement.classList.add('card--flipped');
+    }
     return cardElement;
   }
 
-  createAdriftCardElement(cardId: string, cardNum: string) {
-    const cardElement = this.createCardElement(cardId, cardNum);
+  createAdriftCardElement(id: string, number: string) {
+    const cardElement = this.createCardElement({ id, number, flipped: false });
     cardElement.classList.add('card--adrift');
     cardElement.classList.add('js-adrift');
     return cardElement;
@@ -91,6 +103,11 @@ class TetherGame extends Gamegui {
     deck.classList.add('js-deck');
     adriftZone.appendChild(deck);
 
+    const groupsArea = document.createElement('div');
+    groupsArea.id = 'groups';
+    groupsArea.classList.add('groups');
+    gamePlayArea.appendChild(groupsArea);
+
     const hand = document.createElement('div');
     hand.id = 'hand';
     gamePlayArea.appendChild(hand);
@@ -104,10 +121,11 @@ class TetherGame extends Gamegui {
     }
 
     for (const cardId in gamedatas.hand) {
-      const cardEl = this.createCardElement(
-        cardId,
-        gamedatas.hand[cardId]!.type_arg
-      );
+      const cardEl = this.createCardElement({
+        id: cardId,
+        number: gamedatas.hand[cardId]!.type_arg,
+        flipped: false,
+      });
       hand.appendChild(cardEl);
     }
 
@@ -215,7 +233,7 @@ class TetherGame extends Gamegui {
         );
         break;
       // @ts-expect-error
-      case 'client_connectAstronautChooseInitialCard':
+      case 'client_connectAstronautInitial':
         this.addActionButton(
           'cancel-button',
           _('Restart turn'),
@@ -489,7 +507,7 @@ class TetherGame extends Gamegui {
   }
 
   handleChooseConnectAstronautsAction(args: Record<string, any>) {
-    this.setClientState('client_connectAstronautChooseInitialCard', {
+    this.setClientState('client_connectAstronautInitial', {
       // @ts-expect-error
       descriptionmyturn: _(
         '${you} must select an astronaut from your hand to begin connecting.'
@@ -547,8 +565,38 @@ class TetherGame extends Gamegui {
     this.cardForConnecting = {
       status: 'played',
       id: this.cardForConnecting.id,
+      number: this.cardForConnecting.number,
       flipped,
     };
+
+    // move the card from hand to a new group
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    const cardToRemove = hand.querySelector(
+      `[data-card-id="${this.cardForConnecting.id}"]`
+    );
+    if (!cardToRemove) {
+      throw new Error('card to remove not found');
+    }
+    hand.removeChild(cardToRemove);
+
+    const groupsArea = document.getElementById('groups');
+    if (!groupsArea) {
+      throw new Error('groups not found');
+    }
+    const cardEl = this.createCardElement({
+      id: this.cardForConnecting.id,
+      number: this.cardForConnecting.number,
+      flipped,
+    });
+    const newGroup = document.createElement('div');
+    // TODO: get lowest group number, increment by 1
+    newGroup.classList.add('group');
+    newGroup.appendChild(cardEl);
+    groupsArea.append(newGroup);
+
     this.setClientState('client_connectAstronautChooseNextCard', {
       // @ts-expect-error
       descriptionmyturn: _(
@@ -654,10 +702,11 @@ class TetherGame extends Gamegui {
   notif_drawFromDeck(notif: BGA.Notif<'drawFromDeck'>) {
     console.log('notif_drawFromDeck', notif);
 
-    const cardEl = this.createCardElement(
-      notif.args.card_id,
-      notif.args.card_num
-    );
+    const cardEl = this.createCardElement({
+      id: notif.args.card_id,
+      number: notif.args.card_num,
+      flipped: false,
+    });
     const hand = document.getElementById('hand');
     if (!hand) {
       throw new Error('hand not found');
@@ -685,10 +734,11 @@ class TetherGame extends Gamegui {
     if (notif.args.player_id !== this.player_id) {
       return;
     }
-    const cardEl = this.createCardElement(
-      notif.args.card_id,
-      notif.args.card_num
-    );
+    const cardEl = this.createCardElement({
+      id: notif.args.card_id,
+      number: notif.args.card_num,
+      flipped: false,
+    });
     const hand = document.getElementById('hand');
     if (!hand) {
       throw new Error('hand not found');

@@ -74,20 +74,24 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             console.log('tethergame constructor');
             return _this;
         }
-        TetherGame.prototype.createCardElement = function (cardId, cardNum) {
+        TetherGame.prototype.createCardElement = function (_a) {
+            var id = _a.id, number = _a.number, flipped = _a.flipped;
             var cardElement = document.createElement('div');
             cardElement.classList.add('card');
-            cardElement.dataset['cardId'] = cardId;
-            cardElement.dataset['cardNumber'] = cardNum;
-            cardElement.dataset['cardNumReversed'] = cardNum
+            cardElement.dataset['cardId'] = id;
+            cardElement.dataset['cardNumber'] = number;
+            cardElement.dataset['cardNumReversed'] = number
                 .split('')
                 .reverse()
                 .join('');
-            cardElement.id = "card-".concat(cardNum);
+            cardElement.id = "card-".concat(number);
+            if (flipped) {
+                cardElement.classList.add('card--flipped');
+            }
             return cardElement;
         };
-        TetherGame.prototype.createAdriftCardElement = function (cardId, cardNum) {
-            var cardElement = this.createCardElement(cardId, cardNum);
+        TetherGame.prototype.createAdriftCardElement = function (id, number) {
+            var cardElement = this.createCardElement({ id: id, number: number, flipped: false });
             cardElement.classList.add('card--adrift');
             cardElement.classList.add('js-adrift');
             return cardElement;
@@ -106,6 +110,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             deck.classList.add('deck');
             deck.classList.add('js-deck');
             adriftZone.appendChild(deck);
+            var groupsArea = document.createElement('div');
+            groupsArea.id = 'groups';
+            groupsArea.classList.add('groups');
+            gamePlayArea.appendChild(groupsArea);
             var hand = document.createElement('div');
             hand.id = 'hand';
             gamePlayArea.appendChild(hand);
@@ -114,7 +122,11 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                 adriftZone.appendChild(cardEl);
             }
             for (var cardId in gamedatas.hand) {
-                var cardEl = this.createCardElement(cardId, gamedatas.hand[cardId].type_arg);
+                var cardEl = this.createCardElement({
+                    id: cardId,
+                    number: gamedatas.hand[cardId].type_arg,
+                    flipped: false,
+                });
                 hand.appendChild(cardEl);
             }
             this.setupNotifications();
@@ -180,7 +192,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
                         _this.cancelSetAdriftAction();
                     }, undefined, false, 'red');
                     break;
-                case 'client_connectAstronautChooseInitialCard':
+                case 'client_connectAstronautInitial':
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelConnectAstronautsAction();
                     }, undefined, false, 'red');
@@ -384,7 +396,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
         };
         TetherGame.prototype.handleChooseConnectAstronautsAction = function (args) {
             var _this = this;
-            this.setClientState('client_connectAstronautChooseInitialCard', {
+            this.setClientState('client_connectAstronautInitial', {
                 descriptionmyturn: _('${you} must select an astronaut from your hand to begin connecting.'),
             });
             var handler = function (e) { return _this.handleChooseCardFromHandConnect(e); };
@@ -430,8 +442,31 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             this.cardForConnecting = {
                 status: 'played',
                 id: this.cardForConnecting.id,
+                number: this.cardForConnecting.number,
                 flipped: flipped,
             };
+            var hand = document.getElementById('hand');
+            if (!hand) {
+                throw new Error('hand not found');
+            }
+            var cardToRemove = hand.querySelector("[data-card-id=\"".concat(this.cardForConnecting.id, "\"]"));
+            if (!cardToRemove) {
+                throw new Error('card to remove not found');
+            }
+            hand.removeChild(cardToRemove);
+            var groupsArea = document.getElementById('groups');
+            if (!groupsArea) {
+                throw new Error('groups not found');
+            }
+            var cardEl = this.createCardElement({
+                id: this.cardForConnecting.id,
+                number: this.cardForConnecting.number,
+                flipped: flipped,
+            });
+            var newGroup = document.createElement('div');
+            newGroup.classList.add('group');
+            newGroup.appendChild(cardEl);
+            groupsArea.append(newGroup);
             this.setClientState('client_connectAstronautChooseNextCard', {
                 descriptionmyturn: _('Select an astronaut from your hand or the adrift zone to continue connecting.'),
             });
@@ -459,7 +494,11 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
         };
         TetherGame.prototype.notif_drawFromDeck = function (notif) {
             console.log('notif_drawFromDeck', notif);
-            var cardEl = this.createCardElement(notif.args.card_id, notif.args.card_num);
+            var cardEl = this.createCardElement({
+                id: notif.args.card_id,
+                number: notif.args.card_num,
+                flipped: false,
+            });
             var hand = document.getElementById('hand');
             if (!hand) {
                 throw new Error('hand not found');
@@ -482,7 +521,11 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "ebg/cou
             if (notif.args.player_id !== this.player_id) {
                 return;
             }
-            var cardEl = this.createCardElement(notif.args.card_id, notif.args.card_num);
+            var cardEl = this.createCardElement({
+                id: notif.args.card_id,
+                number: notif.args.card_num,
+                flipped: false,
+            });
             var hand = document.getElementById('hand');
             if (!hand) {
                 throw new Error('hand not found');
