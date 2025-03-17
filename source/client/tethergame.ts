@@ -32,6 +32,20 @@ class TetherGame extends Gamegui {
     number: string;
   } | null = null;
 
+  cardForConnecting:
+    | {
+        status: 'choosingFromHand';
+        id: string;
+        number: string;
+        numReversed: string;
+      }
+    | {
+        status: 'played';
+        id: string;
+        flipped: boolean;
+      }
+    | null = null;
+
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
     super();
@@ -43,6 +57,10 @@ class TetherGame extends Gamegui {
     cardElement.classList.add('card');
     cardElement.dataset['cardId'] = cardId;
     cardElement.dataset['cardNumber'] = cardNum;
+    cardElement.dataset['cardNumReversed'] = cardNum
+      .split('')
+      .reverse()
+      .join('');
     cardElement.id = `card-${cardNum}`;
     return cardElement;
   }
@@ -146,11 +164,10 @@ class TetherGame extends Gamegui {
           'connect-astronauts-button',
           _('Connect Astronauts'),
           () => {
-            console.log('not implemented yet');
+            this.handleChooseConnectAstronautsAction(args);
           }
         );
         if (!this.canConnectAstronauts(this.player_id?.toString()!, args)) {
-          console.log('disabling connect astronauts button', this.player_id);
           document
             .getElementById('connect-astronauts-button')
             ?.classList.add('disabled');
@@ -191,6 +208,80 @@ class TetherGame extends Gamegui {
           _('Restart turn'),
           () => {
             this.cancelSetAdriftAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
+        break;
+      // @ts-expect-error
+      case 'client_connectAstronautChooseInitialCard':
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelConnectAstronautsAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
+        break;
+      // @ts-expect-error
+      case 'client_chooseCardSideToPlay':
+        if (this.cardForConnecting?.status !== 'choosingFromHand') {
+          throw new Error(
+            'cardForConnecting not in correct state for this call'
+          );
+        }
+        const num = this.cardForConnecting?.number;
+        this.addActionButton(
+          'play-upright-button',
+          _(`Play card as ${num}`),
+          () => {
+            this.handleChooseNumberToPlay();
+          }
+        );
+        const isNumPlayable = this.numberIsPlayable(num, args);
+        if (!isNumPlayable) {
+          document
+            .getElementById('play-upright-button')
+            ?.classList.add('disabled');
+        }
+
+        const flippedNum = this.cardForConnecting?.numReversed;
+        this.addActionButton(
+          'play-flipped-button',
+          _(`Play card as ${flippedNum}`),
+          () => {
+            this.handleChooseNumberToPlay({ flipped: true });
+          }
+        );
+        const isFlippedNumPlayable = this.numberIsPlayable(flippedNum, args);
+        if (!isFlippedNumPlayable) {
+          document
+            .getElementById('play-flipped-button')
+            ?.classList.add('disabled');
+        }
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelConnectAstronautsAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
+        break;
+      // @ts-expect-error
+      case 'client_connectAstronautChooseNextCard':
+        console.log(this.cardForConnecting);
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelConnectAstronautsAction();
           },
           undefined,
           false,
@@ -240,6 +331,7 @@ class TetherGame extends Gamegui {
   cancelSetAdriftAction() {
     this.clearSelectedCards();
     this.clearSelectableCards();
+    this.clearEventListeners();
     this.cardSetAdrift = null;
     this.restoreServerGameState();
   }
@@ -290,6 +382,7 @@ class TetherGame extends Gamegui {
       number: e.target.dataset['cardNumber']!,
     };
     this.clearSelectableCards();
+    this.clearEventListeners();
 
     this.setClientState('client_setAdriftChooseDraw', {
       // @ts-expect-error
@@ -373,6 +466,95 @@ class TetherGame extends Gamegui {
       this.restoreServerGameState();
       console.log('error while trying to perform actSetAdrift', e);
     }
+  }
+  // #endregion
+
+  // #region Connect Astronauts Action methods
+  cancelConnectAstronautsAction() {
+    this.clearSelectedCards();
+    this.clearSelectableCards();
+    this.clearEventListeners();
+    this.restoreServerGameState();
+  }
+
+  cardIsPlayable(card: HTMLElement, args: Record<string, any>) {
+    return (
+      this.numberIsPlayable(card.dataset['cardNumber'], args) ||
+      this.numberIsPlayable(card.dataset['cardNumReversed'], args)
+    );
+  }
+
+  numberIsPlayable(number: string | undefined, args: Record<string, any>) {
+    return Boolean(number) && args['_private'].includes(number);
+  }
+
+  handleChooseConnectAstronautsAction(args: Record<string, any>) {
+    this.setClientState('client_connectAstronautChooseInitialCard', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must select an astronaut from your hand to begin connecting.'
+      ),
+    });
+
+    // enable the right buttons
+    const handler = (e: Event) => this.handleChooseCardFromHandConnect(e);
+    this.getCardElementsFromHand().forEach((card) => {
+      if (card instanceof HTMLElement) {
+        if (this.cardIsPlayable(card, args)) {
+          card.classList.add('card--selectable');
+          card.addEventListener('click', handler);
+          this.eventHandlers.push({
+            element: card,
+            event: 'click',
+            handler,
+          });
+        }
+      }
+    });
+  }
+
+  handleChooseCardFromHandConnect(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error(
+        "handleChooseCardFromHandConnect called when it shouldn't have been"
+      );
+    }
+    this.clearSelectableCards();
+    this.clearEventListeners();
+    e.target.classList.add('card--selected');
+
+    this.cardForConnecting = {
+      status: 'choosingFromHand',
+      id: e.target.dataset['cardId']!,
+      number: e.target.dataset['cardNumber']!,
+      numReversed: e.target.dataset['cardNumReversed']!,
+    };
+    this.setClientState('client_chooseCardSideToPlay', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must choose which side of the card to play.'
+      ),
+    });
+  }
+
+  handleChooseNumberToPlay({ flipped } = { flipped: false }) {
+    if (!this.cardForConnecting) {
+      throw new Error('cardForConnecting not set');
+    }
+    if (this.cardForConnecting.status !== 'choosingFromHand') {
+      throw new Error('cardForConnecting not in correct state for this call');
+    }
+    this.cardForConnecting = {
+      status: 'played',
+      id: this.cardForConnecting.id,
+      flipped,
+    };
+    this.setClientState('client_connectAstronautChooseNextCard', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        'Select an astronaut from your hand or the adrift zone to continue connecting.'
+      ),
+    });
   }
   // #endregion
 
