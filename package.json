@@ -5,7 +5,8 @@
   "scripts": {
     "init": "npm install bga-ts-template && npx bga-init TetherGame \"Sean Li 9913851+saifahn@users.noreply.github.com\" source --typescript --scss --vscode-extension-pack --gameinfos.jsonc --gameoptions.jsonc --gamepreferences.jsonc --stats.jsonc --gamestates.jsonc",
     "build": "npx bga-build",
-    "watch": "npx bga-build --watch"
+    "watch": "npx bga-build --watch",
+    "test": "uvu -r tsm"
   },
   "repository": {
     "type": "git",
@@ -21,5 +22,9 @@
   "dependencies": {
     "bga-ts-template": "^2.0.6",
     "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "tsm": "^2.3.0",
+    "uvu": "^0.5.6"
   }
 }
