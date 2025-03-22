@@ -1,42 +1,60 @@
-interface Group {
+export interface BoardCard {
+  id: string;
+  number: string;
+  uprightFor: 'vertical' | 'horizontal';
+}
+
+type Space = BoardCard | null;
+
+export interface Group {
   vertical?: {
     [cardNum: string]: {
       id: string;
       number: string;
-      flipped: boolean;
+      upright: boolean;
     };
   };
   horizontal?: {
     [cardNum: string]: {
       id: string;
       number: string;
-      flipped: boolean;
+      upright: boolean;
     };
   };
 }
 
-export function generateGroup(group: Group) {
+export type GroupUI = Space[][];
+
+export interface BoardUI {
+  [groupNum: string]: GroupUI;
+}
+
+export function generateGroup(group: Group): Space[][] {
   const verticalCards = group.vertical && Object.values(group.vertical);
   const horizontalCards = group.horizontal && Object.values(group.horizontal);
   if (verticalCards) {
-    // sort the cards
-    // return them in an two dimensional array
-    // starting to think we should store the flipped numbers in the db so we don't have to
-    // perform the calculations/reversing everywhere in the code - we should just look at the flipped boolean
+    // TODO: remove the upright boolean from the BoardCard generated
     return verticalCards
       .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-      .map((card) => [{ ...card, uprightFor: 'vertical' }]);
+      .map((card) => [
+        { ...card, uprightFor: card.upright ? 'vertical' : 'horizontal' },
+      ]);
   }
 
   if (horizontalCards) {
-    return horizontalCards
-      .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-      .map((card) => ({ ...card, uprightFor: 'horizontal' }));
+    return [
+      horizontalCards
+        .sort((a, b) => parseInt(a.number) - parseInt(b.number))
+        .map((card) => ({
+          ...card,
+          uprightFor: card.upright ? 'horizontal' : 'vertical',
+        })),
+    ];
   }
 
   // so let's start simple with the two card tests
   // vertical group
   // it might be best to return groups with the orientation as the key rather than the card number
-  // but l;et's start like this
+  // but let's start like this
   return [];
 }

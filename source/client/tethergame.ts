@@ -18,6 +18,7 @@
 
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
+import { BoardUI, generateGroup, GroupUI } from './generateBoard';
 
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
@@ -46,6 +47,12 @@ class TetherGame extends Gamegui {
         flipped: boolean;
       }
     | null = null;
+
+  board: BoardUI = {};
+
+  boardState: BGA.Gamedatas['board'] = {};
+
+  playerDirection: 'horizontal' | 'vertical' | null = null;
 
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
@@ -128,6 +135,43 @@ class TetherGame extends Gamegui {
       });
       hand.appendChild(cardEl);
     }
+
+    if (!this.player_id) {
+      throw new Error('player_id not found');
+    }
+    console.log(gamedatas.players);
+    this.playerDirection =
+      // TODO: figure out a way to extend this type definition or return it under
+      // a different gamedatas key
+      // @ts-expect-error
+      gamedatas.players[this.player_id]?.turn_order === '1'
+        ? 'vertical'
+        : 'horizontal';
+
+    this.boardState = gamedatas.board;
+    let groups: Record<string, GroupUI> = {};
+    for (const group in gamedatas.board) {
+      const generatedGroup = generateGroup(gamedatas.board[group]!);
+      groups[group] = generatedGroup;
+
+      const groupEl = document.createElement('div');
+      groupEl.classList.add('group');
+      for (const row of generatedGroup) {
+        for (const card of row) {
+          if (card) {
+            const flipped = card.uprightFor !== this.playerDirection;
+            const cardEl = this.createCardElement({
+              id: card.id,
+              number: card.number,
+              flipped,
+            });
+            groupEl.appendChild(cardEl);
+          }
+        }
+      }
+      groupsArea.appendChild(groupEl);
+    }
+    this.board = groups;
 
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
