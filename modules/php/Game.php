@@ -24,8 +24,7 @@ require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
 
 class Game extends \Table
 {
-    private static array $CARD_TYPES;
-    private array $card_ids;
+    private array $card_nums;
     public mixed $cards;
 
     /**
@@ -52,7 +51,7 @@ class Game extends \Table
         $this->cards = $this->getNew("module.common.deck");
         $this->cards->init("card");
 
-        $this->card_ids = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13', '14', '15', '16', '17', '18', '19', '22', '23', '24', '25', '26', '27', '28', '29', '33', '34', '35', '36', '37', '38', '39', '44', '45', '46', '47', '48', '49', '55', '56', '57', '58', '59', '66', '67', '68', '69', '77', '78', '79', '88', '89'];
+        $this->card_nums = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13', '14', '15', '16', '17', '18', '19', '22', '23', '24', '25', '26', '27', '28', '29', '33', '34', '35', '36', '37', '38', '39', '44', '45', '46', '47', '48', '49', '55', '56', '57', '58', '59', '66', '67', '68', '69', '77', '78', '79', '88', '89'];
 
 
         /* example of notification decorator.
@@ -238,9 +237,7 @@ class Game extends \Table
 
         // Get information about players.
         // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
-        $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score` FROM `player`"
-        );
+        $result["players"] = $this->getCollectionFromDb("SELECT player_id id, player_score score, player_no turn_order FROM player");
 
         $result['adrift'] = $this->getCollectionFromDB(
             "SELECT card_id id, card_type_arg cardNum
@@ -334,8 +331,8 @@ class Game extends \Table
     function createDeck()
     {
         $cards = array();
-        foreach ($this->card_ids as $id) {
-            $cards[] = array('type' => 'upright', 'type_arg' => $id, 'nbr' => 1);
+        foreach ($this->card_nums as $num) {
+            $cards[] = array('type' => 'upright', 'type_arg' => $num, 'flipped_num' => strrev($num), 'nbr' => 1);
         }
         $this->cards->createCards($cards, 'deck');
         $this->cards->shuffle('deck');
