@@ -7,14 +7,14 @@ export interface BoardCard {
 type Space = BoardCard | null;
 
 export interface Group {
-  vertical?: {
+  vertical: {
     [cardNum: string]: {
       id: string;
       number: string;
       upright: boolean;
     };
   };
-  horizontal?: {
+  horizontal: {
     [cardNum: string]: {
       id: string;
       number: string;
@@ -29,7 +29,7 @@ export interface BoardUI {
   [groupNum: string]: GroupUI;
 }
 
-export function generateGroup(group: Group): Space[][] {
+export function generateGroupUI(group: Group): GroupUI {
   const verticalCards = group.vertical && Object.values(group.vertical);
   const horizontalCards = group.horizontal && Object.values(group.horizontal);
   if (verticalCards) {

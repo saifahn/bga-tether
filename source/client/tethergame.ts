@@ -18,7 +18,14 @@
 
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
-import { BoardUI, generateGroup, GroupUI } from './generateBoard';
+import { BoardUI, generateGroupUI, Group, GroupUI } from './generateBoard';
+
+interface PlayedCard {
+  status: 'played';
+  id: string;
+  number: string; // this is the lower number of the card, not necessarily what it was played as
+  flipped: boolean;
+}
 
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
@@ -40,12 +47,7 @@ class TetherGame extends Gamegui {
         number: string;
         numReversed: string;
       }
-    | {
-        status: 'played';
-        id: string;
-        number: string; // this is the lower number of the card, not necessarily what it was played as
-        flipped: boolean;
-      }
+    | PlayedCard
     | null = null;
 
   board: BoardUI = {};
@@ -89,6 +91,38 @@ class TetherGame extends Gamegui {
     cardElement.classList.add('card--adrift');
     cardElement.classList.add('js-adrift');
     return cardElement;
+  }
+
+  updateBoardUI() {
+    const groupsArea = document.getElementById('groups');
+    if (!groupsArea) {
+      throw new Error('groups not found');
+    }
+    groupsArea.innerHTML = '';
+
+    let groups: Record<string, GroupUI> = {};
+    for (const group in this.boardState) {
+      const generatedGroup = generateGroupUI(this.boardState[group]!);
+      groups[group] = generatedGroup;
+
+      const groupEl = document.createElement('div');
+      groupEl.classList.add('group');
+      for (const row of generatedGroup) {
+        for (const card of row) {
+          if (card) {
+            const flipped = card.uprightFor !== this.playerDirection;
+            const cardEl = this.createCardElement({
+              id: card.id,
+              number: card.number,
+              flipped,
+            });
+            groupEl.appendChild(cardEl);
+          }
+        }
+      }
+      groupsArea.appendChild(groupEl);
+    }
+    this.board = groups;
   }
 
   /** See {@link  BGA.Gamegui#setup} for more information. */
@@ -149,29 +183,7 @@ class TetherGame extends Gamegui {
         : 'horizontal';
 
     this.boardState = gamedatas.board;
-    let groups: Record<string, GroupUI> = {};
-    for (const group in gamedatas.board) {
-      const generatedGroup = generateGroup(gamedatas.board[group]!);
-      groups[group] = generatedGroup;
-
-      const groupEl = document.createElement('div');
-      groupEl.classList.add('group');
-      for (const row of generatedGroup) {
-        for (const card of row) {
-          if (card) {
-            const flipped = card.uprightFor !== this.playerDirection;
-            const cardEl = this.createCardElement({
-              id: card.id,
-              number: card.number,
-              flipped,
-            });
-            groupEl.appendChild(cardEl);
-          }
-        }
-      }
-      groupsArea.appendChild(groupEl);
-    }
-    this.board = groups;
+    this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
@@ -599,6 +611,28 @@ class TetherGame extends Gamegui {
     });
   }
 
+  createGroupFromCard(card: PlayedCard): Group {
+    const uprightVertically =
+      this.playerDirection === 'vertical' && card.flipped;
+
+    return {
+      vertical: {
+        [card.number]: {
+          id: card.id,
+          number: card.number,
+          upright: uprightVertically,
+        },
+      },
+      horizontal: {
+        [card.number]: {
+          id: card.id,
+          number: card.number,
+          upright: !uprightVertically,
+        },
+      },
+    };
+  }
+
   handleChooseNumberToPlay({ flipped } = { flipped: false }) {
     if (!this.cardForConnecting) {
       throw new Error('cardForConnecting not set');
@@ -613,6 +647,17 @@ class TetherGame extends Gamegui {
       flipped,
     };
 
+    if (!this.boardState) {
+      this.boardState = {};
+    }
+    const existingGroupsLen = Object.keys(this.boardState).length;
+    this.boardState[existingGroupsLen + 1] = this.createGroupFromCard(
+      this.cardForConnecting
+    );
+    this.updateBoardUI();
+    // TODO: this redraw function needs to handle animations in the future?
+
+    // TODO: this should be part of the board state? cards in hand
     // move the card from hand to a new group
     const hand = document.getElementById('hand');
     if (!hand) {
@@ -625,21 +670,6 @@ class TetherGame extends Gamegui {
       throw new Error('card to remove not found');
     }
     hand.removeChild(cardToRemove);
-
-    const groupsArea = document.getElementById('groups');
-    if (!groupsArea) {
-      throw new Error('groups not found');
-    }
-    const cardEl = this.createCardElement({
-      id: this.cardForConnecting.id,
-      number: this.cardForConnecting.number,
-      flipped,
-    });
-    const newGroup = document.createElement('div');
-    // TODO: get lowest group number, increment by 1
-    newGroup.classList.add('group');
-    newGroup.appendChild(cardEl);
-    groupsArea.append(newGroup);
 
     this.setClientState('client_connectAstronautChooseNextCard', {
       // @ts-expect-error
