@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS `card` (
   -- the lower number of the card e.g. 01, 02, 23, 45
   -- NOT 10, 20, 32, 54 etc.
   `card_type_arg` varchar(11) NOT NULL,
-  `card_flipped_num` varchar(11) NOT NULL,
   -- `card_location`
   -- deck, hand, adrift, board
   `card_location` varchar(16) NOT NULL,

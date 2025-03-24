@@ -106,13 +106,14 @@ class Game extends \Table
         // TODO: improve this with a better SQL call that gets all the necessary data in one go
         // adrift + hand
         $hand = $this->cards->getCardsInLocation('hand', $player_id);
-        $adrift = $this->cards->getCardsInLocation('adrift');
-        $relevantCards = array_merge($hand, $adrift);
-        $viableCards = [];
+        // $adrift = $this->cards->getCardsInLocation('adrift');
+        // $relevantCards = array_merge($hand, $adrift);
+        $viableCards = array();
+
         foreach ($hand as $card) {
             // check both sides of the card
             $cardNum = $card['type_arg'];
-            foreach ($relevantCards as $otherCard) {
+            foreach ($hand as $otherCard) {
                 if ($this->canCardsBeConnected($cardNum, $otherCard)) {
                     array_push($viableCards, $cardNum);
                     break;
@@ -120,7 +121,7 @@ class Game extends \Table
             }
 
             $cardNumReversed = strrev($cardNum);
-            foreach ($relevantCards as $otherCard) {
+            foreach ($hand as $otherCard) {
                 if ($this->canCardsBeConnected($cardNumReversed, $otherCard)) {
                     array_push($viableCards, $cardNumReversed);
                     break;
@@ -332,7 +333,7 @@ class Game extends \Table
     {
         $cards = array();
         foreach ($this->card_nums as $num) {
-            $cards[] = array('type' => 'upright', 'type_arg' => $num, 'flipped_num' => strrev($num), 'nbr' => 1);
+            $cards[] = array('type' => 'upright', 'type_arg' => $num, 'nbr' => 1);
         }
         $this->cards->createCards($cards, 'deck');
         $this->cards->shuffle('deck');
