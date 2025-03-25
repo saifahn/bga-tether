@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Bga\Games\TetherGame;
 
+use Bga\GameFramework\Actions\Types\JsonParam;
+
 require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
 
 class Game extends \Table
@@ -222,6 +224,29 @@ class Game extends \Table
     }
 
     /*
+    *
+    */
+
+    protected function createGroupObjectForUI(array $cards): array
+    {
+        $groups = array();
+        foreach ($cards as $card) {
+            $groups[$card['groupId']]['vertical'][$card['id']] = array(
+                "id" => $card['id'],
+                "number" => $card['cardNum'],
+                // TODO: base this on upright values
+                "upright" => true,
+            );
+            $groups[$card['groupId']]['horizontal'][$card['id']] = array(
+                "id" => $card['id'],
+                "number" => $card['cardNum'],
+                "upright" => false,
+            );
+        }
+        return $groups;
+    }
+
+    /*
      * Gather all information about current game situation (visible by the current player).
      *
      * The method is called each time the game interface is displayed to a player, i.e.:
@@ -246,6 +271,13 @@ class Game extends \Table
             WHERE card_location = 'adrift'"
         );
         $result['hand'] = $this->cards->getCardsInLocation('hand', $current_player_id);
+
+        $cardsByGroup = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type_arg cardNum, card_location_arg groupId
+            FROM card 
+            WHERE card_location = 'group'"
+        );
+        $result['board'] = $this->createGroupObjectForUI($cardsByGroup);
 
         return $result;
     }
@@ -397,6 +429,26 @@ class Game extends \Table
             ]);
         }
 
+
+        $this->gamestate->nextState('drawAtEndOfTurn');
+    }
+
+    function actConnectAstronauts(#[JsonParam] array $boardStateJSON)
+    {
+        try {
+            foreach ($boardStateJSON as $groupNum => $group) {
+                $cardIds = array();
+                foreach ($group as $key => $cardId) {
+                    array_push($cardIds, $cardId);
+                }
+                // TODO: add validation to make sure that these are valid moves
+                $this->cards->moveCards($cardIds, 'group', $groupNum);
+            }
+        } catch (\Exception $e) {
+            $this->error("Error while connecting astronauts");
+            $this->dump('err', $e);
+            return;
+        }
 
         $this->gamestate->nextState('drawAtEndOfTurn');
     }

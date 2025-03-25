@@ -330,6 +330,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                     }, undefined, false, 'red');
                     break;
                 case 'client_connectAstronautChooseNextCard':
+                    this.addActionButton('finish-connecting-button', _('Finish connecting astronauts'), function () {
+                        _this.finishConnectingAstronauts();
+                    });
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelConnectAstronautsAction();
                     }, undefined, false, 'red');
@@ -619,6 +622,22 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             }
             hand.removeChild(cardToRemove);
             this.highlightPlayableAstronauts();
+        };
+        TetherGame.prototype.getGroupsOfCardIDsFromBoardState = function () {
+            var groups = {};
+            for (var groupNum in this.boardState) {
+                var group = this.boardState[groupNum];
+                if (!group)
+                    break;
+                var vertical = Object.values(group.vertical);
+                groups[groupNum] = vertical.map(function (card) { return card.id; });
+            }
+            return groups;
+        };
+        TetherGame.prototype.finishConnectingAstronauts = function () {
+            this.bgaPerformAction('actConnectAstronauts', {
+                boardStateJSON: JSON.stringify(this.getGroupsOfCardIDsFromBoardState()),
+            });
         };
         TetherGame.prototype.notif_cardSetAdrift = function (notif) {
             var _a = notif.args, cardId = _a.card_id, cardNum = _a.card_num, playerId = _a.player_id;

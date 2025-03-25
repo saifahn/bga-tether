@@ -367,6 +367,13 @@ class TetherGame extends Gamegui {
       // @ts-expect-error
       case 'client_connectAstronautChooseNextCard':
         this.addActionButton(
+          'finish-connecting-button',
+          _('Finish connecting astronauts'),
+          () => {
+            this.finishConnectingAstronauts();
+          }
+        );
+        this.addActionButton(
           'cancel-button',
           _('Restart turn'),
           () => {
@@ -732,6 +739,23 @@ class TetherGame extends Gamegui {
     hand.removeChild(cardToRemove);
 
     this.highlightPlayableAstronauts();
+  }
+
+  getGroupsOfCardIDsFromBoardState() {
+    const groups: Record<string, string[]> = {};
+    for (const groupNum in this.boardState) {
+      const group = this.boardState[groupNum];
+      if (!group) break;
+      const vertical = Object.values(group.vertical);
+      groups[groupNum] = vertical.map((card) => card.id);
+    }
+    return groups;
+  }
+
+  finishConnectingAstronauts() {
+    this.bgaPerformAction('actConnectAstronauts', {
+      boardStateJSON: JSON.stringify(this.getGroupsOfCardIDsFromBoardState()),
+    });
   }
   // #endregion
 

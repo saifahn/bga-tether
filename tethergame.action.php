@@ -27,11 +27,14 @@ class action_tethergame extends APP_GameAction
 		}
 	}
 
-	public function connectAstronauts()
+	public function actConnectAstronauts()
 	{
 		self::setAjaxMode();
 
-		$this->game->connectAstronauts(  );
+		/** @var string $boardStateJSON */
+		$boardStateJSON = self::getArg('boardStateJSON', AT_json, true);
+
+		$this->game->actConnectAstronauts( $boardStateJSON );
 		self::ajaxResponse();
 	}
 
