@@ -9,14 +9,14 @@ gen(
   () => {
     const result = generateGroupUI({
       vertical: {
-        '02': { id: '2', number: '02', upright: true },
-        '03': { id: '3', number: '03', upright: true },
-        '01': { id: '1', number: '01', upright: true },
+        '02': { id: '2', number: '02', uprightFor: 'vertical' },
+        '03': { id: '3', number: '03', uprightFor: 'vertical' },
+        '01': { id: '1', number: '01', uprightFor: 'vertical' },
       },
       horizontal: {
-        '02': { id: '2', number: '02', upright: false },
-        '03': { id: '3', number: '03', upright: false },
-        '01': { id: '1', number: '01', upright: false },
+        '02': { id: '2', number: '02', uprightFor: 'horizontal' },
+        '03': { id: '3', number: '03', uprightFor: 'horizontal' },
+        '01': { id: '1', number: '01', uprightFor: 'horizontal' },
       },
     });
     assert.equal(result, [

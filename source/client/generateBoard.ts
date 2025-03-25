@@ -8,19 +8,18 @@ type Space = BoardCard | null;
 
 export interface Group {
   vertical: {
-    // currently, cardNum is also the upright number, not the played number
-    // TODO: might need to change this?
+    // TODO: might make the key the id instead of the number
     [cardNum: string]: {
       id: string;
       number: string;
-      upright: boolean;
+      uprightFor: 'vertical' | 'horizontal';
     };
   };
   horizontal: {
     [cardNum: string]: {
       id: string;
       number: string;
-      upright: boolean;
+      uprightFor: 'vertical' | 'horizontal';
     };
   };
 }
@@ -38,13 +37,7 @@ export function generateGroupUI(group: Group): GroupUI {
     return verticalCards
       .sort((a, b) => parseInt(a.number) - parseInt(b.number))
       .map((card) => {
-        const { upright, ...rest } = card;
-        return [
-          {
-            ...rest,
-            uprightFor: upright ? 'vertical' : 'horizontal',
-          },
-        ];
+        return [{ ...card }];
       });
   }
 
@@ -52,13 +45,7 @@ export function generateGroupUI(group: Group): GroupUI {
     return [
       horizontalCards
         .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-        .map((card) => {
-          const { upright, ...rest } = card;
-          return {
-            ...rest,
-            uprightFor: upright ? 'horizontal' : 'vertical',
-          };
-        }),
+        .map((card) => ({ ...card })),
     ];
   }
 

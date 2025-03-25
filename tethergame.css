@@ -56,6 +56,9 @@
   width: 200px;
   height: 279.2857142857px;
 }
+.card--flipped {
+  transform: rotate(180deg);
+}
 .card--adrift {
   transform: rotate(90deg);
   margin: -60px 20px;

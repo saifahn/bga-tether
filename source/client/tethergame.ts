@@ -118,8 +118,6 @@ class TetherGame extends Gamegui {
       const groupEl = document.createElement('div');
       groupEl.classList.add('group');
 
-      console.log(generatedGroup);
-
       for (const row of generatedGroup) {
         for (const card of row) {
           if (card) {
@@ -656,21 +654,22 @@ class TetherGame extends Gamegui {
    */
   createGroupFromCard(card: PlayedCard): Group {
     const uprightVertically =
-      this.playerDirection === 'vertical' && card.flipped;
+      this.playerDirection === 'vertical' && !card.flipped;
+    const uprightFor = uprightVertically ? 'vertical' : 'horizontal';
 
     return {
       vertical: {
         [card.number]: {
           id: card.id,
           number: card.number,
-          upright: uprightVertically,
+          uprightFor,
         },
       },
       horizontal: {
         [card.number]: {
           id: card.id,
           number: card.number,
-          upright: !uprightVertically,
+          uprightFor,
         },
       },
     };
@@ -710,16 +709,17 @@ class TetherGame extends Gamegui {
 
       const card = this.cardForConnecting;
       const uprightVertically =
-        this.playerDirection === 'vertical' && card.flipped;
+        this.playerDirection === 'vertical' && !card.flipped;
+      const uprightFor = uprightVertically ? 'vertical' : 'horizontal';
       group.vertical[card.number] = {
         id: card.id,
         number: card.number,
-        upright: uprightVertically,
+        uprightFor,
       };
       group.horizontal[card.number] = {
         id: card.id,
         number: card.number,
-        upright: !uprightVertically,
+        uprightFor,
       };
       this.updateBoardUI();
     }

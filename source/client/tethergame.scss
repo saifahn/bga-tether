@@ -64,6 +64,10 @@ $card-height: math.div(1955px, 7);
   width: $card-width;
   height: $card-height;
 
+  &--flipped {
+    transform: rotate(180deg);
+  }
+
   &--adrift {
     transform: rotate(90deg);
     margin: -60px 20px;

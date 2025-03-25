@@ -9,17 +9,6 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -82,20 +71,14 @@ define("generateBoard", ["require", "exports"], function (require, exports) {
             return verticalCards
                 .sort(function (a, b) { return parseInt(a.number) - parseInt(b.number); })
                 .map(function (card) {
-                var upright = card.upright, rest = __rest(card, ["upright"]);
-                return [
-                    __assign(__assign({}, rest), { uprightFor: upright ? 'vertical' : 'horizontal' }),
-                ];
+                return [__assign({}, card)];
             });
         }
         if (horizontalCards) {
             return [
                 horizontalCards
                     .sort(function (a, b) { return parseInt(a.number) - parseInt(b.number); })
-                    .map(function (card) {
-                    var upright = card.upright, rest = __rest(card, ["upright"]);
-                    return __assign(__assign({}, rest), { uprightFor: upright ? 'horizontal' : 'vertical' });
-                }),
+                    .map(function (card) { return (__assign({}, card)); }),
             ];
         }
         return [];
@@ -166,7 +149,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                 groups[group] = generatedGroup;
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
-                console.log(generatedGroup);
                 for (var _i = 0, generatedGroup_1 = generatedGroup; _i < generatedGroup_1.length; _i++) {
                     var row = generatedGroup_1[_i];
                     for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
@@ -552,20 +534,21 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
         };
         TetherGame.prototype.createGroupFromCard = function (card) {
             var _a, _b;
-            var uprightVertically = this.playerDirection === 'vertical' && card.flipped;
+            var uprightVertically = this.playerDirection === 'vertical' && !card.flipped;
+            var uprightFor = uprightVertically ? 'vertical' : 'horizontal';
             return {
                 vertical: (_a = {},
                     _a[card.number] = {
                         id: card.id,
                         number: card.number,
-                        upright: uprightVertically,
+                        uprightFor: uprightFor,
                     },
                     _a),
                 horizontal: (_b = {},
                     _b[card.number] = {
                         id: card.id,
                         number: card.number,
-                        upright: !uprightVertically,
+                        uprightFor: uprightFor,
                     },
                     _b),
             };
@@ -599,16 +582,17 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                     throw new Error('current group not found');
                 }
                 var card = this.cardForConnecting;
-                var uprightVertically = this.playerDirection === 'vertical' && card.flipped;
+                var uprightVertically = this.playerDirection === 'vertical' && !card.flipped;
+                var uprightFor = uprightVertically ? 'vertical' : 'horizontal';
                 group.vertical[card.number] = {
                     id: card.id,
                     number: card.number,
-                    upright: uprightVertically,
+                    uprightFor: uprightFor,
                 };
                 group.horizontal[card.number] = {
                     id: card.id,
                     number: card.number,
-                    upright: !uprightVertically,
+                    uprightFor: uprightFor,
                 };
                 this.updateBoardUI();
             }
