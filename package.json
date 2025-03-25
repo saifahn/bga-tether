@@ -7,7 +7,7 @@
     "build": "npx bga-build",
     "watch": "npx bga-build --watch",
     "test": "uvu -r tsm",
-    "test:watch": "npm test && watchlist source/client -- npm test"
+    "test:watch": "npm test; watchlist source/client -- npm test"
   },
   "repository": {
     "type": "git",
