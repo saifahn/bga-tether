@@ -35,6 +35,11 @@ class TetherGame extends Gamegui {
     handler: EventListener;
   }[] = [];
 
+  status:
+    | 'choosingAction'
+    | 'connectingAstronautsInitial'
+    | 'connectingAstronautsNext' = 'choosingAction';
+
   cardSetAdrift: {
     id: string;
     number: string;
@@ -112,6 +117,9 @@ class TetherGame extends Gamegui {
 
       const groupEl = document.createElement('div');
       groupEl.classList.add('group');
+
+      console.log(generatedGroup);
+
       for (const row of generatedGroup) {
         for (const card of row) {
           if (card) {
@@ -178,7 +186,6 @@ class TetherGame extends Gamegui {
     if (!this.player_id) {
       throw new Error('player_id not found');
     }
-    console.log(gamedatas.players);
     this.playerDirection =
       // TODO: figure out a way to extend this type definition or return it under
       // a different gamedatas key
@@ -224,11 +231,6 @@ class TetherGame extends Gamegui {
         // enable/disable any user interaction...
         break;
     }
-  }
-
-  canConnectAstronauts(playerId: string, args: Record<string, any>) {
-    console.log('canConnectAstronauts', playerId, args);
-    return args['_private'].length > 0;
   }
 
   /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
@@ -321,7 +323,10 @@ class TetherGame extends Gamegui {
           'play-upright-button',
           _(`Play card as ${num}`),
           () => {
-            this.handleChooseCardToPlay({ first: true, flipped: false });
+            this.handleChooseCardToPlay({
+              first: this.status === 'connectingAstronautsInitial',
+              flipped: false,
+            });
           }
         );
         const isNumPlayable = this.numberIsPlayable(num);
@@ -336,7 +341,10 @@ class TetherGame extends Gamegui {
           'play-flipped-button',
           _(`Play card as ${flippedNum}`),
           () => {
-            this.handleChooseCardToPlay({ first: true, flipped: true });
+            this.handleChooseCardToPlay({
+              first: this.status === 'connectingAstronautsInitial',
+              flipped: true,
+            });
           }
         );
         const isFlippedNumPlayable = this.numberIsPlayable(flippedNum);
@@ -358,7 +366,6 @@ class TetherGame extends Gamegui {
         break;
       // @ts-expect-error
       case 'client_connectAstronautChooseNextCard':
-        console.log(this.cardForConnecting);
         this.addActionButton(
           'cancel-button',
           _('Restart turn'),
@@ -557,6 +564,7 @@ class TetherGame extends Gamegui {
     this.clearSelectableCards();
     this.clearEventListeners();
     this.restoreServerGameState();
+    this.status = 'choosingAction';
   }
 
   cardIsPlayable(card: HTMLElement) {
@@ -578,6 +586,7 @@ class TetherGame extends Gamegui {
    */
   highlightPlayableAstronauts(call: 'initial' | 'further' = 'further') {
     if (call === 'initial') {
+      this.status = 'connectingAstronautsInitial';
       this.setClientState('client_connectAstronautInitial', {
         // @ts-expect-error
         descriptionmyturn: _(
@@ -585,6 +594,7 @@ class TetherGame extends Gamegui {
         ),
       });
     } else {
+      this.status = 'connectingAstronautsNext';
       this.setClientState('client_connectAstronautChooseNextCard', {
         // @ts-expect-error
         descriptionmyturn: _(

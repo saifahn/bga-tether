@@ -9,6 +9,17 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -70,15 +81,21 @@ define("generateBoard", ["require", "exports"], function (require, exports) {
         if (verticalCards) {
             return verticalCards
                 .sort(function (a, b) { return parseInt(a.number) - parseInt(b.number); })
-                .map(function (card) { return [
-                __assign(__assign({}, card), { uprightFor: card.upright ? 'vertical' : 'horizontal' }),
-            ]; });
+                .map(function (card) {
+                var upright = card.upright, rest = __rest(card, ["upright"]);
+                return [
+                    __assign(__assign({}, rest), { uprightFor: upright ? 'vertical' : 'horizontal' }),
+                ];
+            });
         }
         if (horizontalCards) {
             return [
                 horizontalCards
                     .sort(function (a, b) { return parseInt(a.number) - parseInt(b.number); })
-                    .map(function (card) { return (__assign(__assign({}, card), { uprightFor: card.upright ? 'horizontal' : 'vertical' })); }),
+                    .map(function (card) {
+                    var upright = card.upright, rest = __rest(card, ["upright"]);
+                    return __assign(__assign({}, rest), { uprightFor: upright ? 'horizontal' : 'vertical' });
+                }),
             ];
         }
         return [];
@@ -92,6 +109,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
         function TetherGame() {
             var _this = _super.call(this) || this;
             _this.eventHandlers = [];
+            _this.status = 'choosingAction';
             _this.cardSetAdrift = null;
             _this.cardForConnecting = null;
             _this.currentGroup = 0;
@@ -148,6 +166,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                 groups[group] = generatedGroup;
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
+                console.log(generatedGroup);
                 for (var _i = 0, generatedGroup_1 = generatedGroup; _i < generatedGroup_1.length; _i++) {
                     var row = generatedGroup_1[_i];
                     for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
@@ -204,7 +223,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             if (!this.player_id) {
                 throw new Error('player_id not found');
             }
-            console.log(gamedatas.players);
             this.playerDirection =
                 ((_a = gamedatas.players[this.player_id]) === null || _a === void 0 ? void 0 : _a.turn_order) === '1'
                     ? 'vertical'
@@ -235,10 +253,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                 default:
                     break;
             }
-        };
-        TetherGame.prototype.canConnectAstronauts = function (playerId, args) {
-            console.log('canConnectAstronauts', playerId, args);
-            return args['_private'].length > 0;
         };
         TetherGame.prototype.onUpdateActionButtons = function () {
             var _this = this;
@@ -289,7 +303,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                     }
                     var num = (_c = this.cardForConnecting) === null || _c === void 0 ? void 0 : _c.number;
                     this.addActionButton('play-upright-button', _("Play card as ".concat(num)), function () {
-                        _this.handleChooseCardToPlay({ first: true, flipped: false });
+                        _this.handleChooseCardToPlay({
+                            first: _this.status === 'connectingAstronautsInitial',
+                            flipped: false,
+                        });
                     });
                     var isNumPlayable = this.numberIsPlayable(num);
                     if (!isNumPlayable) {
@@ -298,7 +315,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                     }
                     var flippedNum = (_e = this.cardForConnecting) === null || _e === void 0 ? void 0 : _e.numReversed;
                     this.addActionButton('play-flipped-button', _("Play card as ".concat(flippedNum)), function () {
-                        _this.handleChooseCardToPlay({ first: true, flipped: true });
+                        _this.handleChooseCardToPlay({
+                            first: _this.status === 'connectingAstronautsInitial',
+                            flipped: true,
+                        });
                     });
                     var isFlippedNumPlayable = this.numberIsPlayable(flippedNum);
                     if (!isFlippedNumPlayable) {
@@ -310,7 +330,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                     }, undefined, false, 'red');
                     break;
                 case 'client_connectAstronautChooseNextCard':
-                    console.log(this.cardForConnecting);
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelConnectAstronautsAction();
                     }, undefined, false, 'red');
@@ -472,6 +491,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             this.clearSelectableCards();
             this.clearEventListeners();
             this.restoreServerGameState();
+            this.status = 'choosingAction';
         };
         TetherGame.prototype.cardIsPlayable = function (card) {
             return (this.numberIsPlayable(card.dataset['cardNumber']) ||
@@ -484,11 +504,13 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             var _this = this;
             if (call === void 0) { call = 'further'; }
             if (call === 'initial') {
+                this.status = 'connectingAstronautsInitial';
                 this.setClientState('client_connectAstronautInitial', {
                     descriptionmyturn: _('${you} must select an astronaut from your hand to begin connecting.'),
                 });
             }
             else {
+                this.status = 'connectingAstronautsNext';
                 this.setClientState('client_connectAstronautChooseNextCard', {
                     descriptionmyturn: _('Select an astronaut from your hand or the adrift zone to continue connecting.'),
                 });
