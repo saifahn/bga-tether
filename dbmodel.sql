@@ -16,10 +16,9 @@
 CREATE TABLE IF NOT EXISTS `card` (
   `card_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   -- `card_type`
-  -- orientation of cards, upright, uprightV, uprightH for vertical and horizontal players
-  -- upright is the default orientation for the hand
-  -- uprightV means that the card is on the board and shown with its number (card_type_arg) to the vertical player
-  -- uprightH is the same but for the horizontal player
+  -- orientation of cards, none, horizontal, vertical - indicating who it is upright for
+  -- none is used in adrift and hand
+  -- horizontal and vertical are used for the board
   `card_type` varchar(16) NOT NULL,
   -- `card_type_arg`
   -- the lower number of the card e.g. 01, 02, 23, 45

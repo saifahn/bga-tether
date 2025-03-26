@@ -653,9 +653,9 @@ class TetherGame extends Gamegui {
    * utility function to create a group representation from a card
    */
   createGroupFromCard(card: PlayedCard): Group {
-    const uprightVertically =
-      this.playerDirection === 'vertical' && !card.flipped;
-    const uprightFor = uprightVertically ? 'vertical' : 'horizontal';
+    const otherDirection =
+      this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
+    const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
 
     return {
       vertical: {
@@ -708,9 +708,9 @@ class TetherGame extends Gamegui {
       }
 
       const card = this.cardForConnecting;
-      const uprightVertically =
-        this.playerDirection === 'vertical' && !card.flipped;
-      const uprightFor = uprightVertically ? 'vertical' : 'horizontal';
+      const otherDirection =
+        this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
+      const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
       group.vertical[card.number] = {
         id: card.id,
         number: card.number,
@@ -741,13 +741,31 @@ class TetherGame extends Gamegui {
     this.highlightPlayableAstronauts();
   }
 
+  // TODO: this needs a lot of work, it's WIP just because I don't know if
+  // I need both vertical and horizontal on the group object
   getGroupsOfCardIDsFromBoardState() {
-    const groups: Record<string, string[]> = {};
+    type Card = {
+      id: string;
+      uprightFor: 'vertical' | 'horizontal';
+    };
+    type Groups = Record<string, Card[]>;
+    const groups: Groups = {};
+
     for (const groupNum in this.boardState) {
       const group = this.boardState[groupNum];
       if (!group) break;
-      const vertical = Object.values(group.vertical);
-      groups[groupNum] = vertical.map((card) => card.id);
+      for (const cardNum in group.vertical) {
+        if (!group['vertical']?.[cardNum]) {
+          return;
+        }
+        if (!groups[groupNum]) {
+          groups[groupNum] = [];
+        }
+        groups[groupNum].push({
+          id: group.vertical[cardNum]?.id,
+          uprightFor: group.vertical[cardNum]?.uprightFor,
+        });
+      }
     }
     return groups;
   }

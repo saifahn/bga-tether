@@ -47,6 +47,18 @@ $card-height: math.div(1955px, 7);
   border: 1px dashed darkseagreen;
 }
 
+#groups {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.group {
+  padding: 1rem;
+  border: 4px dashed darkslateblue;
+  border-radius: 4px;
+}
+
 .deck {
   border: 1px solid black;
   border-radius: 5px;

@@ -534,8 +534,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
         };
         TetherGame.prototype.createGroupFromCard = function (card) {
             var _a, _b;
-            var uprightVertically = this.playerDirection === 'vertical' && !card.flipped;
-            var uprightFor = uprightVertically ? 'vertical' : 'horizontal';
+            var otherDirection = this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
+            var uprightFor = card.flipped ? otherDirection : this.playerDirection;
             return {
                 vertical: (_a = {},
                     _a[card.number] = {
@@ -582,8 +582,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                     throw new Error('current group not found');
                 }
                 var card = this.cardForConnecting;
-                var uprightVertically = this.playerDirection === 'vertical' && !card.flipped;
-                var uprightFor = uprightVertically ? 'vertical' : 'horizontal';
+                var otherDirection = this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
+                var uprightFor = card.flipped ? otherDirection : this.playerDirection;
                 group.vertical[card.number] = {
                     id: card.id,
                     number: card.number,
@@ -608,13 +608,24 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             this.highlightPlayableAstronauts();
         };
         TetherGame.prototype.getGroupsOfCardIDsFromBoardState = function () {
+            var _a, _b, _c;
             var groups = {};
             for (var groupNum in this.boardState) {
                 var group = this.boardState[groupNum];
                 if (!group)
                     break;
-                var vertical = Object.values(group.vertical);
-                groups[groupNum] = vertical.map(function (card) { return card.id; });
+                for (var cardNum in group.vertical) {
+                    if (!((_a = group['vertical']) === null || _a === void 0 ? void 0 : _a[cardNum])) {
+                        return;
+                    }
+                    if (!groups[groupNum]) {
+                        groups[groupNum] = [];
+                    }
+                    groups[groupNum].push({
+                        id: (_b = group.vertical[cardNum]) === null || _b === void 0 ? void 0 : _b.id,
+                        uprightFor: (_c = group.vertical[cardNum]) === null || _c === void 0 ? void 0 : _c.uprightFor,
+                    });
+                }
             }
             return groups;
         };

@@ -234,13 +234,12 @@ class Game extends \Table
             $groups[$card['groupId']]['vertical'][$card['id']] = array(
                 "id" => $card['id'],
                 "number" => $card['cardNum'],
-                // TODO: base this on upright values
-                "upright" => true,
+                "uprightFor" => $card['uprightFor'],
             );
             $groups[$card['groupId']]['horizontal'][$card['id']] = array(
                 "id" => $card['id'],
                 "number" => $card['cardNum'],
-                "upright" => false,
+                "uprightFor" => $card['uprightFor'],
             );
         }
         return $groups;
@@ -273,7 +272,7 @@ class Game extends \Table
         $result['hand'] = $this->cards->getCardsInLocation('hand', $current_player_id);
 
         $cardsByGroup = $this->getCollectionFromDB(
-            "SELECT card_id id, card_type_arg cardNum, card_location_arg groupId
+            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupId
             FROM card 
             WHERE card_location = 'group'"
         );
@@ -365,7 +364,7 @@ class Game extends \Table
     {
         $cards = array();
         foreach ($this->card_nums as $num) {
-            $cards[] = array('type' => 'upright', 'type_arg' => $num, 'nbr' => 1);
+            $cards[] = array('type' => 'none', 'type_arg' => $num, 'nbr' => 1);
         }
         $this->cards->createCards($cards, 'deck');
         $this->cards->shuffle('deck');
@@ -435,20 +434,39 @@ class Game extends \Table
 
     function actConnectAstronauts(#[JsonParam] array $boardStateJSON)
     {
+        $horizontalUprightCardIds = array();
+        $verticalUprightCardIds = array();
+
         try {
             foreach ($boardStateJSON as $groupNum => $group) {
-                $cardIds = array();
-                foreach ($group as $key => $cardId) {
-                    array_push($cardIds, $cardId);
+                $moveCardIds = array();
+                foreach ($group as $card) {
+                    array_push($moveCardIds, $card['id']);
+
+                    if ($card['uprightFor'] == 'horizontal') {
+                        array_push($horizontalUprightCardIds, $card['id']);
+                    } else {
+                        array_push($verticalUprightCardIds, $card['id']);
+                    }
                 }
                 // TODO: add validation to make sure that these are valid moves
-                $this->cards->moveCards($cardIds, 'group', $groupNum);
+                $this->cards->moveCards($moveCardIds, 'group', $groupNum);
+            }
+            if (count($horizontalUprightCardIds)) {
+                $horizontalCardIds = '(' . implode(',', $horizontalUprightCardIds) . ')';
+                $this->DbQuery("UPDATE card SET card_type = 'horizontal' WHERE card_id IN $horizontalCardIds");
+            }
+
+            if (count($verticalUprightCardIds)) {
+                $verticalCardIds = '(' . implode(',', $verticalUprightCardIds) . ')';
+                $this->DbQuery("UPDATE card SET card_type = 'vertical' WHERE card_id IN $verticalCardIds");
             }
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");
             $this->dump('err', $e);
             return;
         }
+
 
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
