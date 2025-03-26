@@ -33,7 +33,12 @@
     "type": "activeplayer",
     "args": "argPlayerTurn",
     "possibleactions": {
-      "connectAstronauts": [],
+      "actConnectAstronauts": [
+        {
+          "name": "boardStateJSON",
+          "type": "AT_json"
+        }
+      ],
       "actSetAdrift": [
         {
           "name": "cardDrawnId",
@@ -54,9 +59,17 @@
       ]
     },
     "transitions": {
-      "finishConnectingAstronauts": 30,
+      "finishConnectingAstronauts": 15,
       "drawAtEndOfTurn": 25
     }
+  },
+
+  "15": {
+    "name": "finishConnectingAstronauts",
+    "description": "${actplayer} has connected astronauts",
+    "type": "game",
+    "action": "stFinishConnectingAstronauts",
+    "transitions": { "nextPlayer": 25 }
   },
 
   "25": {

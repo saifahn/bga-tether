@@ -18,6 +18,14 @@
 
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
+import { BoardUI, generateGroupUI, Group, GroupUI } from './generateBoard';
+
+interface PlayedCard {
+  status: 'played';
+  id: string;
+  number: string; // this is the lower number of the card, not necessarily what it was played as
+  flipped: boolean;
+}
 
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
@@ -27,10 +35,35 @@ class TetherGame extends Gamegui {
     handler: EventListener;
   }[] = [];
 
+  status:
+    | 'choosingAction'
+    | 'connectingAstronautsInitial'
+    | 'connectingAstronautsNext' = 'choosingAction';
+
   cardSetAdrift: {
     id: string;
     number: string;
   } | null = null;
+
+  cardForConnecting:
+    | {
+        status: 'choosingFromHand';
+        id: string;
+        number: string;
+        numReversed: string;
+      }
+    | PlayedCard
+    | null = null;
+
+  currentGroup = 0;
+
+  board: BoardUI = {};
+
+  boardState: BGA.Gamedatas['board'] = {};
+
+  playerDirection: 'horizontal' | 'vertical' | null = null;
+
+  playableCardNumbers: string[] = [];
 
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
@@ -38,20 +71,69 @@ class TetherGame extends Gamegui {
     console.log('tethergame constructor');
   }
 
-  createCardElement(cardId: string, cardNum: string) {
+  createCardElement({
+    id,
+    number,
+    flipped,
+  }: {
+    id: string;
+    number: string;
+    flipped: boolean;
+  }) {
     const cardElement = document.createElement('div');
     cardElement.classList.add('card');
-    cardElement.dataset['cardId'] = cardId;
-    cardElement.dataset['cardNumber'] = cardNum;
-    cardElement.id = `card-${cardNum}`;
+    cardElement.dataset['cardId'] = id;
+    cardElement.dataset['cardNumber'] = number;
+    cardElement.dataset['cardNumReversed'] = number
+      .split('')
+      .reverse()
+      .join('');
+    cardElement.id = `card-${number}`;
+    if (flipped) {
+      cardElement.classList.add('card--flipped');
+    }
     return cardElement;
   }
 
-  createAdriftCardElement(cardId: string, cardNum: string) {
-    const cardElement = this.createCardElement(cardId, cardNum);
+  createAdriftCardElement(id: string, number: string) {
+    const cardElement = this.createCardElement({ id, number, flipped: false });
     cardElement.classList.add('card--adrift');
     cardElement.classList.add('js-adrift');
     return cardElement;
+  }
+
+  // TODO: this redraw function needs to handle animations in the future?
+  updateBoardUI() {
+    const groupsArea = document.getElementById('groups');
+    if (!groupsArea) {
+      throw new Error('groups not found');
+    }
+    groupsArea.innerHTML = '';
+
+    let groups: Record<string, GroupUI> = {};
+    for (const group in this.boardState) {
+      const generatedGroup = generateGroupUI(this.boardState[group]!);
+      groups[group] = generatedGroup;
+
+      const groupEl = document.createElement('div');
+      groupEl.classList.add('group');
+
+      for (const row of generatedGroup) {
+        for (const card of row) {
+          if (card) {
+            const flipped = card.uprightFor !== this.playerDirection;
+            const cardEl = this.createCardElement({
+              id: card.id,
+              number: card.number,
+              flipped,
+            });
+            groupEl.appendChild(cardEl);
+          }
+        }
+      }
+      groupsArea.appendChild(groupEl);
+    }
+    this.board = groups;
   }
 
   /** See {@link  BGA.Gamegui#setup} for more information. */
@@ -73,6 +155,11 @@ class TetherGame extends Gamegui {
     deck.classList.add('js-deck');
     adriftZone.appendChild(deck);
 
+    const groupsArea = document.createElement('div');
+    groupsArea.id = 'groups';
+    groupsArea.classList.add('groups');
+    gamePlayArea.appendChild(groupsArea);
+
     const hand = document.createElement('div');
     hand.id = 'hand';
     gamePlayArea.appendChild(hand);
@@ -86,12 +173,27 @@ class TetherGame extends Gamegui {
     }
 
     for (const cardId in gamedatas.hand) {
-      const cardEl = this.createCardElement(
-        cardId,
-        gamedatas.hand[cardId]!.type_arg
-      );
+      const cardEl = this.createCardElement({
+        id: cardId,
+        number: gamedatas.hand[cardId]!.type_arg,
+        flipped: false,
+      });
       hand.appendChild(cardEl);
     }
+
+    if (!this.player_id) {
+      throw new Error('player_id not found');
+    }
+    this.playerDirection =
+      // TODO: figure out a way to extend this type definition or return it under
+      // a different gamedatas key
+      // @ts-expect-error
+      gamedatas.players[this.player_id]?.turnOrder === '1'
+        ? 'vertical'
+        : 'horizontal';
+
+    this.boardState = gamedatas.board;
+    this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
@@ -109,6 +211,9 @@ class TetherGame extends Gamegui {
     console.log('Entering state: ' + stateName, state);
 
     switch (stateName) {
+      case 'playerTurn':
+        this.playableCardNumbers = (state.args['_private'] as string[]) || [];
+        break;
       default:
         // enable/disable any user interaction...
         break;
@@ -126,11 +231,6 @@ class TetherGame extends Gamegui {
     }
   }
 
-  canConnectAstronauts(playerId: string, args: Record<string, any>) {
-    console.log('canConnectAstronauts', playerId, args);
-    return args['_private'].length > 0;
-  }
-
   /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
   override onUpdateActionButtons(
     ...[stateName, args]: BGA.GameStateTuple<['name', 'args']>
@@ -141,16 +241,15 @@ class TetherGame extends Gamegui {
 
     switch (stateName) {
       case 'playerTurn':
-        // Add buttons to action bar...
+        this.playableCardNumbers = (args['_private'] as string[]) || [];
         this.addActionButton(
           'connect-astronauts-button',
           _('Connect Astronauts'),
           () => {
-            console.log('not implemented yet');
+            this.highlightPlayableAstronauts('initial');
           }
         );
-        if (!this.canConnectAstronauts(this.player_id?.toString()!, args)) {
-          console.log('disabling connect astronauts button', this.player_id);
+        if (this.playableCardNumbers.length === 0) {
           document
             .getElementById('connect-astronauts-button')
             ?.classList.add('disabled');
@@ -191,6 +290,92 @@ class TetherGame extends Gamegui {
           _('Restart turn'),
           () => {
             this.cancelSetAdriftAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
+        break;
+      // @ts-expect-error
+      case 'client_connectAstronautInitial':
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelConnectAstronautsAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
+        break;
+      // @ts-expect-error
+      case 'client_chooseCardSideToPlay':
+        if (this.cardForConnecting?.status !== 'choosingFromHand') {
+          throw new Error(
+            'cardForConnecting not in correct state for this call'
+          );
+        }
+        const num = this.cardForConnecting?.number;
+        this.addActionButton(
+          'play-upright-button',
+          _(`Play card as ${num}`),
+          () => {
+            this.handleChooseCardToPlay({
+              first: this.status === 'connectingAstronautsInitial',
+              flipped: false,
+            });
+          }
+        );
+        const isNumPlayable = this.numberIsPlayable(num);
+        if (!isNumPlayable) {
+          document
+            .getElementById('play-upright-button')
+            ?.classList.add('disabled');
+        }
+
+        const flippedNum = this.cardForConnecting?.numReversed;
+        this.addActionButton(
+          'play-flipped-button',
+          _(`Play card as ${flippedNum}`),
+          () => {
+            this.handleChooseCardToPlay({
+              first: this.status === 'connectingAstronautsInitial',
+              flipped: true,
+            });
+          }
+        );
+        const isFlippedNumPlayable = this.numberIsPlayable(flippedNum);
+        if (!isFlippedNumPlayable) {
+          document
+            .getElementById('play-flipped-button')
+            ?.classList.add('disabled');
+        }
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelConnectAstronautsAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
+        break;
+      // @ts-expect-error
+      case 'client_connectAstronautChooseNextCard':
+        this.addActionButton(
+          'finish-connecting-button',
+          _('Finish connecting astronauts'),
+          () => {
+            this.finishConnectingAstronauts();
+          }
+        );
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelConnectAstronautsAction();
           },
           undefined,
           false,
@@ -240,6 +425,7 @@ class TetherGame extends Gamegui {
   cancelSetAdriftAction() {
     this.clearSelectedCards();
     this.clearSelectableCards();
+    this.clearEventListeners();
     this.cardSetAdrift = null;
     this.restoreServerGameState();
   }
@@ -290,6 +476,7 @@ class TetherGame extends Gamegui {
       number: e.target.dataset['cardNumber']!,
     };
     this.clearSelectableCards();
+    this.clearEventListeners();
 
     this.setClientState('client_setAdriftChooseDraw', {
       // @ts-expect-error
@@ -373,6 +560,220 @@ class TetherGame extends Gamegui {
       this.restoreServerGameState();
       console.log('error while trying to perform actSetAdrift', e);
     }
+  }
+  // #endregion
+
+  // #region Connect Astronauts Action methods
+  cancelConnectAstronautsAction() {
+    this.clearSelectedCards();
+    this.clearSelectableCards();
+    this.clearEventListeners();
+    this.restoreServerGameState();
+    this.status = 'choosingAction';
+  }
+
+  cardIsPlayable(card: HTMLElement) {
+    return (
+      this.numberIsPlayable(card.dataset['cardNumber']) ||
+      this.numberIsPlayable(card.dataset['cardNumReversed'])
+    );
+  }
+
+  numberIsPlayable(number: string | undefined) {
+    return (
+      typeof number === 'string' && this.playableCardNumbers.includes(number)
+    );
+  }
+
+  /**
+   * Called for each time the playable astronauts need to be highlighted during
+   * the connect astronauts action.
+   */
+  highlightPlayableAstronauts(call: 'initial' | 'further' = 'further') {
+    if (call === 'initial') {
+      this.status = 'connectingAstronautsInitial';
+      this.setClientState('client_connectAstronautInitial', {
+        // @ts-expect-error
+        descriptionmyturn: _(
+          '${you} must select an astronaut from your hand to begin connecting.'
+        ),
+      });
+    } else {
+      this.status = 'connectingAstronautsNext';
+      this.setClientState('client_connectAstronautChooseNextCard', {
+        // @ts-expect-error
+        descriptionmyturn: _(
+          'Select an astronaut from your hand or the adrift zone to continue connecting.'
+        ),
+      });
+    }
+
+    // enable the right buttons
+    const handler = (e: Event) => this.handleChooseCardFromHandConnect(e);
+    this.getCardElementsFromHand().forEach((card) => {
+      if (card instanceof HTMLElement) {
+        if (this.cardIsPlayable(card)) {
+          card.classList.add('card--selectable');
+          card.addEventListener('click', handler);
+          this.eventHandlers.push({
+            element: card,
+            event: 'click',
+            handler,
+          });
+        }
+      }
+    });
+  }
+
+  handleChooseCardFromHandConnect(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error(
+        "handleChooseCardFromHandConnect called when it shouldn't have been"
+      );
+    }
+    this.clearSelectableCards();
+    this.clearEventListeners();
+    e.target.classList.add('card--selected');
+
+    this.cardForConnecting = {
+      status: 'choosingFromHand',
+      id: e.target.dataset['cardId']!,
+      number: e.target.dataset['cardNumber']!,
+      numReversed: e.target.dataset['cardNumReversed']!,
+    };
+    this.setClientState('client_chooseCardSideToPlay', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must choose which side of the card to play.'
+      ),
+    });
+  }
+
+  /**
+   * utility function to create a group representation from a card
+   */
+  createGroupFromCard(card: PlayedCard): Group {
+    const otherDirection =
+      this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
+    const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
+
+    return {
+      vertical: {
+        [card.number]: {
+          id: card.id,
+          number: card.number,
+          uprightFor,
+        },
+      },
+      horizontal: {
+        [card.number]: {
+          id: card.id,
+          number: card.number,
+          uprightFor,
+        },
+      },
+    };
+  }
+
+  handleChooseCardToPlay(
+    { first, flipped } = { first: false, flipped: false }
+  ) {
+    if (!this.cardForConnecting) {
+      throw new Error('cardForConnecting not set');
+    }
+    if (this.cardForConnecting.status !== 'choosingFromHand') {
+      throw new Error('cardForConnecting not in correct state for this call');
+    }
+    this.cardForConnecting = {
+      status: 'played',
+      id: this.cardForConnecting.id,
+      number: this.cardForConnecting.number,
+      flipped,
+    };
+
+    if (first) {
+      if (!this.boardState) {
+        this.boardState = {};
+      }
+      const existingGroupsLen = Object.keys(this.boardState).length;
+      this.currentGroup = existingGroupsLen + 1;
+      this.boardState[this.currentGroup] = this.createGroupFromCard(
+        this.cardForConnecting
+      );
+      this.updateBoardUI();
+    } else {
+      const group = this.boardState[this.currentGroup];
+      if (!group) {
+        throw new Error('current group not found');
+      }
+
+      const card = this.cardForConnecting;
+      const otherDirection =
+        this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
+      const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
+      group.vertical[card.number] = {
+        id: card.id,
+        number: card.number,
+        uprightFor,
+      };
+      group.horizontal[card.number] = {
+        id: card.id,
+        number: card.number,
+        uprightFor,
+      };
+      this.updateBoardUI();
+    }
+
+    // TODO: this should be part of the board state? cards in hand
+    // move the card from hand to a new group
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    const cardToRemove = hand.querySelector(
+      `[data-card-id="${this.cardForConnecting.id}"]`
+    );
+    if (!cardToRemove) {
+      throw new Error('card to remove not found');
+    }
+    hand.removeChild(cardToRemove);
+
+    this.highlightPlayableAstronauts();
+  }
+
+  // TODO: this needs a lot of work, it's WIP just because I don't know if
+  // I need both vertical and horizontal on the group object
+  getGroupsOfCardIDsFromBoardState() {
+    type Card = {
+      id: string;
+      uprightFor: 'vertical' | 'horizontal';
+    };
+    type Groups = Record<string, Card[]>;
+    const groups: Groups = {};
+
+    for (const groupNum in this.boardState) {
+      const group = this.boardState[groupNum];
+      if (!group) break;
+      for (const cardNum in group.vertical) {
+        if (!group['vertical']?.[cardNum]) {
+          return;
+        }
+        if (!groups[groupNum]) {
+          groups[groupNum] = [];
+        }
+        groups[groupNum].push({
+          id: group.vertical[cardNum]?.id,
+          uprightFor: group.vertical[cardNum]?.uprightFor,
+        });
+      }
+    }
+    return groups;
+  }
+
+  finishConnectingAstronauts() {
+    this.bgaPerformAction('actConnectAstronauts', {
+      boardStateJSON: JSON.stringify(this.getGroupsOfCardIDsFromBoardState()),
+    });
   }
   // #endregion
 
@@ -472,10 +873,11 @@ class TetherGame extends Gamegui {
   notif_drawFromDeck(notif: BGA.Notif<'drawFromDeck'>) {
     console.log('notif_drawFromDeck', notif);
 
-    const cardEl = this.createCardElement(
-      notif.args.card_id,
-      notif.args.card_num
-    );
+    const cardEl = this.createCardElement({
+      id: notif.args.card_id,
+      number: notif.args.card_num,
+      flipped: false,
+    });
     const hand = document.getElementById('hand');
     if (!hand) {
       throw new Error('hand not found');
@@ -503,10 +905,11 @@ class TetherGame extends Gamegui {
     if (notif.args.player_id !== this.player_id) {
       return;
     }
-    const cardEl = this.createCardElement(
-      notif.args.card_id,
-      notif.args.card_num
-    );
+    const cardEl = this.createCardElement({
+      id: notif.args.card_id,
+      number: notif.args.card_num,
+      flipped: false,
+    });
     const hand = document.getElementById('hand');
     if (!hand) {
       throw new Error('hand not found');

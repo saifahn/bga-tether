@@ -24,9 +24,10 @@
 */
 #adrift-zone {
   padding: 40px;
-  margin-left: 20px;
-  background-color: azure;
-  border: 1px dashed darksalmon;
+  margin: 20px;
+  display: inline-block;
+  background-color: darksalmon;
+  border-radius: 4px;
 }
 
 #hand {
@@ -36,6 +37,18 @@
   padding: 10px;
   background-color: cornsilk;
   border: 1px dashed darkseagreen;
+}
+
+#groups {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.group {
+  padding: 1rem;
+  border: 4px dashed darkslateblue;
+  border-radius: 4px;
 }
 
 .deck {
@@ -54,6 +67,9 @@
   border-radius: 10px;
   width: 200px;
   height: 279.2857142857px;
+}
+.card--flipped {
+  transform: rotate(180deg);
 }
 .card--adrift {
   transform: rotate(90deg);

@@ -20,12 +20,13 @@ declare(strict_types=1);
 
 namespace Bga\Games\TetherGame;
 
+use Bga\GameFramework\Actions\Types\JsonParam;
+
 require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
 
 class Game extends \Table
 {
-    private static array $CARD_TYPES;
-    private array $card_ids;
+    private array $card_nums;
     public mixed $cards;
 
     /**
@@ -52,7 +53,7 @@ class Game extends \Table
         $this->cards = $this->getNew("module.common.deck");
         $this->cards->init("card");
 
-        $this->card_ids = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13', '14', '15', '16', '17', '18', '19', '22', '23', '24', '25', '26', '27', '28', '29', '33', '34', '35', '36', '37', '38', '39', '44', '45', '46', '47', '48', '49', '55', '56', '57', '58', '59', '66', '67', '68', '69', '77', '78', '79', '88', '89'];
+        $this->card_nums = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13', '14', '15', '16', '17', '18', '19', '22', '23', '24', '25', '26', '27', '28', '29', '33', '34', '35', '36', '37', '38', '39', '44', '45', '46', '47', '48', '49', '55', '56', '57', '58', '59', '66', '67', '68', '69', '77', '78', '79', '88', '89'];
 
 
         /* example of notification decorator.
@@ -107,13 +108,14 @@ class Game extends \Table
         // TODO: improve this with a better SQL call that gets all the necessary data in one go
         // adrift + hand
         $hand = $this->cards->getCardsInLocation('hand', $player_id);
-        $adrift = $this->cards->getCardsInLocation('adrift');
-        $relevantCards = array_merge($hand, $adrift);
-        $viableCards = [];
+        // $adrift = $this->cards->getCardsInLocation('adrift');
+        // $relevantCards = array_merge($hand, $adrift);
+        $viableCards = array();
+
         foreach ($hand as $card) {
             // check both sides of the card
             $cardNum = $card['type_arg'];
-            foreach ($relevantCards as $otherCard) {
+            foreach ($hand as $otherCard) {
                 if ($this->canCardsBeConnected($cardNum, $otherCard)) {
                     array_push($viableCards, $cardNum);
                     break;
@@ -121,7 +123,7 @@ class Game extends \Table
             }
 
             $cardNumReversed = strrev($cardNum);
-            foreach ($relevantCards as $otherCard) {
+            foreach ($hand as $otherCard) {
                 if ($this->canCardsBeConnected($cardNumReversed, $otherCard)) {
                     array_push($viableCards, $cardNumReversed);
                     break;
@@ -222,6 +224,28 @@ class Game extends \Table
     }
 
     /*
+    *
+    */
+
+    protected function createGroupObjectForUI(array $cards): array
+    {
+        $groups = array();
+        foreach ($cards as $card) {
+            $groups[$card['groupId']]['vertical'][$card['id']] = array(
+                "id" => $card['id'],
+                "number" => $card['cardNum'],
+                "uprightFor" => $card['uprightFor'],
+            );
+            $groups[$card['groupId']]['horizontal'][$card['id']] = array(
+                "id" => $card['id'],
+                "number" => $card['cardNum'],
+                "uprightFor" => $card['uprightFor'],
+            );
+        }
+        return $groups;
+    }
+
+    /*
      * Gather all information about current game situation (visible by the current player).
      *
      * The method is called each time the game interface is displayed to a player, i.e.:
@@ -238,9 +262,7 @@ class Game extends \Table
 
         // Get information about players.
         // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
-        $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score` FROM `player`"
-        );
+        $result["players"] = $this->getCollectionFromDb("SELECT player_id id, player_score score, player_no turnOrder FROM player");
 
         $result['adrift'] = $this->getCollectionFromDB(
             "SELECT card_id id, card_type_arg cardNum
@@ -248,6 +270,13 @@ class Game extends \Table
             WHERE card_location = 'adrift'"
         );
         $result['hand'] = $this->cards->getCardsInLocation('hand', $current_player_id);
+
+        $cardsByGroup = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupId
+            FROM card 
+            WHERE card_location = 'group'"
+        );
+        $result['board'] = $this->createGroupObjectForUI($cardsByGroup);
 
         return $result;
     }
@@ -334,8 +363,8 @@ class Game extends \Table
     function createDeck()
     {
         $cards = array();
-        foreach ($this->card_ids as $id) {
-            $cards[] = array('type' => 'upright', 'type_arg' => $id, 'nbr' => 1);
+        foreach ($this->card_nums as $num) {
+            $cards[] = array('type' => 'none', 'type_arg' => $num, 'nbr' => 1);
         }
         $this->cards->createCards($cards, 'deck');
         $this->cards->shuffle('deck');
@@ -397,6 +426,45 @@ class Game extends \Table
                 'card_id' => $cardDrawnId,
                 'card_num' => $cardDrawnNum,
             ]);
+        }
+
+
+        $this->gamestate->nextState('drawAtEndOfTurn');
+    }
+
+    function actConnectAstronauts(#[JsonParam] array $boardStateJSON)
+    {
+        $horizontalUprightCardIds = array();
+        $verticalUprightCardIds = array();
+
+        try {
+            foreach ($boardStateJSON as $groupNum => $group) {
+                $moveCardIds = array();
+                foreach ($group as $card) {
+                    array_push($moveCardIds, $card['id']);
+
+                    if ($card['uprightFor'] == 'horizontal') {
+                        array_push($horizontalUprightCardIds, $card['id']);
+                    } else {
+                        array_push($verticalUprightCardIds, $card['id']);
+                    }
+                }
+                // TODO: add validation to make sure that these are valid moves
+                $this->cards->moveCards($moveCardIds, 'group', $groupNum);
+            }
+            if (count($horizontalUprightCardIds)) {
+                $horizontalCardIds = '(' . implode(',', $horizontalUprightCardIds) . ')';
+                $this->DbQuery("UPDATE card SET card_type = 'horizontal' WHERE card_id IN $horizontalCardIds");
+            }
+
+            if (count($verticalUprightCardIds)) {
+                $verticalCardIds = '(' . implode(',', $verticalUprightCardIds) . ')';
+                $this->DbQuery("UPDATE card SET card_type = 'vertical' WHERE card_id IN $verticalCardIds");
+            }
+        } catch (\Exception $e) {
+            $this->error("Error while connecting astronauts");
+            $this->dump('err', $e);
+            return;
         }
 
 

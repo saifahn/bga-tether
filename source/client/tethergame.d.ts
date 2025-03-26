@@ -7,6 +7,7 @@
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  */
+
 declare namespace BGA {
   /** Goto {@link Gamedatas} or hover name for info. */
   interface Gamedatas extends Record<string, any> {
@@ -24,6 +25,9 @@ declare namespace BGA {
         location: string;
         location_arg: string;
       };
+    };
+    board: {
+      [groupNum: string]: import('./generateBoard').Group;
     };
   }
 
