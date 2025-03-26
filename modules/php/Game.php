@@ -262,7 +262,7 @@ class Game extends \Table
 
         // Get information about players.
         // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
-        $result["players"] = $this->getCollectionFromDb("SELECT player_id id, player_score score, player_no turn_order FROM player");
+        $result["players"] = $this->getCollectionFromDb("SELECT player_id id, player_score score, player_no turnOrder FROM player");
 
         $result['adrift'] = $this->getCollectionFromDB(
             "SELECT card_id id, card_type_arg cardNum

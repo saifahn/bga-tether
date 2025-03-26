@@ -206,7 +206,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                 throw new Error('player_id not found');
             }
             this.playerDirection =
-                ((_a = gamedatas.players[this.player_id]) === null || _a === void 0 ? void 0 : _a.turn_order) === '1'
+                ((_a = gamedatas.players[this.player_id]) === null || _a === void 0 ? void 0 : _a.turnOrder) === '1'
                     ? 'vertical'
                     : 'horizontal';
             this.boardState = gamedatas.board;

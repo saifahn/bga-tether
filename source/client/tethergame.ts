@@ -188,7 +188,7 @@ class TetherGame extends Gamegui {
       // TODO: figure out a way to extend this type definition or return it under
       // a different gamedatas key
       // @ts-expect-error
-      gamedatas.players[this.player_id]?.turn_order === '1'
+      gamedatas.players[this.player_id]?.turnOrder === '1'
         ? 'vertical'
         : 'horizontal';
 
