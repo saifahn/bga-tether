@@ -98,6 +98,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             _this.currentGroup = 0;
             _this.board = {};
             _this.gameState = {
+                adrift: {},
                 board: {},
                 hand: {},
             };
@@ -141,6 +142,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             return cardElement;
         };
         TetherGame.prototype.updateBoardUI = function () {
+            var adriftZone = document.getElementById('adrift-zone');
+            if (!adriftZone) {
+                throw new Error('adrift-zone not found');
+            }
+            adriftZone.innerHTML = '';
+            var deck = document.createElement('div');
+            deck.id = 'deck';
+            deck.classList.add('deck');
+            deck.classList.add('js-deck');
+            adriftZone.appendChild(deck);
+            for (var cardId in this.gameState.adrift) {
+                var cardEl = this.createAdriftCardElement(cardId, this.gameState.adrift[cardId].cardNum);
+                adriftZone.appendChild(cardEl);
+            }
             var hand = document.getElementById('hand');
             if (!hand) {
                 throw new Error('hand not found');
@@ -194,11 +209,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             var adriftZone = document.createElement('div');
             adriftZone.id = 'adrift-zone';
             gamePlayArea.appendChild(adriftZone);
-            var deck = document.createElement('div');
-            deck.id = 'deck';
-            deck.classList.add('deck');
-            deck.classList.add('js-deck');
-            adriftZone.appendChild(deck);
             var groupsArea = document.createElement('div');
             groupsArea.id = 'groups';
             groupsArea.classList.add('groups');
@@ -206,10 +216,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             var hand = document.createElement('div');
             hand.id = 'hand';
             gamePlayArea.appendChild(hand);
-            for (var cardId in gamedatas.adrift) {
-                var cardEl = this.createAdriftCardElement(cardId, gamedatas.adrift[cardId].cardNum);
-                adriftZone.appendChild(cardEl);
-            }
             if (!this.player_id) {
                 throw new Error('player_id not found');
             }
@@ -217,6 +223,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                 ((_a = gamedatas.players[this.player_id]) === null || _a === void 0 ? void 0 : _a.turnOrder) === '1'
                     ? 'vertical'
                     : 'horizontal';
+            this.gameState.adrift = gamedatas.adrift;
             this.gameState.board = gamedatas.board;
             this.gameState.hand = gamedatas.hand;
             this.updateBoardUI();

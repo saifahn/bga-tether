@@ -60,9 +60,11 @@ class TetherGame extends Gamegui {
   board: BoardUI = {};
 
   gameState: {
+    adrift: BGA.Gamedatas['adrift'];
     board: BGA.Gamedatas['board'];
     hand: BGA.Gamedatas['hand'];
   } = {
+    adrift: {},
     board: {},
     hand: {},
   };
@@ -110,6 +112,26 @@ class TetherGame extends Gamegui {
 
   // TODO: this redraw function needs to handle animations in the future?
   updateBoardUI() {
+    const adriftZone = document.getElementById('adrift-zone');
+    if (!adriftZone) {
+      throw new Error('adrift-zone not found');
+    }
+    adriftZone.innerHTML = '';
+
+    const deck = document.createElement('div');
+    deck.id = 'deck';
+    deck.classList.add('deck');
+    deck.classList.add('js-deck');
+    adriftZone.appendChild(deck);
+
+    for (const cardId in this.gameState.adrift) {
+      const cardEl = this.createAdriftCardElement(
+        cardId,
+        this.gameState.adrift[cardId]!.cardNum
+      );
+      adriftZone.appendChild(cardEl);
+    }
+
     const hand = document.getElementById('hand');
     if (!hand) {
       throw new Error('hand not found');
@@ -169,12 +191,6 @@ class TetherGame extends Gamegui {
     adriftZone.id = 'adrift-zone';
     gamePlayArea.appendChild(adriftZone);
 
-    const deck = document.createElement('div');
-    deck.id = 'deck';
-    deck.classList.add('deck');
-    deck.classList.add('js-deck');
-    adriftZone.appendChild(deck);
-
     const groupsArea = document.createElement('div');
     groupsArea.id = 'groups';
     groupsArea.classList.add('groups');
@@ -183,14 +199,6 @@ class TetherGame extends Gamegui {
     const hand = document.createElement('div');
     hand.id = 'hand';
     gamePlayArea.appendChild(hand);
-
-    for (const cardId in gamedatas.adrift) {
-      const cardEl = this.createAdriftCardElement(
-        cardId,
-        gamedatas.adrift[cardId]!.cardNum
-      );
-      adriftZone.appendChild(cardEl);
-    }
 
     if (!this.player_id) {
       throw new Error('player_id not found');
@@ -203,6 +211,7 @@ class TetherGame extends Gamegui {
         ? 'vertical'
         : 'horizontal';
 
+    this.gameState.adrift = gamedatas.adrift;
     this.gameState.board = gamedatas.board;
     this.gameState.hand = gamedatas.hand;
     this.updateBoardUI();
