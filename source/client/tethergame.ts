@@ -61,8 +61,10 @@ class TetherGame extends Gamegui {
 
   gameState: {
     board: BGA.Gamedatas['board'];
+    hand: BGA.Gamedatas['hand'];
   } = {
     board: {},
+    hand: {},
   };
 
   playerDirection: 'horizontal' | 'vertical' | null = null;
@@ -108,6 +110,20 @@ class TetherGame extends Gamegui {
 
   // TODO: this redraw function needs to handle animations in the future?
   updateBoardUI() {
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    hand.innerHTML = '';
+    for (const cardId in this.gameState.hand) {
+      const cardEl = this.createCardElement({
+        id: cardId,
+        number: this.gameState.hand[cardId]!.type_arg,
+        flipped: false,
+      });
+      hand.appendChild(cardEl);
+    }
+
     const groupsArea = document.getElementById('groups');
     if (!groupsArea) {
       throw new Error('groups not found');
@@ -176,15 +192,6 @@ class TetherGame extends Gamegui {
       adriftZone.appendChild(cardEl);
     }
 
-    for (const cardId in gamedatas.hand) {
-      const cardEl = this.createCardElement({
-        id: cardId,
-        number: gamedatas.hand[cardId]!.type_arg,
-        flipped: false,
-      });
-      hand.appendChild(cardEl);
-    }
-
     if (!this.player_id) {
       throw new Error('player_id not found');
     }
@@ -197,6 +204,7 @@ class TetherGame extends Gamegui {
         : 'horizontal';
 
     this.gameState.board = gamedatas.board;
+    this.gameState.hand = gamedatas.hand;
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -695,6 +703,7 @@ class TetherGame extends Gamegui {
       flipped,
     };
 
+    delete this.gameState.hand[this.cardForConnecting.id];
     if (first) {
       const existingGroupsLen = Object.keys(this.gameState.board).length;
       this.currentGroup = existingGroupsLen + 1;
@@ -724,20 +733,6 @@ class TetherGame extends Gamegui {
       };
       this.updateBoardUI();
     }
-
-    // TODO: this should be part of the board state? cards in hand
-    // move the card from hand to a new group
-    const hand = document.getElementById('hand');
-    if (!hand) {
-      throw new Error('hand not found');
-    }
-    const cardToRemove = hand.querySelector(
-      `[data-card-id="${this.cardForConnecting.id}"]`
-    );
-    if (!cardToRemove) {
-      throw new Error('card to remove not found');
-    }
-    hand.removeChild(cardToRemove);
 
     this.highlightPlayableAstronauts();
   }
