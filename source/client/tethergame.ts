@@ -59,7 +59,11 @@ class TetherGame extends Gamegui {
 
   board: BoardUI = {};
 
-  boardState: BGA.Gamedatas['board'] = {};
+  gameState: {
+    board: BGA.Gamedatas['board'];
+  } = {
+    board: {},
+  };
 
   playerDirection: 'horizontal' | 'vertical' | null = null;
 
@@ -111,8 +115,8 @@ class TetherGame extends Gamegui {
     groupsArea.innerHTML = '';
 
     let groups: Record<string, GroupUI> = {};
-    for (const group in this.boardState) {
-      const generatedGroup = generateGroupUI(this.boardState[group]!);
+    for (const group in this.gameState.board) {
+      const generatedGroup = generateGroupUI(this.gameState.board[group]!);
       groups[group] = generatedGroup;
 
       const groupEl = document.createElement('div');
@@ -192,7 +196,7 @@ class TetherGame extends Gamegui {
         ? 'vertical'
         : 'horizontal';
 
-    this.boardState = gamedatas.board;
+    this.gameState.board = gamedatas.board;
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -692,17 +696,14 @@ class TetherGame extends Gamegui {
     };
 
     if (first) {
-      if (!this.boardState) {
-        this.boardState = {};
-      }
-      const existingGroupsLen = Object.keys(this.boardState).length;
+      const existingGroupsLen = Object.keys(this.gameState.board).length;
       this.currentGroup = existingGroupsLen + 1;
-      this.boardState[this.currentGroup] = this.createGroupFromCard(
+      this.gameState.board[this.currentGroup] = this.createGroupFromCard(
         this.cardForConnecting
       );
       this.updateBoardUI();
     } else {
-      const group = this.boardState[this.currentGroup];
+      const group = this.gameState.board[this.currentGroup];
       if (!group) {
         throw new Error('current group not found');
       }
@@ -751,8 +752,8 @@ class TetherGame extends Gamegui {
     type Groups = Record<string, Card[]>;
     const groups: Groups = {};
 
-    for (const groupNum in this.boardState) {
-      const group = this.boardState[groupNum];
+    for (const groupNum in this.gameState.board) {
+      const group = this.gameState.board[groupNum];
       if (!group) break;
       for (const cardNum in group.vertical) {
         if (!group['vertical']?.[cardNum]) {

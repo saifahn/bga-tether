@@ -97,7 +97,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             _this.cardForConnecting = null;
             _this.currentGroup = 0;
             _this.board = {};
-            _this.boardState = {};
+            _this.gameState = {
+                board: {},
+            };
             _this.playerDirection = null;
             _this.playableCardNumbers = [];
             _this.setupNotifications = function () {
@@ -144,8 +146,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
             }
             groupsArea.innerHTML = '';
             var groups = {};
-            for (var group in this.boardState) {
-                var generatedGroup = (0, generateBoard_1.generateGroupUI)(this.boardState[group]);
+            for (var group in this.gameState.board) {
+                var generatedGroup = (0, generateBoard_1.generateGroupUI)(this.gameState.board[group]);
                 groups[group] = generatedGroup;
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
@@ -209,7 +211,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                 ((_a = gamedatas.players[this.player_id]) === null || _a === void 0 ? void 0 : _a.turnOrder) === '1'
                     ? 'vertical'
                     : 'horizontal';
-            this.boardState = gamedatas.board;
+            this.gameState.board = gamedatas.board;
             this.updateBoardUI();
             this.setupNotifications();
             console.log('Ending game setup');
@@ -568,16 +570,13 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
                 flipped: flipped,
             };
             if (first) {
-                if (!this.boardState) {
-                    this.boardState = {};
-                }
-                var existingGroupsLen = Object.keys(this.boardState).length;
+                var existingGroupsLen = Object.keys(this.gameState.board).length;
                 this.currentGroup = existingGroupsLen + 1;
-                this.boardState[this.currentGroup] = this.createGroupFromCard(this.cardForConnecting);
+                this.gameState.board[this.currentGroup] = this.createGroupFromCard(this.cardForConnecting);
                 this.updateBoardUI();
             }
             else {
-                var group = this.boardState[this.currentGroup];
+                var group = this.gameState.board[this.currentGroup];
                 if (!group) {
                     throw new Error('current group not found');
                 }
@@ -610,8 +609,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "generat
         TetherGame.prototype.getGroupsOfCardIDsFromBoardState = function () {
             var _a, _b, _c;
             var groups = {};
-            for (var groupNum in this.boardState) {
-                var group = this.boardState[groupNum];
+            for (var groupNum in this.gameState.board) {
+                var group = this.gameState.board[groupNum];
                 if (!group)
                     break;
                 for (var cardNum in group.vertical) {
