@@ -64,12 +64,19 @@ define("generateBoard", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.generateGroupUI = generateGroupUI;
+    function reverseString(str) {
+        return str.split('').reverse().join('');
+    }
     function generateGroupUI(group) {
         var verticalCards = group.vertical && Object.values(group.vertical);
         var horizontalCards = group.horizontal && Object.values(group.horizontal);
         if (verticalCards) {
             return verticalCards
-                .sort(function (a, b) { return parseInt(a.number) - parseInt(b.number); })
+                .sort(function (a, b) {
+                var aNum = parseInt(a.uprightFor === 'vertical' ? a.number : reverseString(a.number));
+                var bNum = parseInt(b.uprightFor === 'vertical' ? b.number : reverseString(b.number));
+                return aNum - bNum;
+            })
                 .map(function (card) {
                 return [__assign({}, card)];
             });

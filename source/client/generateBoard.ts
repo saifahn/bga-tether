@@ -30,12 +30,24 @@ export interface BoardUI {
   [groupNum: string]: GroupUI;
 }
 
+function reverseString(str: string) {
+  return str.split('').reverse().join('');
+}
+
 export function generateGroupUI(group: Group): GroupUI {
   const verticalCards = group.vertical && Object.values(group.vertical);
   const horizontalCards = group.horizontal && Object.values(group.horizontal);
   if (verticalCards) {
     return verticalCards
-      .sort((a, b) => parseInt(a.number) - parseInt(b.number))
+      .sort((a, b) => {
+        const aNum = parseInt(
+          a.uprightFor === 'vertical' ? a.number : reverseString(a.number)
+        );
+        const bNum = parseInt(
+          b.uprightFor === 'vertical' ? b.number : reverseString(b.number)
+        );
+        return aNum - bNum;
+      })
       .map((card) => {
         return [{ ...card }];
       });
