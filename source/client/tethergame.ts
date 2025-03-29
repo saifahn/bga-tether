@@ -59,7 +59,15 @@ class TetherGame extends Gamegui {
 
   board: BoardUI = {};
 
-  boardState: BGA.Gamedatas['board'] = {};
+  gameState: {
+    adrift: BGA.Gamedatas['adrift'];
+    board: BGA.Gamedatas['board'];
+    hand: BGA.Gamedatas['hand'];
+  } = {
+    adrift: {},
+    board: {},
+    hand: {},
+  };
 
   playerDirection: 'horizontal' | 'vertical' | null = null;
 
@@ -104,6 +112,40 @@ class TetherGame extends Gamegui {
 
   // TODO: this redraw function needs to handle animations in the future?
   updateBoardUI() {
+    const adriftZone = document.getElementById('adrift-zone');
+    if (!adriftZone) {
+      throw new Error('adrift-zone not found');
+    }
+    adriftZone.innerHTML = '';
+
+    const deck = document.createElement('div');
+    deck.id = 'deck';
+    deck.classList.add('deck');
+    deck.classList.add('js-deck');
+    adriftZone.appendChild(deck);
+
+    for (const cardId in this.gameState.adrift) {
+      const cardEl = this.createAdriftCardElement(
+        cardId,
+        this.gameState.adrift[cardId]!.cardNum
+      );
+      adriftZone.appendChild(cardEl);
+    }
+
+    const hand = document.getElementById('hand');
+    if (!hand) {
+      throw new Error('hand not found');
+    }
+    hand.innerHTML = '';
+    for (const cardId in this.gameState.hand) {
+      const cardEl = this.createCardElement({
+        id: cardId,
+        number: this.gameState.hand[cardId]!.type_arg,
+        flipped: false,
+      });
+      hand.appendChild(cardEl);
+    }
+
     const groupsArea = document.getElementById('groups');
     if (!groupsArea) {
       throw new Error('groups not found');
@@ -111,8 +153,8 @@ class TetherGame extends Gamegui {
     groupsArea.innerHTML = '';
 
     let groups: Record<string, GroupUI> = {};
-    for (const group in this.boardState) {
-      const generatedGroup = generateGroupUI(this.boardState[group]!);
+    for (const group in this.gameState.board) {
+      const generatedGroup = generateGroupUI(this.gameState.board[group]!);
       groups[group] = generatedGroup;
 
       const groupEl = document.createElement('div');
@@ -149,12 +191,6 @@ class TetherGame extends Gamegui {
     adriftZone.id = 'adrift-zone';
     gamePlayArea.appendChild(adriftZone);
 
-    const deck = document.createElement('div');
-    deck.id = 'deck';
-    deck.classList.add('deck');
-    deck.classList.add('js-deck');
-    adriftZone.appendChild(deck);
-
     const groupsArea = document.createElement('div');
     groupsArea.id = 'groups';
     groupsArea.classList.add('groups');
@@ -163,23 +199,6 @@ class TetherGame extends Gamegui {
     const hand = document.createElement('div');
     hand.id = 'hand';
     gamePlayArea.appendChild(hand);
-
-    for (const cardId in gamedatas.adrift) {
-      const cardEl = this.createAdriftCardElement(
-        cardId,
-        gamedatas.adrift[cardId]!.cardNum
-      );
-      adriftZone.appendChild(cardEl);
-    }
-
-    for (const cardId in gamedatas.hand) {
-      const cardEl = this.createCardElement({
-        id: cardId,
-        number: gamedatas.hand[cardId]!.type_arg,
-        flipped: false,
-      });
-      hand.appendChild(cardEl);
-    }
 
     if (!this.player_id) {
       throw new Error('player_id not found');
@@ -192,7 +211,9 @@ class TetherGame extends Gamegui {
         ? 'vertical'
         : 'horizontal';
 
-    this.boardState = gamedatas.board;
+    this.gameState.adrift = gamedatas.adrift;
+    this.gameState.board = gamedatas.board;
+    this.gameState.hand = gamedatas.hand;
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -691,18 +712,16 @@ class TetherGame extends Gamegui {
       flipped,
     };
 
+    delete this.gameState.hand[this.cardForConnecting.id];
     if (first) {
-      if (!this.boardState) {
-        this.boardState = {};
-      }
-      const existingGroupsLen = Object.keys(this.boardState).length;
+      const existingGroupsLen = Object.keys(this.gameState.board).length;
       this.currentGroup = existingGroupsLen + 1;
-      this.boardState[this.currentGroup] = this.createGroupFromCard(
+      this.gameState.board[this.currentGroup] = this.createGroupFromCard(
         this.cardForConnecting
       );
       this.updateBoardUI();
     } else {
-      const group = this.boardState[this.currentGroup];
+      const group = this.gameState.board[this.currentGroup];
       if (!group) {
         throw new Error('current group not found');
       }
@@ -724,20 +743,6 @@ class TetherGame extends Gamegui {
       this.updateBoardUI();
     }
 
-    // TODO: this should be part of the board state? cards in hand
-    // move the card from hand to a new group
-    const hand = document.getElementById('hand');
-    if (!hand) {
-      throw new Error('hand not found');
-    }
-    const cardToRemove = hand.querySelector(
-      `[data-card-id="${this.cardForConnecting.id}"]`
-    );
-    if (!cardToRemove) {
-      throw new Error('card to remove not found');
-    }
-    hand.removeChild(cardToRemove);
-
     this.highlightPlayableAstronauts();
   }
 
@@ -751,8 +756,8 @@ class TetherGame extends Gamegui {
     type Groups = Record<string, Card[]>;
     const groups: Groups = {};
 
-    for (const groupNum in this.boardState) {
-      const group = this.boardState[groupNum];
+    for (const groupNum in this.gameState.board) {
+      const group = this.gameState.board[groupNum];
       if (!group) break;
       for (const cardNum in group.vertical) {
         if (!group['vertical']?.[cardNum]) {
