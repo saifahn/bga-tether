@@ -43,19 +43,33 @@ export function getConnectingCardNums(cardNum: string) {
   return [belowNum, aboveNum];
 }
 
+// TODO: for more complex groups
 export function connectCardToGroup({
   group,
   card,
+  connectingCard,
   orientation,
 }: {
   group: Group;
   card: Card;
+  connectingCard: Card;
   orientation: Orientation;
 }) {
   if (orientation === 'vertical') {
-    // check where the current card would go
-    // look for +1/-1 on parseInt of the card, but also filling in the 0 if necessary
-    // put it directly after that card if greater
-    // put it directly before that card if less
+    // find the connecting card
+    const connectingCardPosition = group[0].findIndex(
+      (c) => c?.id === connectingCard.id
+    );
+    if (connectingCardPosition === -1) {
+      throw new Error('Connecting card not found in group');
+    }
+    const cardNumIsGreater =
+      parseInt(card.lowNum) > parseInt(connectingCard.lowNum);
+    if (cardNumIsGreater) {
+      // FIXME: should we make a new array/object?
+      group[0].splice(connectingCardPosition + 1, 0, card);
+    } else {
+      group[0].splice(connectingCardPosition, 0, card);
+    }
   }
 }
