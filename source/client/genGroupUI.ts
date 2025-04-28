@@ -64,19 +64,30 @@ export function connectCardToGroup({
   connection,
   orientation,
 }: ConnectingCardLocation) {
-  if (orientation === 'vertical') {
-    // TODO: compare based on horizontal/vertical orientation
-    // if the number of the card we are adding is greater than the card we are connecting to, it will go at the end of the group
-    const connectAtEnd =
-      parseInt(card.lowNum) > parseInt(connection.card.lowNum);
+  // if the number of the card we are adding is greater than the card we are connecting to, it will go at the end of the row or column
+  const connectAtEnd = parseInt(card.lowNum) > parseInt(connection.card.lowNum);
+  const numCols = Object.keys(group.cards).length;
 
-    for (let i = 0; i < Object.keys(group.cards).length; i++) {
+  if (orientation === 'vertical') {
+    for (let i = 0; i < numCols; i++) {
       const itemToAdd = i === connection.columnIndex ? card : null;
       if (connectAtEnd) {
         group.cards[i].splice(connection.rowIndex + 1, 0, itemToAdd);
       } else {
         group.cards[i].splice(connection.rowIndex, 0, itemToAdd);
       }
+    }
+    return;
+  }
+
+  // if adding at the beginning of the row, we need to shift all the other columns to the right
+  if (!connectAtEnd) {
+    for (let i = numCols; i >= 0; i--) {
+      if (i === 0) {
+        group.cards[i] = [card];
+        continue;
+      }
+      group.cards[i] = group.cards[i - 1];
     }
   }
 }
