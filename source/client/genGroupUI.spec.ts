@@ -153,9 +153,8 @@ connectCardToGroupTests(
   }
 );
 
-// TODO: horizontal
 connectCardToGroupTests(
-  'should connect a card successfully horizontally',
+  'should connect a card to the beginning of a row successfully for the horizontal player',
   () => {
     const group: Group = {
       number: 2,
@@ -188,6 +187,45 @@ connectCardToGroupTests(
         0: [{ id: '1', lowNum: '01', uprightFor: 'horizontal' }],
         1: [{ id: '2', lowNum: '02', uprightFor: 'horizontal' }],
         2: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }],
+      },
+    });
+  }
+);
+
+connectCardToGroupTests(
+  'should connect a card to the end of a row successfully for the horizontal player',
+  () => {
+    const group: Group = {
+      number: 2,
+      cards: {
+        0: [{ id: '2', lowNum: '02', uprightFor: 'horizontal' }],
+        1: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }],
+      },
+    };
+    connectCardToGroup({
+      group,
+      card: {
+        id: '4',
+        lowNum: '04',
+        uprightFor: 'horizontal',
+      },
+      orientation: 'horizontal',
+      connection: {
+        card: {
+          id: '3',
+          lowNum: '03',
+          uprightFor: 'horizontal',
+        },
+        columnIndex: 1,
+        rowIndex: 0,
+      },
+    });
+    assert.equal(group, {
+      number: 2,
+      cards: {
+        0: [{ id: '2', lowNum: '02', uprightFor: 'horizontal' }],
+        1: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }],
+        2: [{ id: '4', lowNum: '04', uprightFor: 'horizontal' }],
       },
     });
   }
