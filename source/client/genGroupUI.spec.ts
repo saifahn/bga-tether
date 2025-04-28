@@ -154,5 +154,47 @@ connectCardToGroupTests(
 );
 
 // TODO: horizontal
+connectCardToGroupTests(
+  'should connect a card successfully horizontally',
+  () => {
+    const group: Group = {
+      number: 2,
+      cards: {
+        0: [{ id: '2', lowNum: '02', uprightFor: 'horizontal' }],
+        1: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }],
+      },
+    };
+    connectCardToGroup({
+      group,
+      card: {
+        id: '1',
+        lowNum: '01',
+        uprightFor: 'horizontal',
+      },
+      orientation: 'horizontal',
+      connection: {
+        card: {
+          id: '2',
+          lowNum: '02',
+          uprightFor: 'horizontal',
+        },
+        columnIndex: 0,
+        rowIndex: 0,
+      },
+    });
+    assert.equal(group, {
+      number: 2,
+      cards: {
+        0: [{ id: '1', lowNum: '01', uprightFor: 'horizontal' }],
+        1: [{ id: '2', lowNum: '02', uprightFor: 'horizontal' }],
+        2: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }],
+      },
+    });
+  }
+);
+
+// TODO: different orientations
 
 connectCardToGroupTests.run();
+
+// TODO: joining groups
