@@ -80,13 +80,17 @@ export function connectCardToGroup({
     return;
   }
 
-  // NOTE: should we check rowIndex/colIndex for the expected card?
-  // if adding at the beginning of the row, we need to shift all the other columns to the right
+  const numRows = group.cards[0].length;
+
   if (connectAtEnd) {
-    group.cards[numCols] = [card];
+    group.cards[numCols] = [];
+    for (let i = 0; i < numRows; i++) {
+      const itemToAdd = i === connection.rowIndex ? card : null;
+      group.cards[numCols].push(itemToAdd);
+    }
     return;
   }
-
+  // if adding at the beginning of the row, we need to shift all the other columns to the right
   for (let i = numCols; i >= 0; i--) {
     if (i === 0) {
       group.cards[i] = [card];

@@ -198,8 +198,11 @@ connectCardToGroupTests(
     const group: Group = {
       number: 2,
       cards: {
-        0: [{ id: '2', lowNum: '02', uprightFor: 'horizontal' }],
-        1: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }],
+        0: [
+          { id: '12', lowNum: '12', uprightFor: 'horizontal' },
+          { id: '2', lowNum: '02', uprightFor: 'horizontal' },
+        ],
+        1: [null, { id: '3', lowNum: '03', uprightFor: 'horizontal' }],
       },
     };
     connectCardToGroup({
@@ -217,15 +220,18 @@ connectCardToGroupTests(
           uprightFor: 'horizontal',
         },
         columnIndex: 1,
-        rowIndex: 0,
+        rowIndex: 1,
       },
     });
     assert.equal(group, {
       number: 2,
       cards: {
-        0: [{ id: '2', lowNum: '02', uprightFor: 'horizontal' }],
-        1: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }],
-        2: [{ id: '4', lowNum: '04', uprightFor: 'horizontal' }],
+        0: [
+          { id: '12', lowNum: '12', uprightFor: 'horizontal' },
+          { id: '2', lowNum: '02', uprightFor: 'horizontal' },
+        ],
+        1: [null, { id: '3', lowNum: '03', uprightFor: 'horizontal' }],
+        2: [null, { id: '4', lowNum: '04', uprightFor: 'horizontal' }],
       },
     });
   }
