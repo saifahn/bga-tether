@@ -80,14 +80,18 @@ export function connectCardToGroup({
     return;
   }
 
+  // NOTE: should we check rowIndex/colIndex for the expected card?
   // if adding at the beginning of the row, we need to shift all the other columns to the right
-  if (!connectAtEnd) {
-    for (let i = numCols; i >= 0; i--) {
-      if (i === 0) {
-        group.cards[i] = [card];
-        continue;
-      }
-      group.cards[i] = group.cards[i - 1];
+  if (connectAtEnd) {
+    group.cards[numCols] = [card];
+    return;
+  }
+
+  for (let i = numCols; i >= 0; i--) {
+    if (i === 0) {
+      group.cards[i] = [card];
+      continue;
     }
+    group.cards[i] = group.cards[i - 1];
   }
 }
