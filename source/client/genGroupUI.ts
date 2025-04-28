@@ -8,7 +8,9 @@ interface Card {
 
 export interface Group {
   number: number;
-  [x: number]: (null | Card)[];
+  cards: {
+    [x: number]: (null | Card)[];
+  };
 }
 
 function getNewGroupNumber() {
@@ -23,9 +25,10 @@ export function createNewGroup(
 ): Group {
   const group = {
     number: getNewGroupNumber(),
+    cards: {},
   };
   if (cards.length === 1) {
-    group[0] = cards[0];
+    group.cards[0] = cards[0];
   } else {
     // orientation and then calculate how to put the cards in order
   }
@@ -43,33 +46,37 @@ export function getConnectingCardNums(cardNum: string) {
   return [belowNum, aboveNum];
 }
 
+interface ConnectingCardLocation {
+  group: Group;
+  card: Card;
+  connection: {
+    card: Card;
+    rowIndex: number;
+    columnIndex: number;
+  };
+  orientation: Orientation;
+}
+
 // TODO: for more complex groups
 export function connectCardToGroup({
   group,
   card,
-  connectingCard,
+  connection,
   orientation,
-}: {
-  group: Group;
-  card: Card;
-  connectingCard: Card;
-  orientation: Orientation;
-}) {
+}: ConnectingCardLocation) {
   if (orientation === 'vertical') {
-    // find the connecting card
-    const connectingCardPosition = group[0].findIndex(
-      (c) => c?.id === connectingCard.id
-    );
-    if (connectingCardPosition === -1) {
-      throw new Error('Connecting card not found in group');
-    }
-    const cardNumIsGreater =
-      parseInt(card.lowNum) > parseInt(connectingCard.lowNum);
-    if (cardNumIsGreater) {
-      // FIXME: should we make a new array/object?
-      group[0].splice(connectingCardPosition + 1, 0, card);
-    } else {
-      group[0].splice(connectingCardPosition, 0, card);
+    // TODO: compare based on horizontal/vertical orientation
+    // if the number of the card we are adding is greater than the card we are connecting to, it will go at the end of the group
+    const connectAtEnd =
+      parseInt(card.lowNum) > parseInt(connection.card.lowNum);
+
+    for (let i = 0; i < Object.keys(group.cards).length; i++) {
+      const itemToAdd = i === connection.columnIndex ? card : null;
+      if (connectAtEnd) {
+        group.cards[i].splice(connection.rowIndex + 1, 0, itemToAdd);
+      } else {
+        group.cards[i].splice(connection.rowIndex, 0, itemToAdd);
+      }
     }
   }
 }
