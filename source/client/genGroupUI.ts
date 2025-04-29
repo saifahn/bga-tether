@@ -57,7 +57,6 @@ interface ConnectingCardLocation {
   orientation: Orientation;
 }
 
-// TODO: for more complex groups
 export function connectCardToGroup({
   group,
   card,
@@ -93,7 +92,11 @@ export function connectCardToGroup({
   // if adding at the beginning of the row, we need to shift all the other columns to the right
   for (let i = numCols; i >= 0; i--) {
     if (i === 0) {
-      group.cards[i] = [card];
+      group.cards[0] = [];
+      for (let i = 0; i < numRows; i++) {
+        const itemToAdd = i === connection.rowIndex ? card : null;
+        group.cards[0].push(itemToAdd);
+      }
       continue;
     }
     group.cards[i] = group.cards[i - 1];
