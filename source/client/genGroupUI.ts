@@ -67,6 +67,13 @@ export function connectCardToGroup({
   const connectAtEnd = parseInt(card.lowNum) > parseInt(connection.card.lowNum);
   const numCols = Object.keys(group.cards).length;
 
+  if (
+    group.cards[connection.columnIndex]?.[connection.rowIndex]?.id !==
+    connection.card.id
+  ) {
+    throw new Error('The connecting card details are not correct');
+  }
+
   if (orientation === 'vertical') {
     for (let i = 0; i < numCols; i++) {
       const itemToAdd = i === connection.columnIndex ? card : null;
