@@ -42,8 +42,8 @@ connectCardToGroupTests(
           lowNum: '02',
           uprightFor: 'vertical',
         },
-        columnIndex: 0,
-        rowIndex: 1,
+        y: 0,
+        x: 1,
       },
     });
 
@@ -86,8 +86,8 @@ connectCardToGroupTests(
           lowNum: '02',
           uprightFor: 'vertical',
         },
-        columnIndex: 0,
-        rowIndex: 0,
+        y: 0,
+        x: 0,
       },
     });
     assert.equal(group, {
@@ -130,8 +130,8 @@ connectCardToGroupTests(
           lowNum: '12',
           uprightFor: 'vertical',
         },
-        columnIndex: 1,
-        rowIndex: 0,
+        y: 1,
+        x: 0,
       },
     });
 
@@ -180,8 +180,8 @@ connectCardToGroupTests(
           lowNum: '02',
           uprightFor: 'horizontal',
         },
-        columnIndex: 0,
-        rowIndex: 1,
+        y: 0,
+        x: 1,
       },
     });
     assert.equal(group, {
@@ -233,8 +233,8 @@ connectCardToGroupTests(
           lowNum: '03',
           uprightFor: 'horizontal',
         },
-        columnIndex: 1,
-        rowIndex: 1,
+        y: 1,
+        x: 1,
       },
     });
     assert.equal(group, {
@@ -291,8 +291,8 @@ connectCardToGroupTests(
           lowNum: '23',
           uprightFor: 'vertical',
         },
-        columnIndex: 0,
-        rowIndex: 3,
+        y: 0,
+        x: 3,
       },
     });
 
@@ -361,8 +361,8 @@ connectCardToGroupTests(
           lowNum: '15',
           uprightFor: 'horizontal',
         },
-        columnIndex: 0,
-        rowIndex: 2,
+        y: 0,
+        x: 2,
       },
     });
 
