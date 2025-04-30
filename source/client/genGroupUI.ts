@@ -111,11 +111,11 @@ export function connectCardToGroup({
 }
 
 interface ConnectGroupsArgs {
-  group1: {
+  smallerGroup: {
     group: Group;
     connection: Connection;
   };
-  group2: {
+  largerGroup: {
     group: Group;
     connection: Connection;
   };
@@ -123,47 +123,61 @@ interface ConnectGroupsArgs {
 }
 
 export function connectGroups({
-  group1,
-  group2,
+  smallerGroup,
+  largerGroup,
   orientation,
 }: ConnectGroupsArgs) {
   // take the first group
   // take the second group
   if (orientation === 'vertical') {
     if (
-      group1.group.cards[group1.connection.x]?.[group1.connection.y]?.id !==
-        group1.connection.card.id ||
-      group2.group.cards[group2.connection.x]?.[group2.connection.y]?.id !==
-        group2.connection.card.id
+      smallerGroup.group.cards[smallerGroup.connection.x]?.[
+        smallerGroup.connection.y
+      ]?.id !== smallerGroup.connection.card.id ||
+      largerGroup.group.cards[largerGroup.connection.x]?.[
+        largerGroup.connection.y
+      ]?.id !== largerGroup.connection.card.id
     ) {
       throw new Error('The connecting card details are not correct');
     }
     // TODO: needs to actually calculate based on uprightFor value
-    const connectAboveGroup =
-      group1.connection.card.lowNum < group2.connection.card.lowNum
-        ? group1
-        : group2;
-    const connectBelowGroup = connectAboveGroup === group1 ? group2 : group1;
-    const lowerGroupNum = Math.min(group1.group.number, group2.group.number);
-    // join them together
+    const finalGroupNum = Math.min(
+      smallerGroup.group.number,
+      largerGroup.group.number
+    );
+    const numberOfColumnsAboveGroup = Object.keys(
+      smallerGroup.group.cards
+    ).length;
+    const numberOfColumnsBelowGroup = Object.keys(
+      largerGroup.group.cards
+    ).length;
+    const numberOfRowsAboveGroup = smallerGroup.group.cards[0].length;
+    const numberOfRowsBelowGroup = largerGroup.group.cards[0].length;
+    // get offset of the below group
+    // TODO: handle case where offset is negative
+    const offset = smallerGroup.connection.x - largerGroup.connection.x;
+
+    // TODO: need to get number of rows of both groups to fill in nulls both on top and bottom
+    // TODO: this actually needs to be calculated after shifting if necessary
+    const finalGroupWidth = Math.max(
+      numberOfColumnsAboveGroup,
+      numberOfColumnsBelowGroup
+    );
     let newCards = {};
-    // TODO: handle when the groups have different numbers of columns
-    for (
-      let i = 0;
-      i < Object.keys(connectAboveGroup.group.cards).length;
-      i++
-    ) {
-      newCards[i] = connectAboveGroup.group.cards[i];
+
+    for (let i = 0; i < finalGroupWidth; i++) {
+      newCards[i] = smallerGroup.group.cards[i];
+
+      const lowerGroupCards = largerGroup.group.cards[i - offset]
+        ? largerGroup.group.cards[i - offset]
+        : new Array(numberOfRowsBelowGroup).fill(null);
+
+      newCards[i] = newCards[i].concat(lowerGroupCards);
+      continue;
     }
-    for (
-      let i = 0;
-      i < Object.keys(connectBelowGroup.group.cards).length;
-      i++
-    ) {
-      newCards[i] = newCards[i].concat(connectBelowGroup.group.cards[i]);
-    }
+
     return {
-      number: lowerGroupNum,
+      number: finalGroupNum,
       cards: newCards,
     };
   }
