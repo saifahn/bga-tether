@@ -46,14 +46,16 @@ export function getConnectingCardNums(cardNum: string) {
   return [belowNum, aboveNum];
 }
 
+interface Connection {
+  card: Card;
+  x: number;
+  y: number;
+}
+
 interface ConnectingCardLocation {
   group: Group;
   card: Card;
-  connection: {
-    card: Card;
-    rowIndex: number;
-    columnIndex: number;
-  };
+  connection: Connection;
   orientation: Orientation;
 }
 
@@ -64,23 +66,21 @@ export function connectCardToGroup({
   orientation,
 }: ConnectingCardLocation) {
   // if the number of the card we are adding is greater than the card we are connecting to, it will go at the end of the row or column
+  // TODO: needs to actually calculate based on uprightFor value
   const connectAtEnd = parseInt(card.lowNum) > parseInt(connection.card.lowNum);
   const numCols = Object.keys(group.cards).length;
 
-  if (
-    group.cards[connection.columnIndex]?.[connection.rowIndex]?.id !==
-    connection.card.id
-  ) {
+  if (group.cards[connection.y]?.[connection.x]?.id !== connection.card.id) {
     throw new Error('The connecting card details are not correct');
   }
 
   if (orientation === 'vertical') {
     for (let i = 0; i < numCols; i++) {
-      const itemToAdd = i === connection.columnIndex ? card : null;
+      const itemToAdd = i === connection.y ? card : null;
       if (connectAtEnd) {
-        group.cards[i].splice(connection.rowIndex + 1, 0, itemToAdd);
+        group.cards[i].splice(connection.x + 1, 0, itemToAdd);
       } else {
-        group.cards[i].splice(connection.rowIndex, 0, itemToAdd);
+        group.cards[i].splice(connection.x, 0, itemToAdd);
       }
     }
     return;
@@ -91,7 +91,7 @@ export function connectCardToGroup({
   if (connectAtEnd) {
     group.cards[numCols] = [];
     for (let i = 0; i < numRows; i++) {
-      const itemToAdd = i === connection.rowIndex ? card : null;
+      const itemToAdd = i === connection.x ? card : null;
       group.cards[numCols].push(itemToAdd);
     }
     return;
@@ -101,11 +101,70 @@ export function connectCardToGroup({
     if (i === 0) {
       group.cards[0] = [];
       for (let i = 0; i < numRows; i++) {
-        const itemToAdd = i === connection.rowIndex ? card : null;
+        const itemToAdd = i === connection.x ? card : null;
         group.cards[0].push(itemToAdd);
       }
       continue;
     }
     group.cards[i] = group.cards[i - 1];
+  }
+}
+
+interface ConnectGroupsArgs {
+  group1: {
+    group: Group;
+    connection: Connection;
+  };
+  group2: {
+    group: Group;
+    connection: Connection;
+  };
+  orientation: Orientation;
+}
+
+export function connectGroups({
+  group1,
+  group2,
+  orientation,
+}: ConnectGroupsArgs) {
+  // take the first group
+  // take the second group
+  if (orientation === 'vertical') {
+    if (
+      group1.group.cards[group1.connection.x]?.[group1.connection.y]?.id !==
+        group1.connection.card.id ||
+      group2.group.cards[group2.connection.x]?.[group2.connection.y]?.id !==
+        group2.connection.card.id
+    ) {
+      throw new Error('The connecting card details are not correct');
+    }
+    // TODO: needs to actually calculate based on uprightFor value
+    const connectAboveGroup =
+      group1.connection.card.lowNum < group2.connection.card.lowNum
+        ? group1
+        : group2;
+    const connectBelowGroup = connectAboveGroup === group1 ? group2 : group1;
+    const lowerGroupNum = Math.min(group1.group.number, group2.group.number);
+    // join them together
+    let newCards = {};
+    // TODO: handle when the groups have different numbers of columns
+    for (
+      let i = 0;
+      i < Object.keys(connectAboveGroup.group.cards).length;
+      i++
+    ) {
+      newCards[i] = connectAboveGroup.group.cards[i];
+    }
+    for (
+      let i = 0;
+      i < Object.keys(connectBelowGroup.group.cards).length;
+      i++
+    ) {
+      newCards[i] = newCards[i].concat(connectBelowGroup.group.cards[i]);
+    }
+    return {
+      number: lowerGroupNum,
+      cards: newCards,
+    };
   }
 }
