@@ -3,6 +3,8 @@ import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
 
 const connectGroupsTests = suite('connectGroups');
+
+// TODO: table-driven tests?
 connectGroupsTests(
   'should successfully connect two aligned groups vertically',
   () => {
@@ -265,6 +267,56 @@ connectGroupsTests(
           null,
           null,
         ],
+      },
+    });
+  }
+);
+
+connectGroupsTests(
+  'should connect two groups horizontally successfully',
+  () => {
+    const group1: Group = {
+      number: 1,
+      cards: {
+        0: [{ id: '58', lowNum: '58', uprightFor: 'horizontal' }],
+        1: [{ id: '57', lowNum: '57', uprightFor: 'horizontal' }],
+      },
+    };
+    const group2: Group = {
+      number: 2,
+      cards: {
+        0: [{ id: '6', lowNum: '06', uprightFor: 'vertical' }],
+        1: [{ id: '59', lowNum: '59', uprightFor: 'horizontal' }],
+      },
+    };
+
+    const result = connectGroups({
+      smallerGroup: {
+        group: group1,
+        connection: {
+          card: { id: '58', lowNum: '58', uprightFor: 'horizontal' },
+          x: 0,
+          y: 0,
+        },
+      },
+      largerGroup: {
+        group: group2,
+        connection: {
+          card: { id: '59', lowNum: '59', uprightFor: 'horizontal' },
+          x: 1,
+          y: 0,
+        },
+      },
+      orientation: 'horizontal',
+    });
+
+    assert.equal(result, {
+      number: 1,
+      cards: {
+        0: [{ id: '6', lowNum: '06', uprightFor: 'vertical' }],
+        1: [{ id: '59', lowNum: '59', uprightFor: 'horizontal' }],
+        2: [{ id: '58', lowNum: '58', uprightFor: 'horizontal' }],
+        3: [{ id: '57', lowNum: '57', uprightFor: 'horizontal' }],
       },
     });
   }
