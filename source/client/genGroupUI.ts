@@ -145,31 +145,33 @@ export function connectGroups({
       smallerGroup.group.number,
       largerGroup.group.number
     );
-    const numberOfColumnsAboveGroup = Object.keys(
+    let numberOfColumnsAboveGroup = Object.keys(
       smallerGroup.group.cards
     ).length;
-    const numberOfColumnsBelowGroup = Object.keys(
-      largerGroup.group.cards
-    ).length;
+    let numberOfColumnsBelowGroup = Object.keys(largerGroup.group.cards).length;
     const numberOfRowsAboveGroup = smallerGroup.group.cards[0].length;
     const numberOfRowsBelowGroup = largerGroup.group.cards[0].length;
-    // get offset of the below group
-    // TODO: handle case where offset is negative
-    const offset = smallerGroup.connection.x - largerGroup.connection.x;
 
-    // TODO: need to get number of rows of both groups to fill in nulls both on top and bottom
-    // TODO: this actually needs to be calculated after shifting if necessary
-    const finalGroupWidth = Math.max(
-      numberOfColumnsAboveGroup,
-      numberOfColumnsBelowGroup
+    // if we have a negative offset, we can make a positive offset on the other group instead
+    // this will make it easier to reason about and generate the new group
+    let belowGroupOffset = smallerGroup.connection.x - largerGroup.connection.x;
+    const aboveGroupOffset = belowGroupOffset < 0 ? belowGroupOffset * -1 : 0;
+    belowGroupOffset = belowGroupOffset < 0 ? 0 : belowGroupOffset;
+
+    const newGroupWidth = Math.max(
+      numberOfColumnsAboveGroup + aboveGroupOffset,
+      numberOfColumnsBelowGroup + belowGroupOffset
     );
     let newCards = {};
 
-    for (let i = 0; i < finalGroupWidth; i++) {
-      newCards[i] = smallerGroup.group.cards[i];
+    for (let i = 0; i < newGroupWidth; i++) {
+      const upperGroupCards = smallerGroup.group.cards[i - aboveGroupOffset]
+        ? smallerGroup.group.cards[i - aboveGroupOffset]
+        : new Array(numberOfRowsAboveGroup).fill(null);
+      newCards[i] = upperGroupCards;
 
-      const lowerGroupCards = largerGroup.group.cards[i - offset]
-        ? largerGroup.group.cards[i - offset]
+      const lowerGroupCards = largerGroup.group.cards[i - belowGroupOffset]
+        ? largerGroup.group.cards[i - belowGroupOffset]
         : new Array(numberOfRowsBelowGroup).fill(null);
 
       newCards[i] = newCards[i].concat(lowerGroupCards);
