@@ -127,24 +127,22 @@ export function connectGroups({
   largerGroup,
   orientation,
 }: ConnectGroupsArgs) {
-  // take the first group
-  // take the second group
+  if (
+    smallerGroup.group.cards[smallerGroup.connection.x]?.[
+      smallerGroup.connection.y
+    ]?.id !== smallerGroup.connection.card.id ||
+    largerGroup.group.cards[largerGroup.connection.x]?.[
+      largerGroup.connection.y
+    ]?.id !== largerGroup.connection.card.id
+  ) {
+    throw new Error('The connecting card details are not correct');
+  }
+  const newGroupNum = Math.min(
+    smallerGroup.group.number,
+    largerGroup.group.number
+  );
+
   if (orientation === 'vertical') {
-    if (
-      smallerGroup.group.cards[smallerGroup.connection.x]?.[
-        smallerGroup.connection.y
-      ]?.id !== smallerGroup.connection.card.id ||
-      largerGroup.group.cards[largerGroup.connection.x]?.[
-        largerGroup.connection.y
-      ]?.id !== largerGroup.connection.card.id
-    ) {
-      throw new Error('The connecting card details are not correct');
-    }
-    // TODO: needs to actually calculate based on uprightFor value
-    const finalGroupNum = Math.min(
-      smallerGroup.group.number,
-      largerGroup.group.number
-    );
     let numberOfColumnsAboveGroup = Object.keys(
       smallerGroup.group.cards
     ).length;
@@ -179,8 +177,27 @@ export function connectGroups({
     }
 
     return {
-      number: finalGroupNum,
+      number: newGroupNum,
       cards: newCards,
     };
   }
+
+  // for horizontal groups, everything is actually flipped
+  // so the group with the higher number will be on the left side
+  const numColsLeftGroup = Object.keys(largerGroup.group.cards).length;
+  const numColsRightGroup = Object.keys(smallerGroup.group.cards).length;
+  const newGroupWidth = numColsLeftGroup + numColsRightGroup;
+  const newCards = {};
+
+  for (let i = 0; i < numColsLeftGroup; i++) {
+    newCards[i] = largerGroup.group.cards[i];
+  }
+  for (let i = 0; i < numColsRightGroup; i++) {
+    newCards[i + numColsLeftGroup] = smallerGroup.group.cards[i];
+  }
+
+  return {
+    number: newGroupNum,
+    cards: newCards,
+  };
 }
