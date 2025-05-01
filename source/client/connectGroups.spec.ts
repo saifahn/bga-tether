@@ -4,7 +4,7 @@ import * as assert from 'uvu/assert';
 
 const connectGroupsTests = suite('connectGroups');
 connectGroupsTests(
-  'should connect two groups of same columns vertically successfully',
+  'should successfully connect two aligned groups vertically',
   () => {
     const group1: Group = {
       number: 1,
@@ -60,7 +60,7 @@ connectGroupsTests(
 );
 
 connectGroupsTests(
-  'should connect two groups of different columns vertically successfully',
+  'should successfully connect two groups vertically with an offset that creates a wider new group',
   () => {
     const group1: Group = {
       number: 1,
@@ -145,6 +145,120 @@ connectGroupsTests(
           {
             id: '17',
             lowNum: '17',
+            uprightFor: 'vertical',
+          },
+          null,
+          null,
+          null,
+        ],
+      },
+    });
+  }
+);
+
+connectGroupsTests(
+  'should connect two groups of different columns vertically successfully with negative offset',
+  () => {
+    const group1: Group = {
+      number: 1,
+      cards: {
+        0: [
+          null,
+          { id: '57', lowNum: '57', uprightFor: 'vertical' },
+          { id: '58', lowNum: '58', uprightFor: 'vertical' },
+        ],
+        1: [
+          null,
+          {
+            id: '47',
+            lowNum: '47',
+            uprightFor: 'vertical',
+          },
+          null,
+        ],
+        2: [
+          {
+            id: '36',
+            lowNum: '36',
+            uprightFor: 'vertical',
+          },
+          {
+            id: '37',
+            lowNum: '37',
+            uprightFor: 'vertical',
+          },
+          null,
+        ],
+      },
+    };
+    const group2: Group = {
+      number: 2,
+      cards: {
+        0: [{ id: '69', lowNum: '69', uprightFor: 'vertical' }, null],
+        1: [
+          { id: '59', lowNum: '59', uprightFor: 'vertical' },
+          { id: '60', lowNum: '60', uprightFor: 'vertical' },
+        ],
+      },
+    };
+
+    const result = connectGroups({
+      smallerGroup: {
+        group: group1,
+        connection: {
+          card: { id: '58', lowNum: '58', uprightFor: 'vertical' },
+          x: 0,
+          y: 2,
+        },
+      },
+      largerGroup: {
+        group: group2,
+        connection: {
+          card: { id: '59', lowNum: '59', uprightFor: 'vertical' },
+          x: 1,
+          y: 0,
+        },
+      },
+      orientation: 'vertical',
+    });
+
+    assert.equal(result, {
+      number: 1,
+      cards: {
+        0: [
+          null,
+          null,
+          null,
+          { id: '69', lowNum: '69', uprightFor: 'vertical' },
+          null,
+        ],
+        1: [
+          null,
+          { id: '57', lowNum: '57', uprightFor: 'vertical' },
+          { id: '58', lowNum: '58', uprightFor: 'vertical' },
+          { id: '59', lowNum: '59', uprightFor: 'vertical' },
+          { id: '60', lowNum: '60', uprightFor: 'vertical' },
+        ],
+        2: [
+          null,
+          {
+            id: '47',
+            lowNum: '47',
+            uprightFor: 'vertical',
+          },
+          null,
+          null,
+          null,
+        ],
+        3: [
+          {
+            id: '36',
+            lowNum: '36',
+            uprightFor: 'vertical',
+          },
+          {
+            id: '37',
+            lowNum: '37',
             uprightFor: 'vertical',
           },
           null,
