@@ -273,7 +273,7 @@ connectGroupsTests(
 );
 
 connectGroupsTests(
-  'should connect two groups horizontally successfully',
+  'should connect two simple groups horizontally successfully',
   () => {
     const group1: Group = {
       number: 1,
@@ -317,6 +317,131 @@ connectGroupsTests(
         1: [{ id: '59', lowNum: '59', uprightFor: 'horizontal' }],
         2: [{ id: '58', lowNum: '58', uprightFor: 'horizontal' }],
         3: [{ id: '57', lowNum: '57', uprightFor: 'horizontal' }],
+      },
+    });
+  }
+);
+
+connectGroupsTests(
+  'should successfully connect two groups horizontally that are somewhat complex',
+  () => {
+    const group1: Group = {
+      number: 1,
+      cards: {
+        0: [
+          {
+            id: '58',
+            lowNum: '58',
+            uprightFor: 'horizontal',
+          },
+          {
+            id: '68',
+            lowNum: '68',
+            uprightFor: 'horizontal',
+          },
+        ],
+        1: [
+          {
+            id: '57',
+            lowNum: '57',
+            uprightFor: 'horizontal',
+          },
+          null,
+        ],
+      },
+    };
+    const group2: Group = {
+      number: 2,
+      cards: {
+        0: [
+          {
+            id: '5',
+            lowNum: '05',
+            uprightFor: 'vertical',
+          },
+          null,
+        ],
+        1: [
+          {
+            id: '49',
+            lowNum: '49',
+            uprightFor: 'horizontal',
+          },
+          {
+            id: '59',
+            lowNum: '59',
+            uprightFor: 'horizontal',
+          },
+        ],
+      },
+    };
+    const res = connectGroups({
+      smallerGroup: {
+        group: group1,
+        connection: {
+          card: { id: '58', lowNum: '58', uprightFor: 'horizontal' },
+          x: 0,
+          y: 0,
+        },
+      },
+      largerGroup: {
+        group: group2,
+        connection: {
+          card: { id: '59', lowNum: '59', uprightFor: 'horizontal' },
+          x: 1,
+          y: 1,
+        },
+      },
+      orientation: 'horizontal',
+    });
+
+    assert.equal(res, {
+      number: 1,
+      cards: {
+        0: [
+          {
+            id: '5',
+            lowNum: '05',
+            uprightFor: 'vertical',
+          },
+          null,
+          null,
+        ],
+        1: [
+          {
+            id: '49',
+            lowNum: '49',
+            uprightFor: 'horizontal',
+          },
+          {
+            id: '59',
+            lowNum: '59',
+            uprightFor: 'horizontal',
+          },
+          null,
+        ],
+        2: [
+          null,
+          {
+            id: '58',
+            lowNum: '58',
+            uprightFor: 'horizontal',
+          },
+          {
+            id: '68',
+            lowNum: '68',
+            uprightFor: 'horizontal',
+          },
+        ],
+        3: [
+          null,
+          {
+            id: '57',
+            lowNum: '57',
+            uprightFor: 'horizontal',
+          },
+          null,
+        ],
       },
     });
   }
