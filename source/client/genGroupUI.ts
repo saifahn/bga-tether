@@ -163,15 +163,14 @@ export function connectGroups({
     let newCards = {};
 
     for (let i = 0; i < newGroupWidth; i++) {
-      const upperGroupCards = smallerGroup.group.cards[i - aboveGroupOffset]
-        ? smallerGroup.group.cards[i - aboveGroupOffset]
-        : new Array(numberOfRowsAboveGroup).fill(null);
+      const upperGroupCards =
+        smallerGroup.group.cards[i - aboveGroupOffset] ??
+        new Array(numberOfRowsAboveGroup).fill(null);
       newCards[i] = upperGroupCards;
 
-      const lowerGroupCards = largerGroup.group.cards[i - belowGroupOffset]
-        ? largerGroup.group.cards[i - belowGroupOffset]
-        : new Array(numberOfRowsBelowGroup).fill(null);
-
+      const lowerGroupCards =
+        largerGroup.group.cards[i - belowGroupOffset] ??
+        new Array(numberOfRowsBelowGroup).fill(null);
       newCards[i] = newCards[i].concat(lowerGroupCards);
       continue;
     }
@@ -186,14 +185,41 @@ export function connectGroups({
   // so the group with the higher number will be on the left side
   const numColsLeftGroup = Object.keys(largerGroup.group.cards).length;
   const numColsRightGroup = Object.keys(smallerGroup.group.cards).length;
-  const newGroupWidth = numColsLeftGroup + numColsRightGroup;
+  const numRowsLeftGroup = largerGroup.group.cards[0].length;
+  const numRowsRightGroup = smallerGroup.group.cards[0].length;
+
+  // TODO: normalized in relation to the connection point
+  // yOffsetRelativeToConnection - a bit long, we can make this a bit more parse-able later
+  // a negative offset means the left group is positioned higher than the right group
+  let leftGroupYOffset = smallerGroup.connection.y - largerGroup.connection.y;
+  const rightGroupYOffset = leftGroupYOffset < 0 ? leftGroupYOffset * -1 : 0;
+  leftGroupYOffset = leftGroupYOffset < 0 ? 0 : leftGroupYOffset;
+
+  const newGroupHeight = Math.max(
+    numRowsLeftGroup + leftGroupYOffset,
+    numRowsRightGroup + rightGroupYOffset
+  );
+
   const newCards = {};
 
-  for (let i = 0; i < numColsLeftGroup; i++) {
-    newCards[i] = largerGroup.group.cards[i];
+  for (let x = 0; x < numColsLeftGroup; x++) {
+    // work down the column - if the card should go there, add it, otherwise null
+    if (!newCards[x]) {
+      newCards[x] = [];
+    }
+    for (let y = 0; y < newGroupHeight; y++) {
+      newCards[x][y] = largerGroup.group.cards[x][y - leftGroupYOffset] ?? null;
+    }
   }
-  for (let i = 0; i < numColsRightGroup; i++) {
-    newCards[i + numColsLeftGroup] = smallerGroup.group.cards[i];
+  for (let x = 0; x < numColsRightGroup; x++) {
+    const xRightGroup = x + numColsLeftGroup;
+    if (!newCards[xRightGroup]) {
+      newCards[xRightGroup] = [];
+    }
+    for (let y = 0; y < newGroupHeight; y++) {
+      newCards[xRightGroup][y] =
+        smallerGroup.group.cards[x][y - rightGroupYOffset] ?? null;
+    }
   }
 
   return {
