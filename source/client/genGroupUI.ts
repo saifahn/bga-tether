@@ -7,7 +7,7 @@ interface Card {
 }
 
 export interface Group {
-  number: number;
+  number: number; // incremental number to keep track of the groups
   cards: {
     [x: number]: (null | Card)[];
   };
@@ -23,7 +23,7 @@ export function createNewGroup(
   orientation: Orientation,
   ...cards: Card[]
 ): Group {
-  const group = {
+  const group: Group = {
     number: getNewGroupNumber(),
     cards: {},
   };
@@ -78,15 +78,15 @@ export function connectCardToGroup({
     for (let i = 0; i < numCols; i++) {
       const itemToAdd = i === connection.y ? card : null;
       if (connectAtEnd) {
-        group.cards[i].splice(connection.x + 1, 0, itemToAdd);
+        group.cards[i]?.splice(connection.x + 1, 0, itemToAdd);
       } else {
-        group.cards[i].splice(connection.x, 0, itemToAdd);
+        group.cards[i]?.splice(connection.x, 0, itemToAdd);
       }
     }
     return;
   }
 
-  const numRows = group.cards[0].length;
+  const numRows = group.cards[0]!.length;
 
   if (connectAtEnd) {
     group.cards[numCols] = [];
@@ -106,7 +106,7 @@ export function connectCardToGroup({
       }
       continue;
     }
-    group.cards[i] = group.cards[i - 1];
+    group.cards[i] = group.cards[i - 1]!;
   }
 }
 
@@ -147,8 +147,8 @@ export function connectGroups({
       smallerGroup.group.cards
     ).length;
     let numberOfColumnsBelowGroup = Object.keys(largerGroup.group.cards).length;
-    const numberOfRowsAboveGroup = smallerGroup.group.cards[0].length;
-    const numberOfRowsBelowGroup = largerGroup.group.cards[0].length;
+    const numberOfRowsAboveGroup = smallerGroup.group.cards[0]?.length ?? 0;
+    const numberOfRowsBelowGroup = largerGroup.group.cards[0]?.length ?? 0;
 
     // if we have a negative offset, we can make a positive offset on the other group instead
     // this will make it easier to reason about and generate the new group
@@ -160,7 +160,7 @@ export function connectGroups({
       numberOfColumnsAboveGroup + aboveGroupOffset,
       numberOfColumnsBelowGroup + belowGroupOffset
     );
-    let newCards = {};
+    let newCards: Record<number, (Card | null)[]> = {};
 
     for (let i = 0; i < newGroupWidth; i++) {
       const upperGroupCards =
@@ -171,7 +171,7 @@ export function connectGroups({
       const lowerGroupCards =
         largerGroup.group.cards[i - belowGroupOffset] ??
         new Array(numberOfRowsBelowGroup).fill(null);
-      newCards[i] = newCards[i].concat(lowerGroupCards);
+      newCards[i] = newCards[i]!.concat(lowerGroupCards);
       continue;
     }
 
@@ -185,8 +185,8 @@ export function connectGroups({
   // so the group with the higher number will be on the left side
   const numColsLeftGroup = Object.keys(largerGroup.group.cards).length;
   const numColsRightGroup = Object.keys(smallerGroup.group.cards).length;
-  const numRowsLeftGroup = largerGroup.group.cards[0].length;
-  const numRowsRightGroup = smallerGroup.group.cards[0].length;
+  const numRowsLeftGroup = largerGroup.group.cards[0]?.length ?? 0;
+  const numRowsRightGroup = smallerGroup.group.cards[0]?.length ?? 0;
 
   // TODO: normalized in relation to the connection point
   // yOffsetRelativeToConnection - a bit long, we can make this a bit more parse-able later
@@ -200,7 +200,7 @@ export function connectGroups({
     numRowsRightGroup + rightGroupYOffset
   );
 
-  const newCards = {};
+  const newCards: Record<number, (Card | null)[]> = {};
 
   for (let x = 0; x < numColsLeftGroup; x++) {
     // work down the column - if the card should go there, add it, otherwise null
@@ -208,7 +208,8 @@ export function connectGroups({
       newCards[x] = [];
     }
     for (let y = 0; y < newGroupHeight; y++) {
-      newCards[x][y] = largerGroup.group.cards[x][y - leftGroupYOffset] ?? null;
+      newCards[x][y] =
+        largerGroup.group.cards[x]?.[y - leftGroupYOffset] ?? null;
     }
   }
   for (let x = 0; x < numColsRightGroup; x++) {
@@ -218,7 +219,7 @@ export function connectGroups({
     }
     for (let y = 0; y < newGroupHeight; y++) {
       newCards[xRightGroup][y] =
-        smallerGroup.group.cards[x][y - rightGroupYOffset] ?? null;
+        smallerGroup.group.cards[x]?.[y - rightGroupYOffset] ?? null;
     }
   }
 
@@ -226,4 +227,41 @@ export function connectGroups({
     number: newGroupNum,
     cards: newCards,
   };
+}
+
+interface BoardCard {
+  id: string;
+  lowNum: string;
+  lowUprightForV: boolean;
+}
+
+export type GroupUI = (BoardCard | null)[][];
+
+export interface BoardUI {
+  [groupNum: string]: GroupUI;
+}
+
+export function genGroupUI(group: Group) {
+  const numCols = Object.keys(group.cards).length;
+  const numRows = group.cards[0]?.length;
+  if (!numRows) {
+    throw new Error(`somehow there are no rows in group: ${group.number}`);
+  }
+  const boardSpaces: GroupUI = [];
+
+  for (let x = 0; x < numCols; x++) {
+    boardSpaces[x] = [];
+    for (let y = 0; y < numRows; y++) {
+      const card = group.cards[x]?.[y];
+      if (!card) {
+        throw new Error('card was missing while creating the group');
+      }
+      boardSpaces[x]![y] = {
+        id: card.id,
+        lowNum: card.lowNum,
+        lowUprightForV: card.uprightFor === 'vertical',
+      };
+    }
+  }
+  return boardSpaces;
 }
