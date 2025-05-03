@@ -27,7 +27,7 @@ declare namespace BGA {
       };
     };
     board: {
-      [groupNum: string]: import('./generateBoard').Group;
+      [groupNum: string]: import('./genGroupUI').Group;
     };
   }
 

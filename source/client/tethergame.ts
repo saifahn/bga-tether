@@ -18,7 +18,8 @@
 
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
-import { BoardUI, generateGroupUI, Group, GroupUI } from './generateBoard';
+import { Group } from './generateBoard';
+import { genGroupUI, GroupUI, BoardUI } from './genGroupUI';
 
 interface PlayedCard {
   status: 'played';
@@ -110,7 +111,6 @@ class TetherGame extends Gamegui {
     return cardElement;
   }
 
-  // TODO: this redraw function needs to handle animations in the future?
   updateBoardUI() {
     const adriftZone = document.getElementById('adrift-zone');
     if (!adriftZone) {
@@ -154,7 +154,7 @@ class TetherGame extends Gamegui {
 
     let groups: Record<string, GroupUI> = {};
     for (const group in this.gameState.board) {
-      const generatedGroup = generateGroupUI(this.gameState.board[group]!);
+      const generatedGroup = genGroupUI(this.gameState.board[group]!);
       groups[group] = generatedGroup;
 
       const groupEl = document.createElement('div');
@@ -163,11 +163,10 @@ class TetherGame extends Gamegui {
       for (const row of generatedGroup) {
         for (const card of row) {
           if (card) {
-            const flipped = card.uprightFor !== this.playerDirection;
             const cardEl = this.createCardElement({
               id: card.id,
-              number: card.number,
-              flipped,
+              number: card.lowNum,
+              flipped: false,
             });
             groupEl.appendChild(cardEl);
           }
