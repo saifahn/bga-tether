@@ -18,8 +18,13 @@
 
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
-import { Group } from './generateBoard';
-import { genGroupUI, GroupUI, BoardUI } from './genGroupUI';
+import {
+  genGroupUI,
+  GroupUI,
+  BoardUI,
+  Group,
+  connectCardToGroup,
+} from './genGroupUI';
 
 interface PlayedCard {
   status: 'played';
@@ -676,21 +681,12 @@ class TetherGame extends Gamegui {
     const otherDirection =
       this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
     const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
+    const newGroupNum = Object.keys(this.gameState.board).length + 1;
 
     return {
-      vertical: {
-        [card.number]: {
-          id: card.id,
-          number: card.number,
-          uprightFor,
-        },
-      },
-      horizontal: {
-        [card.number]: {
-          id: card.id,
-          number: card.number,
-          uprightFor,
-        },
+      number: newGroupNum,
+      cards: {
+        0: [{ id: card.id, lowNum: card.number, uprightFor }],
       },
     };
   }
@@ -720,63 +716,51 @@ class TetherGame extends Gamegui {
       );
       this.updateBoardUI();
     } else {
+      // connect card to that group
       const group = this.gameState.board[this.currentGroup];
       if (!group) {
         throw new Error('current group not found');
       }
 
+      if (!this.playerDirection) {
+        throw new Error('something is wrong, playerDirection was null');
+      }
+
       const card = this.cardForConnecting;
       const otherDirection =
         this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
-      const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
-      group.vertical[card.number] = {
-        id: card.id,
-        number: card.number,
-        uprightFor,
-      };
-      group.horizontal[card.number] = {
-        id: card.id,
-        number: card.number,
-        uprightFor,
-      };
+      const uprightFor = card.flipped ? otherDirection : this.playerDirection;
+
+      connectCardToGroup({
+        group,
+        card: {
+          id: card.id,
+          lowNum: card.number,
+          uprightFor,
+        },
+        connection: {
+          card: group.cards[0]![0]!,
+          x: 0,
+          y: 0,
+        }, // need to specify where it is connected
+        orientation: this.playerDirection,
+      });
       this.updateBoardUI();
     }
 
     this.highlightPlayableAstronauts();
   }
 
-  // TODO: this needs a lot of work, it's WIP just because I don't know if
-  // I need both vertical and horizontal on the group object
-  getGroupsOfCardIDsFromBoardState() {
-    type Card = {
-      id: string;
-      uprightFor: 'vertical' | 'horizontal';
-    };
-    type Groups = Record<string, Card[]>;
-    const groups: Groups = {};
-
-    for (const groupNum in this.gameState.board) {
-      const group = this.gameState.board[groupNum];
-      if (!group) break;
-      for (const cardNum in group.vertical) {
-        if (!group['vertical']?.[cardNum]) {
-          return;
-        }
-        if (!groups[groupNum]) {
-          groups[groupNum] = [];
-        }
-        groups[groupNum].push({
-          id: group.vertical[cardNum]?.id,
-          uprightFor: group.vertical[cardNum]?.uprightFor,
-        });
-      }
-    }
-    return groups;
+  formatGroupsForServer() {
+    return this.board;
+    // what details does the backend need?
+    // group: number/id and cards
+    // cards need uprightFor, id, x, and y
   }
 
   finishConnectingAstronauts() {
     this.bgaPerformAction('actConnectAstronauts', {
-      boardStateJSON: JSON.stringify(this.getGroupsOfCardIDsFromBoardState()),
+      boardStateJSON: JSON.stringify(this.formatGroupsForServer()),
     });
   }
   // #endregion
