@@ -395,5 +395,3 @@ connectCardToGroupTests(
 );
 
 connectCardToGroupTests.run();
-
-// TODO: joining groups
