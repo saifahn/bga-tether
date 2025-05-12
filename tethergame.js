@@ -352,7 +352,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             this.gameStateTurnStart.hand = gamedatas.hand;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
             console.log('player direction', this.playerDirection);
-            console.log(gamedatas.board);
             this.generateCardMap();
             this.setInitialPlayableCards();
             this.updateBoardUI();

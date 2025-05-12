@@ -28,7 +28,7 @@ export function createNewGroup(
     cards: {},
   };
   if (cards.length === 1) {
-    group.cards[0] = cards[0];
+    group.cards[0] = [cards[0]!];
   } else {
     // orientation and then calculate how to put the cards in order
   }
@@ -208,7 +208,7 @@ export function connectGroups({
       newCards[x] = [];
     }
     for (let y = 0; y < newGroupHeight; y++) {
-      newCards[x][y] =
+      newCards[x]![y] =
         largerGroup.group.cards[x]?.[y - leftGroupYOffset] ?? null;
     }
   }
@@ -253,14 +253,20 @@ export function genGroupUI(group: Group) {
     boardSpaces[x] = [];
     for (let y = 0; y < numRows; y++) {
       const card = group.cards[x]?.[y];
-      if (!card) {
-        throw new Error('card was missing while creating the group');
+      if (card === null) {
+        boardSpaces[x]![y] = null;
+      } else {
+        if (!card) {
+          throw new Error(
+            `card was missing while creating the group: ${card}, at (${x},${y})`
+          );
+        }
+        boardSpaces[x]![y] = {
+          id: card.id,
+          lowNum: card.lowNum,
+          lowUprightForV: card.uprightFor === 'vertical',
+        };
       }
-      boardSpaces[x]![y] = {
-        id: card.id,
-        lowNum: card.lowNum,
-        lowUprightForV: card.uprightFor === 'vertical',
-      };
     }
   }
   return boardSpaces;
