@@ -216,8 +216,14 @@ class TetherGame extends Gamegui {
         : 'horizontal';
 
     this.gameState.adrift = gamedatas.adrift;
-    this.gameState.board = gamedatas.board;
+    // it's only an array if it is empty
+    this.gameState.board = Array.isArray(gamedatas.board)
+      ? {}
+      : gamedatas.board;
     this.gameState.hand = gamedatas.hand;
+
+    console.log('board state from server', gamedatas.board);
+    console.log('board state', this.gameState.board);
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -709,12 +715,20 @@ class TetherGame extends Gamegui {
 
     delete this.gameState.hand[this.cardForConnecting.id];
     if (first) {
+      console.log(
+        'creating a new group at start of connecting astronauts',
+        this.gameState.board
+      );
       const existingGroupsLen = Object.keys(this.gameState.board).length;
       this.currentGroup = existingGroupsLen + 1;
       this.gameState.board[this.currentGroup] = this.createGroupFromCard(
         this.cardForConnecting
       );
       this.updateBoardUI();
+      console.log(
+        'after creating a new group with the first card of connecting astronauts',
+        this.gameState.board
+      );
     } else {
       // connect card to that group
       const group = this.gameState.board[this.currentGroup];
@@ -752,7 +766,7 @@ class TetherGame extends Gamegui {
   }
 
   formatGroupsForServer() {
-    return this.board;
+    return this.gameState.board;
     // what details does the backend need?
     // group: number/id and cards
     // cards need uprightFor, id, x, and y

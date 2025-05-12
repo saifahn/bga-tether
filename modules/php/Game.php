@@ -229,18 +229,55 @@ class Game extends \Table
 
     protected function createGroupObjectForUI(array $cards): array
     {
-        $groups = array();
+        $cardsByGroupAndCoords = array();
         foreach ($cards as $card) {
-            $groups[$card['groupId']]['vertical'][$card['id']] = array(
+            $groupAndCoords = explode("_", $card["groupAndCoords"]);
+            // 0 is group number, 1 is x coord, 2 is y coord
+            $x = $groupAndCoords[1];
+            $y = $groupAndCoords[2];
+
+            $cardsByGroupAndCoords[$groupAndCoords[0]][$x][$y] = array(
                 "id" => $card['id'],
-                "number" => $card['cardNum'],
+                "lowNum" => $card['cardNum'],
                 "uprightFor" => $card['uprightFor'],
             );
-            $groups[$card['groupId']]['horizontal'][$card['id']] = array(
-                "id" => $card['id'],
-                "number" => $card['cardNum'],
-                "uprightFor" => $card['uprightFor'],
+
+            if (!isset($cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"])) {
+                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"] = 0;
+                $greatestX = 0;
+            }
+            if (!isset($cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"])) {
+                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"] = 0;
+                $greatestY = 0;
+            }
+
+            if ($x > $greatestX) {
+                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"] = $x;
+            }
+            if ($y > $greatestY) {
+                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"] = $y;
+            }
+            // $this->debug(print_r($cardsByGroupAndCoords[$groupAndCoords[0]][$x][$y], true));
+        }
+
+        $groups = array();
+        foreach ($cardsByGroupAndCoords as $groupNum => $group) {
+            // $this->debug("group number:" . print_r($groupNum, true));
+            $groups[$groupNum] = array(
+                "number" => $groupNum,
+                "cards" => array(),
             );
+            for ($x = 0; $x < $group["greatestX"] + 1; $x++) {
+                array_push($groups[$groupNum]["cards"], array());
+                for ($y = 0; $y < $group["greatestY"] + 1; $y++) {
+                    $this->debug("x: $x, y: $y");
+
+                    // $this->debug(print_r($cardsByGroupAndCoords[$groupNum][$x][$y], true));
+                    $itemToSet = $cardsByGroupAndCoords[$groupNum][$x][$y] ?? NULL;
+                    // FIXME: check this actually returns null or the card as expected
+                    array_push($groups[$groupNum]["cards"][$x], $itemToSet);
+                }
+            }
         }
         return $groups;
     }
@@ -272,7 +309,7 @@ class Game extends \Table
         $result['hand'] = $this->cards->getCardsInLocation('hand', $current_player_id);
 
         $cardsByGroup = $this->getCollectionFromDB(
-            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupId
+            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
             FROM card 
             WHERE card_location = 'group'"
         );
@@ -434,32 +471,30 @@ class Game extends \Table
 
     function actConnectAstronauts(#[JsonParam] array $boardStateJSON)
     {
-        $horizontalUprightCardIds = array();
-        $verticalUprightCardIds = array();
-
         try {
+            // TODO: make more efficient - one SQL query at the end
+            // groups
             foreach ($boardStateJSON as $groupNum => $group) {
-                $moveCardIds = array();
-                foreach ($group as $card) {
-                    array_push($moveCardIds, $card['id']);
+                // get the cards
+                foreach ($group["cards"] as $xCoord => $cards) {
+                    $this->debug("looking at a new column $xCoord");
+                    $yCoord = 0;
+                    foreach ($cards as $card) {
+                        $this->debug("looking at a new card in the column, row $yCoord");
+                        // update the cards to the right places based on IDs
+                        // if $card
+                        if ($card) {
+                            $message = "found a card at ($xCoord, $yCoord) with group number of $groupNum";
+                            $this->debug($message);
+                            $this->cards->moveCard($card["id"], 'group', $groupNum . '_' . $xCoord . '_' . $yCoord);
+                        }
+                        // TODO: set the correct orientation
+                        // TODO: add validation to make sure that these are valid moves
+                        //     $this->cards->moveCards
 
-                    if ($card['uprightFor'] == 'horizontal') {
-                        array_push($horizontalUprightCardIds, $card['id']);
-                    } else {
-                        array_push($verticalUprightCardIds, $card['id']);
+                        $yCoord++;
                     }
                 }
-                // TODO: add validation to make sure that these are valid moves
-                $this->cards->moveCards($moveCardIds, 'group', $groupNum);
-            }
-            if (count($horizontalUprightCardIds)) {
-                $horizontalCardIds = '(' . implode(',', $horizontalUprightCardIds) . ')';
-                $this->DbQuery("UPDATE card SET card_type = 'horizontal' WHERE card_id IN $horizontalCardIds");
-            }
-
-            if (count($verticalUprightCardIds)) {
-                $verticalCardIds = '(' . implode(',', $verticalUprightCardIds) . ')';
-                $this->DbQuery("UPDATE card SET card_type = 'vertical' WHERE card_id IN $verticalCardIds");
             }
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");
