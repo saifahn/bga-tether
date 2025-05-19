@@ -484,11 +484,12 @@ class Game extends \Table
                         // update the cards to the right places based on IDs
                         // if $card
                         if ($card) {
-                            $message = "found a card at ($xCoord, $yCoord) with group number of $groupNum";
-                            $this->debug($message);
-                            $this->cards->moveCard($card["id"], 'group', $groupNum . '_' . $xCoord . '_' . $yCoord);
+                            $orientation = $card['uprightFor'];
+                            $groupAndCoords = $groupNum . '_' . $xCoord . '_' . $yCoord;
+                            $id = $card['id'];
+                            $sql = "UPDATE card SET card_type='$orientation', card_location='group', card_location_arg='$groupAndCoords' WHERE card_id=$id";
+                            $this->DbQuery($sql);
                         }
-                        // TODO: set the correct orientation
                         // TODO: add validation to make sure that these are valid moves
                         //     $this->cards->moveCards
 
