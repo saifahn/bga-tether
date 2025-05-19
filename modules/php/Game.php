@@ -474,11 +474,8 @@ class Game extends \Table
             foreach ($boardStateJSON as $groupNum => $group) {
                 // get the cards
                 foreach ($group["cards"] as $xCoord => $cards) {
-                    $this->debug("looking at a new column $xCoord");
                     $yCoord = 0;
                     foreach ($cards as $card) {
-                        $this->debug("looking at a new card in the column, row $yCoord");
-                        // update the cards to the right places based on IDs
                         if ($card) {
                             $orientation = $card['uprightFor'];
                             $groupAndCoords = $groupNum . '_' . $xCoord . '_' . $yCoord;

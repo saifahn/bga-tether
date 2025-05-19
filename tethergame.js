@@ -95,11 +95,11 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
         }
     }
 });
-define("generateBoardUI", ["require", "exports"], function (require, exports) {
+define("generateGroupUI", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.genGroupUI = genGroupUI;
-    function genGroupUI(group) {
+    exports.generateGroupUI = generateGroupUI;
+    function generateGroupUI(group) {
         var _a, _b;
         var numCols = Object.keys(group.cards).length;
         var numRows = (_a = group.cards[0]) === null || _a === void 0 ? void 0 : _a.length;
@@ -129,7 +129,7 @@ define("generateBoardUI", ["require", "exports"], function (require, exports) {
         return boardSpaces;
     }
 });
-define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateBoardUI", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateBoardUI_1) {
+define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var TetherGame = (function (_super) {
@@ -221,7 +221,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             groupsArea.innerHTML = '';
             var groups = {};
             for (var group in this.gameState.board) {
-                var generatedGroup = (0, generateBoardUI_1.genGroupUI)(this.gameState.board[group]);
+                var generatedGroup = (0, generateGroupUI_1.generateGroupUI)(this.gameState.board[group]);
                 groups[group] = generatedGroup;
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
@@ -275,8 +275,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 ? {}
                 : gamedatas.board;
             this.gameState.hand = gamedatas.hand;
-            console.log('board state from server', gamedatas.board);
-            console.log('board state', this.gameState.board);
             this.updateBoardUI();
             this.setupNotifications();
             console.log('Ending game setup');
@@ -660,12 +658,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             }
             this.highlightPlayableAstronauts();
         };
-        TetherGame.prototype.formatGroupsForServer = function () {
-            return this.gameState.board;
-        };
         TetherGame.prototype.finishConnectingAstronauts = function () {
             this.bgaPerformAction('actConnectAstronauts', {
-                boardStateJSON: JSON.stringify(this.formatGroupsForServer()),
+                boardStateJSON: JSON.stringify(this.gameState.board),
             });
         };
         TetherGame.prototype.notif_cardSetAdrift = function (notif) {
