@@ -257,12 +257,10 @@ class Game extends \Table
             if ($y > $greatestY) {
                 $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"] = $y;
             }
-            // $this->debug(print_r($cardsByGroupAndCoords[$groupAndCoords[0]][$x][$y], true));
         }
 
         $groups = array();
         foreach ($cardsByGroupAndCoords as $groupNum => $group) {
-            // $this->debug("group number:" . print_r($groupNum, true));
             $groups[$groupNum] = array(
                 "number" => $groupNum,
                 "cards" => array(),
@@ -272,7 +270,6 @@ class Game extends \Table
                 for ($y = 0; $y < $group["greatestY"] + 1; $y++) {
                     $this->debug("x: $x, y: $y");
 
-                    // $this->debug(print_r($cardsByGroupAndCoords[$groupNum][$x][$y], true));
                     $itemToSet = $cardsByGroupAndCoords[$groupNum][$x][$y] ?? NULL;
                     // FIXME: check this actually returns null or the card as expected
                     array_push($groups[$groupNum]["cards"][$x], $itemToSet);
@@ -482,7 +479,6 @@ class Game extends \Table
                     foreach ($cards as $card) {
                         $this->debug("looking at a new card in the column, row $yCoord");
                         // update the cards to the right places based on IDs
-                        // if $card
                         if ($card) {
                             $orientation = $card['uprightFor'];
                             $groupAndCoords = $groupNum . '_' . $xCoord . '_' . $yCoord;
@@ -491,8 +487,6 @@ class Game extends \Table
                             $this->DbQuery($sql);
                         }
                         // TODO: add validation to make sure that these are valid moves
-                        //     $this->cards->moveCards
-
                         $yCoord++;
                     }
                 }
