@@ -164,6 +164,9 @@ class TetherGame extends Gamegui {
 
       const groupEl = document.createElement('div');
       groupEl.classList.add('group');
+      if (this.playerDirection === 'horizontal') {
+        groupEl.classList.add('group--flipped');
+      }
 
       for (const row of generatedGroup) {
         for (const card of row) {
@@ -171,7 +174,7 @@ class TetherGame extends Gamegui {
             const cardEl = this.createCardElement({
               id: card.id,
               number: card.lowNum,
-              flipped: false,
+              flipped: card.lowUprightForV,
             });
             groupEl.appendChild(cardEl);
           }

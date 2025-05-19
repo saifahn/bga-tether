@@ -57,6 +57,10 @@ $card-height: math.div(1955px, 7);
   padding: 1rem;
   border: 4px dashed darkslateblue;
   border-radius: 4px;
+
+  &--flipped {
+    transform: rotate(180deg);
+  }
 }
 
 .deck {

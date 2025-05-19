@@ -315,6 +315,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "genGrou
                 groups[group] = generatedGroup;
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
+                if (this.playerDirection === 'horizontal') {
+                    groupEl.classList.add('group--flipped');
+                }
                 for (var _i = 0, generatedGroup_1 = generatedGroup; _i < generatedGroup_1.length; _i++) {
                     var row = generatedGroup_1[_i];
                     for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
@@ -323,7 +326,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "genGrou
                             var cardEl = this.createCardElement({
                                 id: card.id,
                                 number: card.lowNum,
-                                flipped: false,
+                                flipped: card.lowUprightForV,
                             });
                             groupEl.appendChild(cardEl);
                         }
