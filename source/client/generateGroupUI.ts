@@ -12,7 +12,7 @@ export interface BoardUI {
   [groupNum: string]: GroupUI;
 }
 
-export function genGroupUI(group: Group) {
+export function generateGroupUI(group: Group) {
   const numCols = Object.keys(group.cards).length;
   const numRows = group.cards[0]?.length;
   if (!numRows) {

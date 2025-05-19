@@ -19,7 +19,7 @@
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
 import { Group, connectCardToGroup } from './connectCardToGroup';
-import { genGroupUI, GroupUI, BoardUI } from './generateBoardUI';
+import { generateGroupUI, GroupUI, BoardUI } from './generateGroupUI';
 
 interface PlayedCard {
   status: 'played';
@@ -154,7 +154,7 @@ class TetherGame extends Gamegui {
 
     let groups: Record<string, GroupUI> = {};
     for (const group in this.gameState.board) {
-      const generatedGroup = genGroupUI(this.gameState.board[group]!);
+      const generatedGroup = generateGroupUI(this.gameState.board[group]!);
       groups[group] = generatedGroup;
 
       const groupEl = document.createElement('div');
@@ -219,9 +219,6 @@ class TetherGame extends Gamegui {
       ? {}
       : gamedatas.board;
     this.gameState.hand = gamedatas.hand;
-
-    console.log('board state from server', gamedatas.board);
-    console.log('board state', this.gameState.board);
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -742,11 +739,12 @@ class TetherGame extends Gamegui {
           lowNum: card.number,
           uprightFor,
         },
+        // TODO: support connecting at a different place
         connection: {
           card: group.cards[0]![0]!,
           x: 0,
           y: 0,
-        }, // need to specify where it is connected
+        },
         orientation: this.playerDirection,
       });
       this.updateBoardUI();
@@ -755,16 +753,9 @@ class TetherGame extends Gamegui {
     this.highlightPlayableAstronauts();
   }
 
-  formatGroupsForServer() {
-    return this.gameState.board;
-    // what details does the backend need?
-    // group: number/id and cards
-    // cards need uprightFor, id, x, and y
-  }
-
   finishConnectingAstronauts() {
     this.bgaPerformAction('actConnectAstronauts', {
-      boardStateJSON: JSON.stringify(this.formatGroupsForServer()),
+      boardStateJSON: JSON.stringify(this.gameState.board),
     });
   }
   // #endregion
