@@ -1,18 +1,6 @@
-import { getConnectingCardNums, connectCardToGroup, Group } from './genGroupUI';
+import { connectCardToGroup, Group } from './connectCardToGroup';
 import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
-
-const connectingNumsTests = suite('getConnectingCardNums');
-
-connectingNumsTests(
-  'should return the connecting card numbers for a card',
-  () => {
-    const result = getConnectingCardNums('02');
-    assert.equal(result, ['01', '03']);
-  }
-);
-
-connectingNumsTests.run();
 
 const connectCardToGroupTests = suite('connectCardToGroup');
 

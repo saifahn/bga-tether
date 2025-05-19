@@ -49,42 +49,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-define("genGroupUI", ["require", "exports"], function (require, exports) {
+define("connectCardToGroup", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.createNewGroup = createNewGroup;
-    exports.getConnectingCardNums = getConnectingCardNums;
     exports.connectCardToGroup = connectCardToGroup;
-    exports.connectGroups = connectGroups;
-    exports.genGroupUI = genGroupUI;
-    function getNewGroupNumber() {
-        return 5;
-    }
-    function createNewGroup(orientation) {
-        var cards = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            cards[_i - 1] = arguments[_i];
-        }
-        var group = {
-            number: getNewGroupNumber(),
-            cards: {},
-        };
-        if (cards.length === 1) {
-            group.cards[0] = [cards[0]];
-        }
-        else {
-        }
-        return group;
-    }
-    function getConnectingCardNums(cardNum) {
-        var belowNum = String(parseInt(cardNum) - 1);
-        if (belowNum.length < 2)
-            belowNum = '0' + belowNum;
-        var aboveNum = String(parseInt(cardNum) + 1);
-        if (aboveNum.length < 2)
-            aboveNum = '0' + aboveNum;
-        return [belowNum, aboveNum];
-    }
     function connectCardToGroup(_a) {
         var _b, _c, _d, _e;
         var group = _a.group, card = _a.card, connection = _a.connection, orientation = _a.orientation;
@@ -126,69 +94,11 @@ define("genGroupUI", ["require", "exports"], function (require, exports) {
             group.cards[i] = group.cards[i - 1];
         }
     }
-    function connectGroups(_a) {
-        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
-        var smallerGroup = _a.smallerGroup, largerGroup = _a.largerGroup, orientation = _a.orientation;
-        if (((_c = (_b = smallerGroup.group.cards[smallerGroup.connection.x]) === null || _b === void 0 ? void 0 : _b[smallerGroup.connection.y]) === null || _c === void 0 ? void 0 : _c.id) !== smallerGroup.connection.card.id ||
-            ((_e = (_d = largerGroup.group.cards[largerGroup.connection.x]) === null || _d === void 0 ? void 0 : _d[largerGroup.connection.y]) === null || _e === void 0 ? void 0 : _e.id) !== largerGroup.connection.card.id) {
-            throw new Error('The connecting card details are not correct');
-        }
-        var newGroupNum = Math.min(smallerGroup.group.number, largerGroup.group.number);
-        if (orientation === 'vertical') {
-            var numberOfColumnsAboveGroup = Object.keys(smallerGroup.group.cards).length;
-            var numberOfColumnsBelowGroup = Object.keys(largerGroup.group.cards).length;
-            var numberOfRowsAboveGroup = (_g = (_f = smallerGroup.group.cards[0]) === null || _f === void 0 ? void 0 : _f.length) !== null && _g !== void 0 ? _g : 0;
-            var numberOfRowsBelowGroup = (_j = (_h = largerGroup.group.cards[0]) === null || _h === void 0 ? void 0 : _h.length) !== null && _j !== void 0 ? _j : 0;
-            var belowGroupOffset = smallerGroup.connection.x - largerGroup.connection.x;
-            var aboveGroupOffset = belowGroupOffset < 0 ? belowGroupOffset * -1 : 0;
-            belowGroupOffset = belowGroupOffset < 0 ? 0 : belowGroupOffset;
-            var newGroupWidth = Math.max(numberOfColumnsAboveGroup + aboveGroupOffset, numberOfColumnsBelowGroup + belowGroupOffset);
-            var newCards_1 = {};
-            for (var i = 0; i < newGroupWidth; i++) {
-                var upperGroupCards = (_k = smallerGroup.group.cards[i - aboveGroupOffset]) !== null && _k !== void 0 ? _k : new Array(numberOfRowsAboveGroup).fill(null);
-                newCards_1[i] = upperGroupCards;
-                var lowerGroupCards = (_l = largerGroup.group.cards[i - belowGroupOffset]) !== null && _l !== void 0 ? _l : new Array(numberOfRowsBelowGroup).fill(null);
-                newCards_1[i] = newCards_1[i].concat(lowerGroupCards);
-                continue;
-            }
-            return {
-                number: newGroupNum,
-                cards: newCards_1,
-            };
-        }
-        var numColsLeftGroup = Object.keys(largerGroup.group.cards).length;
-        var numColsRightGroup = Object.keys(smallerGroup.group.cards).length;
-        var numRowsLeftGroup = (_o = (_m = largerGroup.group.cards[0]) === null || _m === void 0 ? void 0 : _m.length) !== null && _o !== void 0 ? _o : 0;
-        var numRowsRightGroup = (_q = (_p = smallerGroup.group.cards[0]) === null || _p === void 0 ? void 0 : _p.length) !== null && _q !== void 0 ? _q : 0;
-        var leftGroupYOffset = smallerGroup.connection.y - largerGroup.connection.y;
-        var rightGroupYOffset = leftGroupYOffset < 0 ? leftGroupYOffset * -1 : 0;
-        leftGroupYOffset = leftGroupYOffset < 0 ? 0 : leftGroupYOffset;
-        var newGroupHeight = Math.max(numRowsLeftGroup + leftGroupYOffset, numRowsRightGroup + rightGroupYOffset);
-        var newCards = {};
-        for (var x = 0; x < numColsLeftGroup; x++) {
-            if (!newCards[x]) {
-                newCards[x] = [];
-            }
-            for (var y = 0; y < newGroupHeight; y++) {
-                newCards[x][y] =
-                    (_s = (_r = largerGroup.group.cards[x]) === null || _r === void 0 ? void 0 : _r[y - leftGroupYOffset]) !== null && _s !== void 0 ? _s : null;
-            }
-        }
-        for (var x = 0; x < numColsRightGroup; x++) {
-            var xRightGroup = x + numColsLeftGroup;
-            if (!newCards[xRightGroup]) {
-                newCards[xRightGroup] = [];
-            }
-            for (var y = 0; y < newGroupHeight; y++) {
-                newCards[xRightGroup][y] =
-                    (_u = (_t = smallerGroup.group.cards[x]) === null || _t === void 0 ? void 0 : _t[y - rightGroupYOffset]) !== null && _u !== void 0 ? _u : null;
-            }
-        }
-        return {
-            number: newGroupNum,
-            cards: newCards,
-        };
-    }
+});
+define("generateBoardUI", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.genGroupUI = genGroupUI;
     function genGroupUI(group) {
         var _a, _b;
         var numCols = Object.keys(group.cards).length;
@@ -219,7 +129,7 @@ define("genGroupUI", ["require", "exports"], function (require, exports) {
         return boardSpaces;
     }
 });
-define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "genGroupUI", "ebg/counter"], function (require, exports, Gamegui, genGroupUI_1) {
+define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateBoardUI", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateBoardUI_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var TetherGame = (function (_super) {
@@ -311,7 +221,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "genGrou
             groupsArea.innerHTML = '';
             var groups = {};
             for (var group in this.gameState.board) {
-                var generatedGroup = (0, genGroupUI_1.genGroupUI)(this.gameState.board[group]);
+                var generatedGroup = (0, generateBoardUI_1.genGroupUI)(this.gameState.board[group]);
                 groups[group] = generatedGroup;
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
@@ -716,12 +626,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "genGrou
             };
             delete this.gameState.hand[this.cardForConnecting.id];
             if (first) {
-                console.log('creating a new group at start of connecting astronauts', this.gameState.board);
                 var existingGroupsLen = Object.keys(this.gameState.board).length;
                 this.currentGroup = existingGroupsLen + 1;
                 this.gameState.board[this.currentGroup] = this.createGroupFromCard(this.cardForConnecting);
                 this.updateBoardUI();
-                console.log('after creating a new group with the first card of connecting astronauts', this.gameState.board);
             }
             else {
                 var group = this.gameState.board[this.currentGroup];
@@ -734,7 +642,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "genGrou
                 var card = this.cardForConnecting;
                 var otherDirection = this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
                 var uprightFor = card.flipped ? otherDirection : this.playerDirection;
-                (0, genGroupUI_1.connectCardToGroup)({
+                (0, connectCardToGroup_1.connectCardToGroup)({
                     group: group,
                     card: {
                         id: card.id,

@@ -18,13 +18,8 @@
 
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
-import {
-  genGroupUI,
-  GroupUI,
-  BoardUI,
-  Group,
-  connectCardToGroup,
-} from './genGroupUI';
+import { Group, connectCardToGroup } from './connectCardToGroup';
+import { genGroupUI, GroupUI, BoardUI } from './generateBoardUI';
 
 interface PlayedCard {
   status: 'played';
@@ -718,20 +713,12 @@ class TetherGame extends Gamegui {
 
     delete this.gameState.hand[this.cardForConnecting.id];
     if (first) {
-      console.log(
-        'creating a new group at start of connecting astronauts',
-        this.gameState.board
-      );
       const existingGroupsLen = Object.keys(this.gameState.board).length;
       this.currentGroup = existingGroupsLen + 1;
       this.gameState.board[this.currentGroup] = this.createGroupFromCard(
         this.cardForConnecting
       );
       this.updateBoardUI();
-      console.log(
-        'after creating a new group with the first card of connecting astronauts',
-        this.gameState.board
-      );
     } else {
       // connect card to that group
       const group = this.gameState.board[this.currentGroup];
