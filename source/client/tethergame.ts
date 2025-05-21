@@ -19,13 +19,20 @@
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
 import { Group, connectCardToGroup } from './connectCardToGroup';
-import { generateGroupUI, GroupUI, BoardUI } from './generateGroupUI';
+import { generateGroupUI } from './generateGroupUI';
+import { clone } from 'dojo';
 
 interface PlayedCard {
   status: 'played';
   id: string;
   number: string; // this is the lower number of the card, not necessarily what it was played as
   flipped: boolean;
+}
+
+interface GameState {
+  adrift: BGA.Gamedatas['adrift'];
+  board: BGA.Gamedatas['board'];
+  hand: BGA.Gamedatas['hand'];
 }
 
 /** See {@link BGA.Gamegui} for more information. */
@@ -58,13 +65,13 @@ class TetherGame extends Gamegui {
 
   currentGroup = 0;
 
-  board: BoardUI = {};
+  gameStateTurnStart: GameState = {
+    adrift: {},
+    board: {},
+    hand: {},
+  };
 
-  gameState: {
-    adrift: BGA.Gamedatas['adrift'];
-    board: BGA.Gamedatas['board'];
-    hand: BGA.Gamedatas['hand'];
-  } = {
+  gameStateCurrent: GameState = {
     adrift: {},
     board: {},
     hand: {},
@@ -124,10 +131,10 @@ class TetherGame extends Gamegui {
     deck.classList.add('js-deck');
     adriftZone.appendChild(deck);
 
-    for (const cardId in this.gameState.adrift) {
+    for (const cardId in this.gameStateCurrent.adrift) {
       const cardEl = this.createAdriftCardElement(
         cardId,
-        this.gameState.adrift[cardId]!.cardNum
+        this.gameStateCurrent.adrift[cardId]!.cardNum
       );
       adriftZone.appendChild(cardEl);
     }
@@ -137,10 +144,10 @@ class TetherGame extends Gamegui {
       throw new Error('hand not found');
     }
     hand.innerHTML = '';
-    for (const cardId in this.gameState.hand) {
+    for (const cardId in this.gameStateCurrent.hand) {
       const cardEl = this.createCardElement({
         id: cardId,
-        number: this.gameState.hand[cardId]!.type_arg,
+        number: this.gameStateCurrent.hand[cardId]!.type_arg,
         flipped: false,
       });
       hand.appendChild(cardEl);
@@ -152,10 +159,10 @@ class TetherGame extends Gamegui {
     }
     groupsArea.innerHTML = '';
 
-    let groups: Record<string, GroupUI> = {};
-    for (const group in this.gameState.board) {
-      const generatedGroup = generateGroupUI(this.gameState.board[group]!);
-      groups[group] = generatedGroup;
+    for (const group in this.gameStateCurrent.board) {
+      const generatedGroup = generateGroupUI(
+        this.gameStateCurrent.board[group]!
+      );
 
       const groupEl = document.createElement('div');
       groupEl.classList.add('group');
@@ -177,7 +184,6 @@ class TetherGame extends Gamegui {
       }
       groupsArea.appendChild(groupEl);
     }
-    this.board = groups;
   }
 
   /** See {@link  BGA.Gamegui#setup} for more information. */
@@ -213,12 +219,14 @@ class TetherGame extends Gamegui {
         ? 'vertical'
         : 'horizontal';
 
-    this.gameState.adrift = gamedatas.adrift;
+    this.gameStateTurnStart.adrift = gamedatas.adrift;
     // it's only an array if it is empty
-    this.gameState.board = Array.isArray(gamedatas.board)
+    this.gameStateTurnStart.board = Array.isArray(gamedatas.board)
       ? {}
       : gamedatas.board;
-    this.gameState.hand = gamedatas.hand;
+    this.gameStateTurnStart.hand = gamedatas.hand;
+    this.gameStateCurrent = clone(this.gameStateTurnStart);
+
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -589,6 +597,11 @@ class TetherGame extends Gamegui {
   }
   // #endregion
 
+  restoreUIToTurnStart() {
+    this.gameStateCurrent = clone(this.gameStateTurnStart);
+    this.updateBoardUI();
+  }
+
   // #region Connect Astronauts Action methods
   cancelConnectAstronautsAction() {
     this.clearSelectedCards();
@@ -596,6 +609,7 @@ class TetherGame extends Gamegui {
     this.clearEventListeners();
     this.restoreServerGameState();
     this.status = 'choosingAction';
+    this.restoreUIToTurnStart();
   }
 
   cardIsPlayable(card: HTMLElement) {
@@ -682,7 +696,7 @@ class TetherGame extends Gamegui {
     const otherDirection =
       this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
     const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
-    const newGroupNum = Object.keys(this.gameState.board).length + 1;
+    const newGroupNum = Object.keys(this.gameStateCurrent.board).length + 1;
 
     return {
       number: newGroupNum,
@@ -708,17 +722,17 @@ class TetherGame extends Gamegui {
       flipped,
     };
 
-    delete this.gameState.hand[this.cardForConnecting.id];
+    delete this.gameStateCurrent.hand[this.cardForConnecting.id];
     if (first) {
-      const existingGroupsLen = Object.keys(this.gameState.board).length;
+      const existingGroupsLen = Object.keys(this.gameStateCurrent.board).length;
       this.currentGroup = existingGroupsLen + 1;
-      this.gameState.board[this.currentGroup] = this.createGroupFromCard(
+      this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(
         this.cardForConnecting
       );
       this.updateBoardUI();
     } else {
       // connect card to that group
-      const group = this.gameState.board[this.currentGroup];
+      const group = this.gameStateCurrent.board[this.currentGroup];
       if (!group) {
         throw new Error('current group not found');
       }
@@ -755,7 +769,7 @@ class TetherGame extends Gamegui {
 
   finishConnectingAstronauts() {
     this.bgaPerformAction('actConnectAstronauts', {
-      boardStateJSON: JSON.stringify(this.gameState.board),
+      boardStateJSON: JSON.stringify(this.gameStateCurrent.board),
     });
   }
   // #endregion

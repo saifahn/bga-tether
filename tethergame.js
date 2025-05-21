@@ -129,7 +129,7 @@ define("generateGroupUI", ["require", "exports"], function (require, exports) {
         return boardSpaces;
     }
 });
-define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1) {
+define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, dojo_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var TetherGame = (function (_super) {
@@ -141,8 +141,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             _this.cardSetAdrift = null;
             _this.cardForConnecting = null;
             _this.currentGroup = 0;
-            _this.board = {};
-            _this.gameState = {
+            _this.gameStateTurnStart = {
+                adrift: {},
+                board: {},
+                hand: {},
+            };
+            _this.gameStateCurrent = {
                 adrift: {},
                 board: {},
                 hand: {},
@@ -197,8 +201,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             deck.classList.add('deck');
             deck.classList.add('js-deck');
             adriftZone.appendChild(deck);
-            for (var cardId in this.gameState.adrift) {
-                var cardEl = this.createAdriftCardElement(cardId, this.gameState.adrift[cardId].cardNum);
+            for (var cardId in this.gameStateCurrent.adrift) {
+                var cardEl = this.createAdriftCardElement(cardId, this.gameStateCurrent.adrift[cardId].cardNum);
                 adriftZone.appendChild(cardEl);
             }
             var hand = document.getElementById('hand');
@@ -206,10 +210,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 throw new Error('hand not found');
             }
             hand.innerHTML = '';
-            for (var cardId in this.gameState.hand) {
+            for (var cardId in this.gameStateCurrent.hand) {
                 var cardEl = this.createCardElement({
                     id: cardId,
-                    number: this.gameState.hand[cardId].type_arg,
+                    number: this.gameStateCurrent.hand[cardId].type_arg,
                     flipped: false,
                 });
                 hand.appendChild(cardEl);
@@ -219,10 +223,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 throw new Error('groups not found');
             }
             groupsArea.innerHTML = '';
-            var groups = {};
-            for (var group in this.gameState.board) {
-                var generatedGroup = (0, generateGroupUI_1.generateGroupUI)(this.gameState.board[group]);
-                groups[group] = generatedGroup;
+            for (var group in this.gameStateCurrent.board) {
+                var generatedGroup = (0, generateGroupUI_1.generateGroupUI)(this.gameStateCurrent.board[group]);
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
                 if (this.playerDirection === 'horizontal') {
@@ -244,7 +246,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 }
                 groupsArea.appendChild(groupEl);
             }
-            this.board = groups;
         };
         TetherGame.prototype.setup = function (gamedatas) {
             var _a;
@@ -270,11 +271,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 ((_a = gamedatas.players[this.player_id]) === null || _a === void 0 ? void 0 : _a.turnOrder) === '1'
                     ? 'vertical'
                     : 'horizontal';
-            this.gameState.adrift = gamedatas.adrift;
-            this.gameState.board = Array.isArray(gamedatas.board)
+            this.gameStateTurnStart.adrift = gamedatas.adrift;
+            this.gameStateTurnStart.board = Array.isArray(gamedatas.board)
                 ? {}
                 : gamedatas.board;
-            this.gameState.hand = gamedatas.hand;
+            this.gameStateTurnStart.hand = gamedatas.hand;
+            this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
             this.updateBoardUI();
             this.setupNotifications();
             console.log('Ending game setup');
@@ -536,12 +538,17 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 });
             });
         };
+        TetherGame.prototype.restoreUIToTurnStart = function () {
+            this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
+            this.updateBoardUI();
+        };
         TetherGame.prototype.cancelConnectAstronautsAction = function () {
             this.clearSelectedCards();
             this.clearSelectableCards();
             this.clearEventListeners();
             this.restoreServerGameState();
             this.status = 'choosingAction';
+            this.restoreUIToTurnStart();
         };
         TetherGame.prototype.cardIsPlayable = function (card) {
             return (this.numberIsPlayable(card.dataset['cardNumber']) ||
@@ -600,7 +607,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         TetherGame.prototype.createGroupFromCard = function (card) {
             var otherDirection = this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
             var uprightFor = card.flipped ? otherDirection : this.playerDirection;
-            var newGroupNum = Object.keys(this.gameState.board).length + 1;
+            var newGroupNum = Object.keys(this.gameStateCurrent.board).length + 1;
             return {
                 number: newGroupNum,
                 cards: {
@@ -622,15 +629,15 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 number: this.cardForConnecting.number,
                 flipped: flipped,
             };
-            delete this.gameState.hand[this.cardForConnecting.id];
+            delete this.gameStateCurrent.hand[this.cardForConnecting.id];
             if (first) {
-                var existingGroupsLen = Object.keys(this.gameState.board).length;
+                var existingGroupsLen = Object.keys(this.gameStateCurrent.board).length;
                 this.currentGroup = existingGroupsLen + 1;
-                this.gameState.board[this.currentGroup] = this.createGroupFromCard(this.cardForConnecting);
+                this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(this.cardForConnecting);
                 this.updateBoardUI();
             }
             else {
-                var group = this.gameState.board[this.currentGroup];
+                var group = this.gameStateCurrent.board[this.currentGroup];
                 if (!group) {
                     throw new Error('current group not found');
                 }
@@ -660,7 +667,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         };
         TetherGame.prototype.finishConnectingAstronauts = function () {
             this.bgaPerformAction('actConnectAstronauts', {
-                boardStateJSON: JSON.stringify(this.gameState.board),
+                boardStateJSON: JSON.stringify(this.gameStateCurrent.board),
             });
         };
         TetherGame.prototype.notif_cardSetAdrift = function (notif) {
