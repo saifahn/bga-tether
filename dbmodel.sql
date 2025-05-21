@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `card` (
   -- deck, hand, adrift, board
   `card_location` varchar(16) NOT NULL,
   -- `card_location_arg`
-  -- if hand, player_id of the hand. if board, the group number
-  `card_location_arg` int(11) NOT NULL,
+  -- if hand, player_id of the hand. if board, the group number and x/y coord
+  `card_location_arg` varchar(11) NOT NULL,
   PRIMARY KEY (`card_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8 AUTO_INCREMENT = 1;
