@@ -49,9 +49,16 @@
   padding: 1rem;
   border: 4px dashed darkslateblue;
   border-radius: 4px;
+  height: fit-content;
+  display: flex;
 }
 .group--flipped {
   transform: rotate(180deg);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
 }
 
 .deck {

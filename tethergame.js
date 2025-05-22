@@ -56,28 +56,35 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
     function connectCardToGroup(_a) {
         var _b, _c, _d, _e;
         var group = _a.group, card = _a.card, connection = _a.connection, orientation = _a.orientation;
-        var connectAtEnd = parseInt(card.lowNum) > parseInt(connection.card.lowNum);
+        var cardNumShown = card.uprightFor === orientation
+            ? parseInt(card.lowNum)
+            : parseInt(card.lowNum.split('').reverse().join(''));
+        var connectionCardNumShown = card.uprightFor === orientation
+            ? parseInt(connection.card.lowNum)
+            : parseInt(connection.card.lowNum.split('').reverse().join(''));
         var numCols = Object.keys(group.cards).length;
-        if (((_c = (_b = group.cards[connection.y]) === null || _b === void 0 ? void 0 : _b[connection.x]) === null || _c === void 0 ? void 0 : _c.id) !== connection.card.id) {
+        if (((_c = (_b = group.cards[connection.x]) === null || _b === void 0 ? void 0 : _b[connection.y]) === null || _c === void 0 ? void 0 : _c.id) !== connection.card.id) {
             throw new Error('The connecting card details are not correct');
         }
         if (orientation === 'vertical') {
             for (var i = 0; i < numCols; i++) {
-                var itemToAdd = i === connection.y ? card : null;
-                if (connectAtEnd) {
-                    (_d = group.cards[i]) === null || _d === void 0 ? void 0 : _d.splice(connection.x + 1, 0, itemToAdd);
+                var itemToAdd = i === connection.x ? card : null;
+                var connectAtEnd_1 = cardNumShown > connectionCardNumShown;
+                if (connectAtEnd_1) {
+                    (_d = group.cards[i]) === null || _d === void 0 ? void 0 : _d.splice(connection.y + 1, 0, itemToAdd);
                 }
                 else {
-                    (_e = group.cards[i]) === null || _e === void 0 ? void 0 : _e.splice(connection.x, 0, itemToAdd);
+                    (_e = group.cards[i]) === null || _e === void 0 ? void 0 : _e.splice(connection.y, 0, itemToAdd);
                 }
             }
             return;
         }
         var numRows = group.cards[0].length;
+        var connectAtEnd = connectionCardNumShown > cardNumShown;
         if (connectAtEnd) {
             group.cards[numCols] = [];
             for (var i = 0; i < numRows; i++) {
-                var itemToAdd = i === connection.x ? card : null;
+                var itemToAdd = i === connection.y ? card : null;
                 group.cards[numCols].push(itemToAdd);
             }
             return;
@@ -86,7 +93,7 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
             if (i === 0) {
                 group.cards[0] = [];
                 for (var i_1 = 0; i_1 < numRows; i_1++) {
-                    var itemToAdd = i_1 === connection.x ? card : null;
+                    var itemToAdd = i_1 === connection.y ? card : null;
                     group.cards[0].push(itemToAdd);
                 }
                 continue;
@@ -232,17 +239,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 }
                 for (var _i = 0, generatedGroup_1 = generatedGroup; _i < generatedGroup_1.length; _i++) {
                     var row = generatedGroup_1[_i];
+                    var columnEl = document.createElement('div');
+                    columnEl.classList.add('column');
                     for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
                         var card = row_1[_a];
                         if (card) {
                             var cardEl = this.createCardElement({
                                 id: card.id,
                                 number: card.lowNum,
-                                flipped: card.lowUprightForV,
+                                flipped: !card.lowUprightForV,
                             });
-                            groupEl.appendChild(cardEl);
+                            columnEl.appendChild(cardEl);
                         }
                     }
+                    groupEl.appendChild(columnEl);
                 }
                 groupsArea.appendChild(groupEl);
             }
@@ -277,6 +287,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 : gamedatas.board;
             this.gameStateTurnStart.hand = gamedatas.hand;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
+            console.log('game board', gamedatas.board);
+            console.log('player direction', this.playerDirection);
             this.updateBoardUI();
             this.setupNotifications();
             console.log('Ending game setup');

@@ -171,16 +171,20 @@ class TetherGame extends Gamegui {
       }
 
       for (const row of generatedGroup) {
+        const columnEl = document.createElement('div');
+        columnEl.classList.add('column');
+
         for (const card of row) {
           if (card) {
             const cardEl = this.createCardElement({
               id: card.id,
               number: card.lowNum,
-              flipped: card.lowUprightForV,
+              flipped: !card.lowUprightForV,
             });
-            groupEl.appendChild(cardEl);
+            columnEl.appendChild(cardEl);
           }
         }
+        groupEl.appendChild(columnEl);
       }
       groupsArea.appendChild(groupEl);
     }
@@ -226,6 +230,9 @@ class TetherGame extends Gamegui {
       : gamedatas.board;
     this.gameStateTurnStart.hand = gamedatas.hand;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
+
+    console.log('game board', gamedatas.board);
+    console.log('player direction', this.playerDirection);
 
     this.updateBoardUI();
 
