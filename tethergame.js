@@ -247,7 +247,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                             var cardEl = this.createCardElement({
                                 id: card.id,
                                 number: card.lowNum,
-                                flipped: card.lowUprightForV,
+                                flipped: !card.lowUprightForV,
                             });
                             columnEl.appendChild(cardEl);
                         }
@@ -287,6 +287,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 : gamedatas.board;
             this.gameStateTurnStart.hand = gamedatas.hand;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
+            console.log('game board', gamedatas.board);
+            console.log('player direction', this.playerDirection);
             this.updateBoardUI();
             this.setupNotifications();
             console.log('Ending game setup');

@@ -179,7 +179,7 @@ class TetherGame extends Gamegui {
             const cardEl = this.createCardElement({
               id: card.id,
               number: card.lowNum,
-              flipped: card.lowUprightForV,
+              flipped: !card.lowUprightForV,
             });
             columnEl.appendChild(cardEl);
           }
@@ -230,6 +230,9 @@ class TetherGame extends Gamegui {
       : gamedatas.board;
     this.gameStateTurnStart.hand = gamedatas.hand;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
+
+    console.log('game board', gamedatas.board);
+    console.log('player direction', this.playerDirection);
 
     this.updateBoardUI();
 
