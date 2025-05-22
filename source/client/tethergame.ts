@@ -171,6 +171,9 @@ class TetherGame extends Gamegui {
       }
 
       for (const row of generatedGroup) {
+        const columnEl = document.createElement('div');
+        columnEl.classList.add('column');
+
         for (const card of row) {
           if (card) {
             const cardEl = this.createCardElement({
@@ -178,9 +181,10 @@ class TetherGame extends Gamegui {
               number: card.lowNum,
               flipped: card.lowUprightForV,
             });
-            groupEl.appendChild(cardEl);
+            columnEl.appendChild(cardEl);
           }
         }
+        groupEl.appendChild(columnEl);
       }
       groupsArea.appendChild(groupEl);
     }
