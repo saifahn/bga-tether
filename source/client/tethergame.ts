@@ -60,6 +60,12 @@ class TetherGame extends Gamegui {
         number: string;
         numReversed: string;
       }
+    | {
+        status: 'choosingFromAdrift';
+        id: string;
+        number: string;
+        numReversed: string;
+      }
     | PlayedCard
     | null = null;
 
@@ -352,7 +358,10 @@ class TetherGame extends Gamegui {
         break;
       // @ts-expect-error
       case 'client_chooseCardSideToPlay':
-        if (this.cardForConnecting?.status !== 'choosingFromHand') {
+        if (
+          this.cardForConnecting?.status !== 'choosingFromHand' &&
+          this.cardForConnecting?.status !== 'choosingFromAdrift'
+        ) {
           throw new Error(
             'cardForConnecting not in correct state for this call'
           );
@@ -637,25 +646,6 @@ class TetherGame extends Gamegui {
    * the connect astronauts action.
    */
   highlightPlayableAstronauts(call: 'initial' | 'further' = 'further') {
-    if (call === 'initial') {
-      this.status = 'connectingAstronautsInitial';
-      this.setClientState('client_connectAstronautInitial', {
-        // @ts-expect-error
-        descriptionmyturn: _(
-          '${you} must select an astronaut from your hand to begin connecting.'
-        ),
-      });
-    } else {
-      this.status = 'connectingAstronautsNext';
-      this.setClientState('client_connectAstronautChooseNextCard', {
-        // @ts-expect-error
-        descriptionmyturn: _(
-          'Select an astronaut from your hand or the adrift zone to continue connecting.'
-        ),
-      });
-    }
-
-    // enable the right buttons
     const handler = (e: Event) => this.handleChooseCardFromHandConnect(e);
     this.getCardElementsFromHand().forEach((card) => {
       if (card instanceof HTMLElement) {
@@ -666,6 +656,42 @@ class TetherGame extends Gamegui {
             element: card,
             event: 'click',
             handler,
+          });
+        }
+      }
+    });
+
+    if (call === 'initial') {
+      this.status = 'connectingAstronautsInitial';
+      this.setClientState('client_connectAstronautInitial', {
+        // @ts-expect-error
+        descriptionmyturn: _(
+          '${you} must select an astronaut from your hand to begin connecting.'
+        ),
+      });
+      return;
+    } else {
+      this.status = 'connectingAstronautsNext';
+      this.setClientState('client_connectAstronautChooseNextCard', {
+        // @ts-expect-error
+        descriptionmyturn: _(
+          'Select an astronaut from your hand or the adrift zone to continue connecting.'
+        ),
+      });
+    }
+
+    const adriftCards = document.querySelectorAll('.js-adrift');
+    const connectFromAdriftHandler = (e: Event) =>
+      this.handleChooseCardFromAdriftConnect(e);
+    adriftCards.forEach((card) => {
+      if (card instanceof HTMLElement) {
+        if (this.cardIsPlayable(card)) {
+          card.classList.add('card--selectable');
+          card.addEventListener('click', connectFromAdriftHandler);
+          this.eventHandlers.push({
+            element: card,
+            event: 'click',
+            handler: connectFromAdriftHandler,
           });
         }
       }
@@ -684,6 +710,30 @@ class TetherGame extends Gamegui {
 
     this.cardForConnecting = {
       status: 'choosingFromHand',
+      id: e.target.dataset['cardId']!,
+      number: e.target.dataset['cardNumber']!,
+      numReversed: e.target.dataset['cardNumReversed']!,
+    };
+    this.setClientState('client_chooseCardSideToPlay', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must choose which side of the card to play.'
+      ),
+    });
+  }
+
+  handleChooseCardFromAdriftConnect(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error(
+        "handleChooseCardFromAdriftConnect called when it shouldn't have been"
+      );
+    }
+    this.clearSelectableCards();
+    this.clearEventListeners();
+    e.target.classList.add('card--selected');
+
+    this.cardForConnecting = {
+      status: 'choosingFromAdrift',
       id: e.target.dataset['cardId']!,
       number: e.target.dataset['cardNumber']!,
       numReversed: e.target.dataset['cardNumReversed']!,
@@ -719,7 +769,11 @@ class TetherGame extends Gamegui {
     if (!this.cardForConnecting) {
       throw new Error('cardForConnecting not set');
     }
-    if (this.cardForConnecting.status !== 'choosingFromHand') {
+    if (this.cardForConnecting.status === 'choosingFromHand') {
+      delete this.gameStateCurrent.hand[this.cardForConnecting.id];
+    } else if (this.cardForConnecting.status === 'choosingFromAdrift') {
+      delete this.gameStateCurrent.adrift[this.cardForConnecting.id];
+    } else {
       throw new Error('cardForConnecting not in correct state for this call');
     }
     this.cardForConnecting = {
@@ -729,7 +783,6 @@ class TetherGame extends Gamegui {
       flipped,
     };
 
-    delete this.gameStateCurrent.hand[this.cardForConnecting.id];
     if (first) {
       const existingGroupsLen = Object.keys(this.gameStateCurrent.board).length;
       this.currentGroup = existingGroupsLen + 1;
@@ -778,6 +831,7 @@ class TetherGame extends Gamegui {
     this.bgaPerformAction('actConnectAstronauts', {
       boardStateJSON: JSON.stringify(this.gameStateCurrent.board),
     });
+    this.clearSelectableCards();
   }
   // #endregion
 

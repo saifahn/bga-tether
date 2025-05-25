@@ -198,6 +198,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             return cardElement;
         };
         TetherGame.prototype.updateBoardUI = function () {
+            console.log('updating board UI');
+            console.log('current game state', this.gameStateCurrent);
             var adriftZone = document.getElementById('adrift-zone');
             if (!adriftZone) {
                 throw new Error('adrift-zone not found');
@@ -317,12 +319,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         };
         TetherGame.prototype.onUpdateActionButtons = function () {
             var _this = this;
-            var _a, _b, _c, _d, _e, _f;
-            var _g = [];
+            var _a, _b, _c, _d, _e, _f, _g;
+            var _h = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                _g[_i] = arguments[_i];
+                _h[_i] = arguments[_i];
             }
-            var stateName = _g[0], args = _g[1];
+            var stateName = _h[0], args = _h[1];
             console.log('onUpdateActionButtons: ' + stateName, args);
             if (!this.isCurrentPlayerActive())
                 return;
@@ -359,10 +361,11 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     }, undefined, false, 'red');
                     break;
                 case 'client_chooseCardSideToPlay':
-                    if (((_b = this.cardForConnecting) === null || _b === void 0 ? void 0 : _b.status) !== 'choosingFromHand') {
+                    if (((_b = this.cardForConnecting) === null || _b === void 0 ? void 0 : _b.status) !== 'choosingFromHand' &&
+                        ((_c = this.cardForConnecting) === null || _c === void 0 ? void 0 : _c.status) !== 'choosingFromAdrift') {
                         throw new Error('cardForConnecting not in correct state for this call');
                     }
-                    var num = (_c = this.cardForConnecting) === null || _c === void 0 ? void 0 : _c.number;
+                    var num = (_d = this.cardForConnecting) === null || _d === void 0 ? void 0 : _d.number;
                     this.addActionButton('play-upright-button', _("Play card as ".concat(num)), function () {
                         _this.handleChooseCardToPlay({
                             first: _this.status === 'connectingAstronautsInitial',
@@ -371,10 +374,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     });
                     var isNumPlayable = this.numberIsPlayable(num);
                     if (!isNumPlayable) {
-                        (_d = document
-                            .getElementById('play-upright-button')) === null || _d === void 0 ? void 0 : _d.classList.add('disabled');
+                        (_e = document
+                            .getElementById('play-upright-button')) === null || _e === void 0 ? void 0 : _e.classList.add('disabled');
                     }
-                    var flippedNum = (_e = this.cardForConnecting) === null || _e === void 0 ? void 0 : _e.numReversed;
+                    var flippedNum = (_f = this.cardForConnecting) === null || _f === void 0 ? void 0 : _f.numReversed;
                     this.addActionButton('play-flipped-button', _("Play card as ".concat(flippedNum)), function () {
                         _this.handleChooseCardToPlay({
                             first: _this.status === 'connectingAstronautsInitial',
@@ -383,8 +386,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     });
                     var isFlippedNumPlayable = this.numberIsPlayable(flippedNum);
                     if (!isFlippedNumPlayable) {
-                        (_f = document
-                            .getElementById('play-flipped-button')) === null || _f === void 0 ? void 0 : _f.classList.add('disabled');
+                        (_g = document
+                            .getElementById('play-flipped-button')) === null || _g === void 0 ? void 0 : _g.classList.add('disabled');
                     }
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelConnectAstronautsAction();
@@ -572,18 +575,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         TetherGame.prototype.highlightPlayableAstronauts = function (call) {
             var _this = this;
             if (call === void 0) { call = 'further'; }
-            if (call === 'initial') {
-                this.status = 'connectingAstronautsInitial';
-                this.setClientState('client_connectAstronautInitial', {
-                    descriptionmyturn: _('${you} must select an astronaut from your hand to begin connecting.'),
-                });
-            }
-            else {
-                this.status = 'connectingAstronautsNext';
-                this.setClientState('client_connectAstronautChooseNextCard', {
-                    descriptionmyturn: _('Select an astronaut from your hand or the adrift zone to continue connecting.'),
-                });
-            }
             var handler = function (e) { return _this.handleChooseCardFromHandConnect(e); };
             this.getCardElementsFromHand().forEach(function (card) {
                 if (card instanceof HTMLElement) {
@@ -598,6 +589,36 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     }
                 }
             });
+            if (call === 'initial') {
+                this.status = 'connectingAstronautsInitial';
+                this.setClientState('client_connectAstronautInitial', {
+                    descriptionmyturn: _('${you} must select an astronaut from your hand to begin connecting.'),
+                });
+                return;
+            }
+            else {
+                this.status = 'connectingAstronautsNext';
+                this.setClientState('client_connectAstronautChooseNextCard', {
+                    descriptionmyturn: _('Select an astronaut from your hand or the adrift zone to continue connecting.'),
+                });
+            }
+            var adriftCards = document.querySelectorAll('.js-adrift');
+            var connectFromAdriftHandler = function (e) {
+                return _this.handleChooseCardFromAdriftConnect(e);
+            };
+            adriftCards.forEach(function (card) {
+                if (card instanceof HTMLElement) {
+                    if (_this.cardIsPlayable(card)) {
+                        card.classList.add('card--selectable');
+                        card.addEventListener('click', connectFromAdriftHandler);
+                        _this.eventHandlers.push({
+                            element: card,
+                            event: 'click',
+                            handler: connectFromAdriftHandler,
+                        });
+                    }
+                }
+            });
         };
         TetherGame.prototype.handleChooseCardFromHandConnect = function (e) {
             if (!(e.target instanceof HTMLElement)) {
@@ -608,6 +629,23 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             e.target.classList.add('card--selected');
             this.cardForConnecting = {
                 status: 'choosingFromHand',
+                id: e.target.dataset['cardId'],
+                number: e.target.dataset['cardNumber'],
+                numReversed: e.target.dataset['cardNumReversed'],
+            };
+            this.setClientState('client_chooseCardSideToPlay', {
+                descriptionmyturn: _('${you} must choose which side of the card to play.'),
+            });
+        };
+        TetherGame.prototype.handleChooseCardFromAdriftConnect = function (e) {
+            if (!(e.target instanceof HTMLElement)) {
+                throw new Error("handleChooseCardFromAdriftConnect called when it shouldn't have been");
+            }
+            this.clearSelectableCards();
+            this.clearEventListeners();
+            e.target.classList.add('card--selected');
+            this.cardForConnecting = {
+                status: 'choosingFromAdrift',
                 id: e.target.dataset['cardId'],
                 number: e.target.dataset['cardNumber'],
                 numReversed: e.target.dataset['cardNumReversed'],
@@ -632,7 +670,13 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             if (!this.cardForConnecting) {
                 throw new Error('cardForConnecting not set');
             }
-            if (this.cardForConnecting.status !== 'choosingFromHand') {
+            if (this.cardForConnecting.status === 'choosingFromHand') {
+                delete this.gameStateCurrent.hand[this.cardForConnecting.id];
+            }
+            else if (this.cardForConnecting.status === 'choosingFromAdrift') {
+                delete this.gameStateCurrent.adrift[this.cardForConnecting.id];
+            }
+            else {
                 throw new Error('cardForConnecting not in correct state for this call');
             }
             this.cardForConnecting = {
@@ -641,7 +685,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 number: this.cardForConnecting.number,
                 flipped: flipped,
             };
-            delete this.gameStateCurrent.hand[this.cardForConnecting.id];
             if (first) {
                 var existingGroupsLen = Object.keys(this.gameStateCurrent.board).length;
                 this.currentGroup = existingGroupsLen + 1;
@@ -681,6 +724,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             this.bgaPerformAction('actConnectAstronauts', {
                 boardStateJSON: JSON.stringify(this.gameStateCurrent.board),
             });
+            this.clearSelectableCards();
         };
         TetherGame.prototype.notif_cardSetAdrift = function (notif) {
             var _a = notif.args, cardId = _a.card_id, cardNum = _a.card_num, playerId = _a.player_id;
