@@ -49,6 +49,7 @@ $card-height: math.div(1955px, 7);
 
 #groups {
   display: flex;
+  flex-wrap: wrap;
   gap: 2rem;
   padding: 1rem;
 }

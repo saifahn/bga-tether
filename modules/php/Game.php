@@ -108,14 +108,14 @@ class Game extends \Table
         // TODO: improve this with a better SQL call that gets all the necessary data in one go
         // adrift + hand
         $hand = $this->cards->getCardsInLocation('hand', $player_id);
-        // $adrift = $this->cards->getCardsInLocation('adrift');
-        // $relevantCards = array_merge($hand, $adrift);
+        $adrift = $this->cards->getCardsInLocation('adrift');
+        $relevantCards = array_merge($hand, $adrift);
         $viableCards = array();
 
-        foreach ($hand as $card) {
+        foreach ($relevantCards as $card) {
             // check both sides of the card
             $cardNum = $card['type_arg'];
-            foreach ($hand as $otherCard) {
+            foreach ($relevantCards as $otherCard) {
                 if ($this->canCardsBeConnected($cardNum, $otherCard)) {
                     array_push($viableCards, $cardNum);
                     break;
@@ -123,7 +123,7 @@ class Game extends \Table
             }
 
             $cardNumReversed = strrev($cardNum);
-            foreach ($hand as $otherCard) {
+            foreach ($relevantCards as $otherCard) {
                 if ($this->canCardsBeConnected($cardNumReversed, $otherCard)) {
                     array_push($viableCards, $cardNumReversed);
                     break;
