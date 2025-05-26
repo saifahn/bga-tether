@@ -305,7 +305,7 @@ connectCardToGroupTests(
 );
 
 connectCardToGroupTests(
-  'can connect a card vertically to a group of different orientations',
+  'can connect a card of a different orientation vertically to a group of mixed orientations, with the card replacing a blank space (null)',
   () => {
     // for vertical:
     //    39
@@ -338,19 +338,19 @@ connectCardToGroupTests(
     connectCardToGroup({
       group,
       card: {
-        id: '25',
-        lowNum: '25',
-        uprightFor: 'horizontal',
+        id: '49',
+        lowNum: '49',
+        uprightFor: 'vertical',
       },
       orientation: 'vertical',
       connection: {
         card: {
-          id: '15',
-          lowNum: '15',
+          id: '05',
+          lowNum: '05',
           uprightFor: 'horizontal',
         },
         x: 0,
-        y: 2,
+        y: 1,
       },
     });
 
@@ -358,7 +358,11 @@ connectCardToGroupTests(
       number: 2,
       cards: {
         0: [
-          null,
+          {
+            id: '49',
+            lowNum: '49',
+            uprightFor: 'vertical',
+          },
           {
             id: '05',
             lowNum: '05',
@@ -369,12 +373,10 @@ connectCardToGroupTests(
             lowNum: '15',
             uprightFor: 'horizontal',
           },
-          { id: '25', lowNum: '25', uprightFor: 'horizontal' },
         ],
         1: [
           { id: '39', lowNum: '39', uprightFor: 'vertical' },
           { id: '04', lowNum: '04', uprightFor: 'horizontal' },
-          null,
           null,
         ],
       },
