@@ -240,7 +240,65 @@ connectCardToGroupTests(
 );
 
 connectCardToGroupTests(
-  'can connect a card horizontally to a group of different orientations',
+  'can connect a card of a different orientation horizontally to a group of mixed orientations, with the card replacing a blank space (null)',
+  () => {
+    // for vertical:
+    // 17 07
+    //    08 97
+
+    // for horizontal:
+    // 79 80
+    //    70 71
+    const group: Group = {
+      number: 2,
+      cards: {
+        0: [{ id: '17', lowNum: '17', uprightFor: 'vertical' }, null],
+        1: [
+          { id: '07', lowNum: '07', uprightFor: 'vertical' },
+          { id: '08', lowNum: '08', uprightFor: 'vertical' },
+        ],
+        2: [null, { id: '79', lowNum: '79', uprightFor: 'horizontal' }],
+      },
+    };
+
+    connectCardToGroup({
+      group,
+      card: {
+        id: '69',
+        lowNum: '69',
+        uprightFor: 'horizontal',
+      },
+      orientation: 'horizontal',
+      connection: {
+        card: {
+          id: '07',
+          lowNum: '07',
+          uprightFor: 'vertical',
+        },
+        x: 1,
+        y: 0,
+      },
+    });
+
+    assert.equal(group, {
+      number: 2,
+      cards: {
+        0: [{ id: '17', lowNum: '17', uprightFor: 'vertical' }, null],
+        1: [
+          { id: '07', lowNum: '07', uprightFor: 'vertical' },
+          { id: '08', lowNum: '08', uprightFor: 'vertical' },
+        ],
+        2: [
+          { id: '69', lowNum: '69', uprightFor: 'horizontal' },
+          { id: '79', lowNum: '79', uprightFor: 'horizontal' },
+        ],
+      },
+    });
+  }
+);
+
+connectCardToGroupTests(
+  'can connect a card horizontally and fill in blank spaces correctly',
   () => {
     // for vertical:
     // 20

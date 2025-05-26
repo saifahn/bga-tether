@@ -86,12 +86,24 @@ export function connectCardToGroup({
   const connectAfter = connectionCardNumShown > cardNumShown;
 
   if (connectAfter) {
+    // if the place where we want to add the card is a null, the column already
+    // exists and can be replaced with the card we want
+
+    if (group.cards[connection.x + 1]?.[connection.y] === null) {
+      group.cards[connection.x + 1]![connection.y] = card;
+      return;
+    }
     group.cards[numCols] = [];
     for (let i = 0; i < numRows; i++) {
       // i is equal to y when we are in the correct row to add the card
       const itemToAdd = i === connection.y ? card : null;
       group.cards[numCols].push(itemToAdd);
     }
+    return;
+  }
+
+  if (group.cards[connection.x - 1]?.[connection.y] === null) {
+    group.cards[connection.x - 1]![connection.y] === card;
     return;
   }
   // if adding at the beginning of the row, we need to shift all the other columns to the right
