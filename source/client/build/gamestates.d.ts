@@ -25,6 +25,7 @@ interface DefinedGameStates extends ValidateGameStates<{
 		'name': 'playerTurn',
 		'description': '${actplayer} must connect astronauts or set an astronaut adrift',
 		'descriptionmyturn': '${you} must connect astronauts or set an astronaut adrift',
+		'action': 'stPlayerTurn',
 		'type': 'activeplayer',
 		'args': 'argPlayerTurn',
 		'possibleactions': ['actConnectAstronauts', 'actSetAdrift'],

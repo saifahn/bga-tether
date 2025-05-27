@@ -860,8 +860,9 @@ class TetherGame extends Gamegui {
       (notif) => notif.args.player_id === this.player_id
     );
     this.notifqueue.setSynchronous('drawOtherPlayer', 500);
-    dojo.subscribe('updateBoardAndAdrift', this, 'notif_updateBoardAndAdrift');
-    this.notifqueue.setSynchronous('updateBoardAndAdrift', 500);
+
+    dojo.subscribe('updateGameState', this, 'notif_updateGameState');
+    this.notifqueue.setSynchronous('updateGameState', 500);
 
     // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
     // dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
@@ -977,9 +978,10 @@ class TetherGame extends Gamegui {
     hand.appendChild(cardEl);
   }
 
-  notif_updateBoardAndAdrift(notif: BGA.Notif<'updateBoardAndAdrift'>) {
+  notif_updateGameState(notif: BGA.Notif<'updateGameState'>) {
     this.gameStateTurnStart.adrift = notif.args.adrift;
     this.gameStateTurnStart.board = notif.args.board;
+    this.gameStateTurnStart.hand = notif.args.hand;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
     this.updateBoardUI();
   }

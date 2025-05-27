@@ -54,12 +54,12 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.connectCardToGroup = connectCardToGroup;
     function connectCardToGroup(_a) {
-        var _b, _c, _d, _e;
+        var _b, _c, _d, _e, _f, _g;
         var group = _a.group, card = _a.card, connection = _a.connection, orientation = _a.orientation;
         var cardNumShown = card.uprightFor === orientation
             ? parseInt(card.lowNum)
             : parseInt(card.lowNum.split('').reverse().join(''));
-        var connectionCardNumShown = card.uprightFor === orientation
+        var connectionCardNumShown = connection.card.uprightFor === orientation
             ? parseInt(connection.card.lowNum)
             : parseInt(connection.card.lowNum.split('').reverse().join(''));
         var numCols = Object.keys(group.cards).length;
@@ -68,25 +68,43 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
         }
         if (orientation === 'vertical') {
             for (var i = 0; i < numCols; i++) {
-                var itemToAdd = i === connection.x ? card : null;
-                var connectAtEnd_1 = cardNumShown > connectionCardNumShown;
-                if (connectAtEnd_1) {
-                    (_d = group.cards[i]) === null || _d === void 0 ? void 0 : _d.splice(connection.y + 1, 0, itemToAdd);
+                if (!group.cards[i]) {
+                    throw new Error("something has gone wrong - cards for the column don't exist for some reason");
                 }
-                else {
-                    (_e = group.cards[i]) === null || _e === void 0 ? void 0 : _e.splice(connection.y, 0, itemToAdd);
+                var itemToAdd = i === connection.x ? card : null;
+                var connectAfter_1 = cardNumShown > connectionCardNumShown;
+                var itemAdjacentToConnectionIndex = group.cards[i][connectAfter_1 ? connection.y + 1 : connection.y - 1];
+                if (itemAdjacentToConnectionIndex === null) {
+                    group.cards[i][connectAfter_1 ? connection.y + 1 : connection.y - 1] =
+                        itemToAdd;
+                }
+                else if (itemAdjacentToConnectionIndex === undefined) {
+                    if (connectAfter_1) {
+                        (_d = group.cards[i]) === null || _d === void 0 ? void 0 : _d.push(itemToAdd);
+                    }
+                    else {
+                        (_e = group.cards[i]) === null || _e === void 0 ? void 0 : _e.unshift(itemToAdd);
+                    }
                 }
             }
             return;
         }
         var numRows = group.cards[0].length;
-        var connectAtEnd = connectionCardNumShown > cardNumShown;
-        if (connectAtEnd) {
+        var connectAfter = connectionCardNumShown > cardNumShown;
+        if (connectAfter) {
+            if (((_f = group.cards[connection.x + 1]) === null || _f === void 0 ? void 0 : _f[connection.y]) === null) {
+                group.cards[connection.x + 1][connection.y] = card;
+                return;
+            }
             group.cards[numCols] = [];
             for (var i = 0; i < numRows; i++) {
                 var itemToAdd = i === connection.y ? card : null;
                 group.cards[numCols].push(itemToAdd);
             }
+            return;
+        }
+        if (((_g = group.cards[connection.x - 1]) === null || _g === void 0 ? void 0 : _g[connection.y]) === null) {
+            group.cards[connection.x - 1][connection.y] === card;
             return;
         }
         for (var i = numCols; i >= 0; i--) {
@@ -171,6 +189,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 dojo.subscribe('drawOtherPlayer', _this, 'notif_drawOtherPlayer');
                 _this.notifqueue.setIgnoreNotificationCheck('drawOtherPlayer', function (notif) { return notif.args.player_id === _this.player_id; });
                 _this.notifqueue.setSynchronous('drawOtherPlayer', 500);
+                dojo.subscribe('updateGameState', _this, 'notif_updateGameState');
+                _this.notifqueue.setSynchronous('updateGameState', 500);
             };
             console.log('tethergame constructor');
             return _this;
@@ -198,8 +218,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             return cardElement;
         };
         TetherGame.prototype.updateBoardUI = function () {
-            console.log('updating board UI');
-            console.log('current game state', this.gameStateCurrent);
             var adriftZone = document.getElementById('adrift-zone');
             if (!adriftZone) {
                 throw new Error('adrift-zone not found');
@@ -786,6 +804,13 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 throw new Error('hand not found');
             }
             hand.appendChild(cardEl);
+        };
+        TetherGame.prototype.notif_updateGameState = function (notif) {
+            this.gameStateTurnStart.adrift = notif.args.adrift;
+            this.gameStateTurnStart.board = notif.args.board;
+            this.gameStateTurnStart.hand = notif.args.hand;
+            this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
+            this.updateBoardUI();
         };
         return TetherGame;
     }(Gamegui));
