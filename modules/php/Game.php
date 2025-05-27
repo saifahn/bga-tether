@@ -488,6 +488,27 @@ class Game extends \Table
                     }
                 }
             }
+            // TODO: personalize the notification
+            $current_player_id = (int) $this->getCurrentPlayerId();
+            $opponent_id = $this->getPlayerAfter($current_player_id);
+            $adrift = $this->getCollectionFromDB(
+                "SELECT card_id id, card_type_arg cardNum
+                FROM card 
+                WHERE card_location = 'adrift'"
+            );
+            $cardsByGroup = $this->getCollectionFromDB(
+                "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
+                FROM card 
+                WHERE card_location = 'group'"
+            );
+            $board = $this->createGroupObjectForUI($cardsByGroup);
+            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} played some cards TO BE MORE SPECIFIC.'), [
+                'player_id' => $current_player_id,
+                'player_name' => $this->getPlayerNameById($current_player_id),
+                'adrift' => $adrift,
+                'board' => $board,
+            ]);
+            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected some astronauts.'), []);
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");
             $this->dump('err', $e);
