@@ -861,6 +861,9 @@ class TetherGame extends Gamegui {
     );
     this.notifqueue.setSynchronous('drawOtherPlayer', 500);
 
+    dojo.subscribe('updateGameState', this, 'notif_updateGameState');
+    this.notifqueue.setSynchronous('updateGameState', 500);
+
     // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
     // dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
     // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
@@ -973,6 +976,14 @@ class TetherGame extends Gamegui {
       throw new Error('hand not found');
     }
     hand.appendChild(cardEl);
+  }
+
+  notif_updateGameState(notif: BGA.Notif<'updateGameState'>) {
+    this.gameStateTurnStart.adrift = notif.args.adrift;
+    this.gameStateTurnStart.board = notif.args.board;
+    this.gameStateTurnStart.hand = notif.args.hand;
+    this.gameStateCurrent = clone(this.gameStateTurnStart);
+    this.updateBoardUI();
   }
 }
 

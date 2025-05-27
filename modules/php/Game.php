@@ -159,10 +159,31 @@ class Game extends \Table
     {
         $player_id = (int)$this->getActivePlayerId();
         $this->giveExtraTime($player_id);
-
         $this->activeNextPlayer();
 
         $this->gamestate->nextState('goToNextPlayerTurn');
+    }
+
+    public function stPlayerTurn(): void
+    {
+        $player_id = (int)$this->getActivePlayerId();
+
+        $gameState = [];
+        $gameState['adrift'] = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type_arg cardNum
+            FROM card 
+            WHERE card_location = 'adrift'"
+        );
+        $gameState['hand'] = $this->cards->getCardsInLocation('hand', $player_id);
+
+        $cardsByGroup = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
+            FROM card 
+            WHERE card_location = 'group'"
+        );
+        $gameState['board'] = $this->createGroupObjectForUI($cardsByGroup);
+
+        $this->notify->player($player_id, 'updateGameState', '', $gameState);
     }
 
     public function stDrawAtEndOfTurn(): void
@@ -462,7 +483,6 @@ class Game extends \Table
             ]);
         }
 
-
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
@@ -488,12 +508,19 @@ class Game extends \Table
                     }
                 }
             }
+            // TODO: personalize the notification
+            $current_player_id = (int) $this->getCurrentPlayerId();
+            $opponent_id = $this->getPlayerAfter($current_player_id);
+            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected some astronauts.'), [
+                "player_id" => $current_player_id,
+                "player_name" => $this->getPlayerNameById($current_player_id),
+            ]);
+            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected some astronauts.'), []);
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");
             $this->dump('err', $e);
             return;
         }
-
 
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
