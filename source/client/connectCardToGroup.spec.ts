@@ -4,8 +4,9 @@ import * as assert from 'uvu/assert';
 
 const connectCardToGroupTests = suite('connectCardToGroup');
 
+// vertical connections
 connectCardToGroupTests(
-  'should connect a greater card to the bottom of a group of 2 cards',
+  'should extend columns correctly when connecting a card vertically at the end',
   () => {
     const group: Group = {
       number: 2,
@@ -14,6 +15,7 @@ connectCardToGroupTests(
           { id: '1', lowNum: '01', uprightFor: 'vertical' },
           { id: '2', lowNum: '02', uprightFor: 'vertical' },
         ],
+        1: [null, { id: '19', lowNum: '19', uprightFor: 'horizontal' }],
       },
     };
     connectCardToGroup({
@@ -43,13 +45,14 @@ connectCardToGroupTests(
           { id: '2', lowNum: '02', uprightFor: 'vertical' },
           { id: '3', lowNum: '03', uprightFor: 'vertical' },
         ],
+        1: [null, { id: '19', lowNum: '19', uprightFor: 'horizontal' }, null],
       },
     });
   }
 );
 
 connectCardToGroupTests(
-  'should connect a lesser card to the top of a group of 2 cards',
+  'should extend columns correctly when connecting a card vertically at the beginning',
   () => {
     const group: Group = {
       number: 2,
@@ -58,6 +61,7 @@ connectCardToGroupTests(
           { id: '2', lowNum: '02', uprightFor: 'vertical' },
           { id: '3', lowNum: '03', uprightFor: 'vertical' },
         ],
+        1: [null, { id: '29', lowNum: '29', uprightFor: 'horizontal' }],
       },
     };
     connectCardToGroup({
@@ -86,40 +90,59 @@ connectCardToGroupTests(
           { id: '2', lowNum: '02', uprightFor: 'vertical' },
           { id: '3', lowNum: '03', uprightFor: 'vertical' },
         ],
+        1: [null, null, { id: '29', lowNum: '29', uprightFor: 'horizontal' }],
       },
     });
   }
 );
 
 connectCardToGroupTests(
-  'should connect a card to a group that has horizontal and vertical cards successfully for the vertical player',
+  'can connect a card of a different orientation vertically to a group of mixed orientations, with the card replacing a blank space (null)',
   () => {
+    // for vertical:
+    //    39
+    // 50 40
+    // 51
     const group: Group = {
       number: 2,
       cards: {
         0: [
-          { id: '2', lowNum: '02', uprightFor: 'vertical' },
-          { id: '3', lowNum: '03', uprightFor: 'vertical' },
+          null,
+          {
+            id: '05',
+            lowNum: '05',
+            uprightFor: 'horizontal',
+          },
+          {
+            id: '15',
+            lowNum: '15',
+            uprightFor: 'horizontal',
+          },
         ],
-        1: [{ id: '12', lowNum: '12', uprightFor: 'vertical' }, null],
+        1: [
+          { id: '39', lowNum: '39', uprightFor: 'vertical' },
+          { id: '04', lowNum: '04', uprightFor: 'horizontal' },
+          null,
+        ],
       },
     };
+
     connectCardToGroup({
       group,
       card: {
-        id: '11',
-        lowNum: '11',
+        id: '49',
+        lowNum: '49',
         uprightFor: 'vertical',
       },
       orientation: 'vertical',
       connection: {
         card: {
-          id: '12',
-          lowNum: '12',
-          uprightFor: 'vertical',
+          id: '05',
+          lowNum: '05',
+          uprightFor: 'horizontal',
         },
-        x: 1,
-        y: 0,
+        x: 0,
+        y: 1,
       },
     });
 
@@ -127,13 +150,25 @@ connectCardToGroupTests(
       number: 2,
       cards: {
         0: [
-          null,
-          { id: '2', lowNum: '02', uprightFor: 'vertical' },
-          { id: '3', lowNum: '03', uprightFor: 'vertical' },
+          {
+            id: '49',
+            lowNum: '49',
+            uprightFor: 'vertical',
+          },
+          {
+            id: '05',
+            lowNum: '05',
+            uprightFor: 'horizontal',
+          },
+          {
+            id: '15',
+            lowNum: '15',
+            uprightFor: 'horizontal',
+          },
         ],
         1: [
-          { id: '11', lowNum: '11', uprightFor: 'vertical' },
-          { id: '12', lowNum: '12', uprightFor: 'vertical' },
+          { id: '39', lowNum: '39', uprightFor: 'vertical' },
+          { id: '04', lowNum: '04', uprightFor: 'horizontal' },
           null,
         ],
       },
@@ -141,8 +176,9 @@ connectCardToGroupTests(
   }
 );
 
+// horizontal connection
 connectCardToGroupTests(
-  'should connect a card to the beginning of a row successfully for the horizontal player',
+  'should extend rows correctly when connecting a card horizontally at the beginning',
   () => {
     // data is always represented from the vertical player's perspective
     const group: Group = {
@@ -188,7 +224,7 @@ connectCardToGroupTests(
 );
 
 connectCardToGroupTests(
-  'should connect a card to the end of a row successfully for the horizontal player',
+  'should extend rows correctly when connecting a card horizontally at the end',
   () => {
     // horizontal player view:
     // 12
@@ -356,86 +392,6 @@ connectCardToGroupTests(
           { id: '12', lowNum: '12', uprightFor: 'horizontal' },
           { id: '22', lowNum: '22', uprightFor: 'vertical' },
           { id: '23', lowNum: '23', uprightFor: 'vertical' },
-        ],
-      },
-    });
-  }
-);
-
-connectCardToGroupTests(
-  'can connect a card of a different orientation vertically to a group of mixed orientations, with the card replacing a blank space (null)',
-  () => {
-    // for vertical:
-    //    39
-    // 50 40
-    // 51
-    const group: Group = {
-      number: 2,
-      cards: {
-        0: [
-          null,
-          {
-            id: '05',
-            lowNum: '05',
-            uprightFor: 'horizontal',
-          },
-          {
-            id: '15',
-            lowNum: '15',
-            uprightFor: 'horizontal',
-          },
-        ],
-        1: [
-          { id: '39', lowNum: '39', uprightFor: 'vertical' },
-          { id: '04', lowNum: '04', uprightFor: 'horizontal' },
-          null,
-        ],
-      },
-    };
-
-    connectCardToGroup({
-      group,
-      card: {
-        id: '49',
-        lowNum: '49',
-        uprightFor: 'vertical',
-      },
-      orientation: 'vertical',
-      connection: {
-        card: {
-          id: '05',
-          lowNum: '05',
-          uprightFor: 'horizontal',
-        },
-        x: 0,
-        y: 1,
-      },
-    });
-
-    assert.equal(group, {
-      number: 2,
-      cards: {
-        0: [
-          {
-            id: '49',
-            lowNum: '49',
-            uprightFor: 'vertical',
-          },
-          {
-            id: '05',
-            lowNum: '05',
-            uprightFor: 'horizontal',
-          },
-          {
-            id: '15',
-            lowNum: '15',
-            uprightFor: 'horizontal',
-          },
-        ],
-        1: [
-          { id: '39', lowNum: '39', uprightFor: 'vertical' },
-          { id: '04', lowNum: '04', uprightFor: 'horizontal' },
-          null,
         ],
       },
     });
