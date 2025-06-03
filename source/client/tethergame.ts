@@ -376,7 +376,7 @@ class TetherGame extends Gamegui {
             });
           }
         );
-        const isNumPlayable = this.numberIsPlayable(number);
+        const isNumPlayable = this.isNumPlayable(number);
         if (!isNumPlayable) {
           document
             .getElementById('play-upright-button')
@@ -393,7 +393,7 @@ class TetherGame extends Gamegui {
             });
           }
         );
-        const isFlippedNumPlayable = this.numberIsPlayable(numReversed);
+        const isFlippedNumPlayable = this.isNumPlayable(numReversed);
         if (!isFlippedNumPlayable) {
           document
             .getElementById('play-flipped-button')
@@ -633,14 +633,14 @@ class TetherGame extends Gamegui {
     this.restoreUIToTurnStart();
   }
 
-  cardIsPlayable(card: HTMLElement) {
+  isCardPlayable(card: HTMLElement) {
     return (
-      this.numberIsPlayable(card.dataset['cardNumber']) ||
-      this.numberIsPlayable(card.dataset['cardNumReversed'])
+      this.isNumPlayable(card.dataset['cardNumber']) ||
+      this.isNumPlayable(card.dataset['cardNumReversed'])
     );
   }
 
-  numberIsPlayable(number: string | undefined) {
+  isNumPlayable(number: string | undefined) {
     return (
       typeof number === 'string' && this.playableCardNumbers.includes(number)
     );
@@ -654,7 +654,7 @@ class TetherGame extends Gamegui {
     const handler = (e: Event) => this.handleChooseCardFromHandConnect(e);
     this.getCardElementsFromHand().forEach((card) => {
       if (card instanceof HTMLElement) {
-        if (this.cardIsPlayable(card)) {
+        if (this.isCardPlayable(card)) {
           card.classList.add('card--selectable');
           card.addEventListener('click', handler);
           this.eventHandlers.push({
@@ -690,7 +690,7 @@ class TetherGame extends Gamegui {
       this.handleChooseCardFromAdriftConnect(e);
     adriftCards.forEach((card) => {
       if (card instanceof HTMLElement) {
-        if (this.cardIsPlayable(card)) {
+        if (this.isCardPlayable(card)) {
           card.classList.add('card--selectable');
           card.addEventListener('click', connectFromAdriftHandler);
           this.eventHandlers.push({
