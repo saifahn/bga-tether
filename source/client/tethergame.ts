@@ -23,7 +23,6 @@ import { generateGroupUI } from './generateGroupUI';
 import { clone } from 'dojo';
 
 interface PlayedCard {
-  status: 'played';
   id: string;
   number: string; // this is the lower number of the card, not necessarily what it was played as
   flipped: boolean;
@@ -35,6 +34,30 @@ interface GameState {
   hand: BGA.Gamedatas['hand'];
 }
 
+type ClientState =
+  | {
+      status: 'choosingAction' | 'connectingAstronautsInitial';
+    }
+  | {
+      status: 'settingAdrift';
+      card: {
+        id: string;
+        number: string;
+      };
+    }
+  | {
+      status: 'choosingCardSideToPlay';
+      card: {
+        first: boolean;
+        from: 'hand' | 'adrift';
+        id: string;
+        number: string;
+        numReversed: string;
+      };
+    }
+  // TODO: are we going to store the group or cards here?
+  | { status: 'connectingAstronautsNext' };
+
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
   eventHandlers: {
@@ -43,31 +66,9 @@ class TetherGame extends Gamegui {
     handler: EventListener;
   }[] = [];
 
-  status:
-    | 'choosingAction'
-    | 'connectingAstronautsInitial'
-    | 'connectingAstronautsNext' = 'choosingAction';
-
-  cardSetAdrift: {
-    id: string;
-    number: string;
-  } | null = null;
-
-  cardForConnecting:
-    | {
-        status: 'choosingFromHand';
-        id: string;
-        number: string;
-        numReversed: string;
-      }
-    | {
-        status: 'choosingFromAdrift';
-        id: string;
-        number: string;
-        numReversed: string;
-      }
-    | PlayedCard
-    | null = null;
+  clientState: ClientState = {
+    status: 'choosingAction',
+  };
 
   currentGroup = 0;
 
@@ -259,6 +260,7 @@ class TetherGame extends Gamegui {
 
     switch (stateName) {
       case 'playerTurn':
+        this.clientState = { status: 'choosingAction' };
         this.playableCardNumbers = (state.args['_private'] as string[]) || [];
         break;
       default:
@@ -358,44 +360,40 @@ class TetherGame extends Gamegui {
         break;
       // @ts-expect-error
       case 'client_chooseCardSideToPlay':
-        if (
-          this.cardForConnecting?.status !== 'choosingFromHand' &&
-          this.cardForConnecting?.status !== 'choosingFromAdrift'
-        ) {
+        if (this.clientState.status !== 'choosingCardSideToPlay') {
           throw new Error(
             'cardForConnecting not in correct state for this call'
           );
         }
-        const num = this.cardForConnecting?.number;
+        const { first, number, numReversed } = this.clientState.card;
         this.addActionButton(
           'play-upright-button',
-          _(`Play card as ${num}`),
+          _(`Play card as ${number}`),
           () => {
             this.handleChooseCardToPlay({
-              first: this.status === 'connectingAstronautsInitial',
+              first,
               flipped: false,
             });
           }
         );
-        const isNumPlayable = this.numberIsPlayable(num);
+        const isNumPlayable = this.numberIsPlayable(number);
         if (!isNumPlayable) {
           document
             .getElementById('play-upright-button')
             ?.classList.add('disabled');
         }
 
-        const flippedNum = this.cardForConnecting?.numReversed;
         this.addActionButton(
           'play-flipped-button',
-          _(`Play card as ${flippedNum}`),
+          _(`Play card as ${numReversed}`),
           () => {
             this.handleChooseCardToPlay({
-              first: this.status === 'connectingAstronautsInitial',
+              first,
               flipped: true,
             });
           }
         );
-        const isFlippedNumPlayable = this.numberIsPlayable(flippedNum);
+        const isFlippedNumPlayable = this.numberIsPlayable(numReversed);
         if (!isFlippedNumPlayable) {
           document
             .getElementById('play-flipped-button')
@@ -476,7 +474,9 @@ class TetherGame extends Gamegui {
     this.clearSelectedCards();
     this.clearSelectableCards();
     this.clearEventListeners();
-    this.cardSetAdrift = null;
+    this.clientState = {
+      status: 'choosingAction',
+    };
     this.restoreServerGameState();
   }
 
@@ -521,10 +521,14 @@ class TetherGame extends Gamegui {
     }
     e.target.classList.add('card--selected');
 
-    this.cardSetAdrift = {
-      id: e.target.dataset['cardId']!,
-      number: e.target.dataset['cardNumber']!,
+    this.clientState = {
+      status: 'settingAdrift',
+      card: {
+        id: e.target.dataset['cardId']!,
+        number: e.target.dataset['cardNumber']!,
+      },
     };
+
     this.clearSelectableCards();
     this.clearEventListeners();
 
@@ -576,9 +580,9 @@ class TetherGame extends Gamegui {
     if (
       !e.target.dataset['cardId'] ||
       !e.target.dataset['cardNumber'] ||
-      !this.cardSetAdrift
+      this.clientState.status !== 'settingAdrift'
     ) {
-      throw new Error('id of card to draw or cardSetAdrift not set properly');
+      throw new Error('id of card to draw or adrift status not set properly');
     }
     this.performAdriftAction(
       e.target.dataset['cardId'],
@@ -591,8 +595,8 @@ class TetherGame extends Gamegui {
    * and event listeners.
    */
   async performAdriftAction(cardDrawnId: string, cardDrawnNum: string) {
-    if (!this.cardSetAdrift) {
-      throw new Error('performAdriftAction is missing required information');
+    if (this.clientState.status !== 'settingAdrift') {
+      throw new Error('performAdriftAction called in the wrong state');
     }
 
     try {
@@ -602,10 +606,9 @@ class TetherGame extends Gamegui {
       await this.bgaPerformAction('actSetAdrift', {
         cardDrawnId,
         cardDrawnNum,
-        cardSetAdriftId: this.cardSetAdrift.id,
-        cardSetAdriftNum: this.cardSetAdrift.number,
+        cardSetAdriftId: this.clientState.card.id,
+        cardSetAdriftNum: this.clientState.card.number,
       });
-      this.cardSetAdrift = null;
     } catch (e) {
       this.restoreServerGameState();
       console.log('error while trying to perform actSetAdrift', e);
@@ -624,7 +627,9 @@ class TetherGame extends Gamegui {
     this.clearSelectableCards();
     this.clearEventListeners();
     this.restoreServerGameState();
-    this.status = 'choosingAction';
+    this.clientState = {
+      status: 'choosingAction',
+    };
     this.restoreUIToTurnStart();
   }
 
@@ -662,7 +667,7 @@ class TetherGame extends Gamegui {
     });
 
     if (call === 'initial') {
-      this.status = 'connectingAstronautsInitial';
+      this.clientState = { status: 'connectingAstronautsInitial' };
       this.setClientState('client_connectAstronautInitial', {
         // @ts-expect-error
         descriptionmyturn: _(
@@ -671,7 +676,7 @@ class TetherGame extends Gamegui {
       });
       return;
     } else {
-      this.status = 'connectingAstronautsNext';
+      this.clientState = { status: 'connectingAstronautsNext' };
       this.setClientState('client_connectAstronautChooseNextCard', {
         // @ts-expect-error
         descriptionmyturn: _(
@@ -708,11 +713,18 @@ class TetherGame extends Gamegui {
     this.clearEventListeners();
     e.target.classList.add('card--selected');
 
-    this.cardForConnecting = {
-      status: 'choosingFromHand',
-      id: e.target.dataset['cardId']!,
-      number: e.target.dataset['cardNumber']!,
-      numReversed: e.target.dataset['cardNumReversed']!,
+    const firstCardPlayed =
+      this.clientState.status === 'connectingAstronautsInitial';
+
+    this.clientState = {
+      status: 'choosingCardSideToPlay',
+      card: {
+        first: firstCardPlayed,
+        from: 'hand',
+        id: e.target.dataset['cardId']!,
+        number: e.target.dataset['cardNumber']!,
+        numReversed: e.target.dataset['cardNumReversed']!,
+      },
     };
     this.setClientState('client_chooseCardSideToPlay', {
       // @ts-expect-error
@@ -732,11 +744,15 @@ class TetherGame extends Gamegui {
     this.clearEventListeners();
     e.target.classList.add('card--selected');
 
-    this.cardForConnecting = {
-      status: 'choosingFromAdrift',
-      id: e.target.dataset['cardId']!,
-      number: e.target.dataset['cardNumber']!,
-      numReversed: e.target.dataset['cardNumReversed']!,
+    this.clientState = {
+      status: 'choosingCardSideToPlay',
+      card: {
+        first: false,
+        from: 'adrift',
+        id: e.target.dataset['cardId']!,
+        number: e.target.dataset['cardNumber']!,
+        numReversed: e.target.dataset['cardNumReversed']!,
+      },
     };
     this.setClientState('client_chooseCardSideToPlay', {
       // @ts-expect-error
@@ -766,29 +782,20 @@ class TetherGame extends Gamegui {
   handleChooseCardToPlay(
     { first, flipped } = { first: false, flipped: false }
   ) {
-    if (!this.cardForConnecting) {
-      throw new Error('cardForConnecting not set');
+    if (this.clientState.status !== 'choosingCardSideToPlay') {
+      throw new Error('handleChooseCardToPlay was called in the wrong state');
     }
-    if (this.cardForConnecting.status === 'choosingFromHand') {
-      delete this.gameStateCurrent.hand[this.cardForConnecting.id];
-    } else if (this.cardForConnecting.status === 'choosingFromAdrift') {
-      delete this.gameStateCurrent.adrift[this.cardForConnecting.id];
-    } else {
-      throw new Error('cardForConnecting not in correct state for this call');
-    }
-    this.cardForConnecting = {
-      status: 'played',
-      id: this.cardForConnecting.id,
-      number: this.cardForConnecting.number,
-      flipped,
-    };
+    const { from, id, number } = this.clientState.card;
+    // remove the card from adrift or hand, depending where it is played from
+    delete this.gameStateCurrent[from][id];
+
+    const card = { id, number, flipped };
 
     if (first) {
       const existingGroupsLen = Object.keys(this.gameStateCurrent.board).length;
       this.currentGroup = existingGroupsLen + 1;
-      this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(
-        this.cardForConnecting
-      );
+      this.gameStateCurrent.board[this.currentGroup] =
+        this.createGroupFromCard(card);
       this.updateBoardUI();
     } else {
       // connect card to that group
@@ -801,7 +808,6 @@ class TetherGame extends Gamegui {
         throw new Error('something is wrong, playerDirection was null');
       }
 
-      const card = this.cardForConnecting;
       const otherDirection =
         this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
       const uprightFor = card.flipped ? otherDirection : this.playerDirection;
