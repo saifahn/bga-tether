@@ -295,7 +295,7 @@ class TetherGame extends Gamegui {
           'connect-astronauts-button',
           _('Connect Astronauts'),
           () => {
-            this.highlightPlayableAstronauts('initial');
+            this.highlightPlayableAstronauts();
           }
         );
         if (this.playableCardNumbers.length === 0) {
@@ -650,7 +650,7 @@ class TetherGame extends Gamegui {
    * Called for each time the playable astronauts need to be highlighted during
    * the connect astronauts action.
    */
-  highlightPlayableAstronauts(call: 'initial' | 'further' = 'further') {
+  highlightPlayableAstronauts() {
     const handler = (e: Event) => this.handleChooseCardFromHandConnect(e);
     this.getCardElementsFromHand().forEach((card) => {
       if (card instanceof HTMLElement) {
@@ -666,7 +666,7 @@ class TetherGame extends Gamegui {
       }
     });
 
-    if (call === 'initial') {
+    if (this.clientState.status === 'choosingAction') {
       this.clientState = { status: 'connectingAstronautsInitial' };
       this.setClientState('client_connectAstronautInitial', {
         // @ts-expect-error
