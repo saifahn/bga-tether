@@ -86,6 +86,8 @@ class TetherGame extends Gamegui {
 
   playerDirection: 'horizontal' | 'vertical' | null = null;
 
+  cardMap: Record<string, string> = {};
+
   playableCardNumbers: string[] = [];
 
   /** See {@link BGA.Gamegui} for more information. */
@@ -252,6 +254,21 @@ class TetherGame extends Gamegui {
   ///////////////////////////////////////////////////
   //// Game & client states
 
+  generateCardMap() {
+    for (const cardId in this.gameStateTurnStart.hand) {
+      const lowNum = this.gameStateTurnStart.hand[cardId]!.type_arg;
+      this.cardMap[lowNum] = cardId;
+      const numReversed = lowNum.split('').reverse().join('');
+      this.cardMap[numReversed] = cardId;
+    }
+    for (const cardId in this.gameStateTurnStart.adrift) {
+      const lowNum = this.gameStateTurnStart.adrift[cardId]!.cardNum;
+      this.cardMap[lowNum] = cardId;
+      const numReversed = lowNum.split('').reverse().join('');
+      this.cardMap[numReversed] = cardId;
+    }
+  }
+
   /** See {@link BGA.Gamegui#onEnteringState} for more information. */
   override onEnteringState(
     ...[stateName, state]: BGA.GameStateTuple<['name', 'state']>
@@ -261,6 +278,7 @@ class TetherGame extends Gamegui {
     switch (stateName) {
       case 'playerTurn':
         this.clientState = { status: 'choosingAction' };
+        this.generateCardMap();
         this.playableCardNumbers = (state.args['_private'] as string[]) || [];
         break;
       default:
