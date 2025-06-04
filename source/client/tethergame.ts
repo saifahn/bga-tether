@@ -20,6 +20,7 @@ import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
 import { Group, connectCardToGroup } from './connectCardToGroup';
 import { generateGroupUI } from './generateGroupUI';
+import { getConnectingNumbers } from './getConnectingNumbers';
 import { clone } from 'dojo';
 
 interface PlayedCard {
@@ -36,7 +37,7 @@ interface GameState {
 
 type ClientState =
   | {
-      status: 'choosingAction' | 'connectingAstronautsInitial';
+      status: 'choosingAction';
     }
   | {
       status: 'settingAdrift';
@@ -56,7 +57,7 @@ type ClientState =
       };
     }
   // TODO: are we going to store the group or cards here?
-  | { status: 'connectingAstronautsNext' };
+  | { status: 'connectingAstronautsNext' | 'connectingAstronautsInitial' };
 
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
@@ -278,8 +279,6 @@ class TetherGame extends Gamegui {
     switch (stateName) {
       case 'playerTurn':
         this.clientState = { status: 'choosingAction' };
-        this.generateCardMap();
-        this.playableCardNumbers = (state.args['_private'] as string[]) || [];
         break;
       default:
         // enable/disable any user interaction...
@@ -308,7 +307,28 @@ class TetherGame extends Gamegui {
 
     switch (stateName) {
       case 'playerTurn':
-        this.playableCardNumbers = (args['_private'] as string[]) || [];
+        this.generateCardMap();
+        const playableCardNums = [];
+
+        for (const cardId in this.gameStateTurnStart.hand) {
+          const lowNum = this.gameStateTurnStart.hand[cardId]!.type_arg;
+          for (const possibleConnectNum of getConnectingNumbers(lowNum)) {
+            if (this.cardMap[possibleConnectNum]) {
+              playableCardNums.push(lowNum);
+              break;
+            }
+          }
+          const numReversed = lowNum.split('').reverse().join('');
+          for (const possibleConnectNum of getConnectingNumbers(numReversed)) {
+            if (this.cardMap[possibleConnectNum]) {
+              playableCardNums.push(numReversed);
+              break;
+            }
+          }
+        }
+        console.log(playableCardNums);
+        this.playableCardNumbers = playableCardNums;
+
         this.addActionButton(
           'connect-astronauts-button',
           _('Connect Astronauts'),

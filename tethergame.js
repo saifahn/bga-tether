@@ -154,7 +154,24 @@ define("generateGroupUI", ["require", "exports"], function (require, exports) {
         return boardSpaces;
     }
 });
-define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, dojo_1) {
+define("getConnectingNumbers", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getConnectingNumbers = getConnectingNumbers;
+    function getConnectingNumbers(num) {
+        if (num.length !== 2) {
+            throw new Error('the number string should be exactly 2 characters long');
+        }
+        var parsedNum = parseInt(num);
+        if (parsedNum < 1 || parsedNum > 98) {
+            throw new Error('the number must be between 01 and 98');
+        }
+        var decremented = (parsedNum - 1).toString().padStart(2, '0');
+        var incremented = (parsedNum + 1).toString().padStart(2, '0');
+        return [decremented, incremented];
+    }
+});
+define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "getConnectingNumbers", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, getConnectingNumbers_1, dojo_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var TetherGame = (function (_super) {
@@ -338,8 +355,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             switch (stateName) {
                 case 'playerTurn':
                     this.clientState = { status: 'choosingAction' };
-                    this.generateCardMap();
-                    this.playableCardNumbers = state.args['_private'] || [];
                     break;
                 default:
                     break;
@@ -365,7 +380,28 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 return;
             switch (stateName) {
                 case 'playerTurn':
-                    this.playableCardNumbers = args['_private'] || [];
+                    this.generateCardMap();
+                    var playableCardNums = [];
+                    for (var cardId in this.gameStateTurnStart.hand) {
+                        var lowNum = this.gameStateTurnStart.hand[cardId].type_arg;
+                        for (var _e = 0, _f = (0, getConnectingNumbers_1.getConnectingNumbers)(lowNum); _e < _f.length; _e++) {
+                            var possibleConnectNum = _f[_e];
+                            if (this.cardMap[possibleConnectNum]) {
+                                playableCardNums.push(lowNum);
+                                break;
+                            }
+                        }
+                        var numReversed_1 = lowNum.split('').reverse().join('');
+                        for (var _g = 0, _h = (0, getConnectingNumbers_1.getConnectingNumbers)(numReversed_1); _g < _h.length; _g++) {
+                            var possibleConnectNum = _h[_g];
+                            if (this.cardMap[possibleConnectNum]) {
+                                playableCardNums.push(numReversed_1);
+                                break;
+                            }
+                        }
+                    }
+                    console.log(playableCardNums);
+                    this.playableCardNumbers = playableCardNums;
                     this.addActionButton('connect-astronauts-button', _('Connect Astronauts'), function () {
                         _this.highlightPlayableAstronauts();
                     });
@@ -399,7 +435,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     if (this.clientState.status !== 'choosingCardSideToPlay') {
                         throw new Error('cardForConnecting not in correct state for this call');
                     }
-                    var _e = this.clientState.card, first_1 = _e.first, number = _e.number, numReversed = _e.numReversed;
+                    var _j = this.clientState.card, first_1 = _j.first, number = _j.number, numReversed = _j.numReversed;
                     this.addActionButton('play-upright-button', _("Play card as ".concat(number)), function () {
                         _this.handleChooseCardToPlay({
                             first: first_1,
