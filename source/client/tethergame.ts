@@ -241,9 +241,10 @@ class TetherGame extends Gamegui {
     this.gameStateTurnStart.hand = gamedatas.hand;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
 
-    console.log('game board', gamedatas.board);
     console.log('player direction', this.playerDirection);
 
+    this.generateCardMap();
+    this.setInitialPlayableCards();
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -256,6 +257,7 @@ class TetherGame extends Gamegui {
   //// Game & client states
 
   generateCardMap() {
+    this.cardMap = {};
     for (const cardId in this.gameStateTurnStart.hand) {
       const lowNum = this.gameStateTurnStart.hand[cardId]!.type_arg;
       this.cardMap[lowNum] = cardId;
@@ -297,6 +299,28 @@ class TetherGame extends Gamegui {
     }
   }
 
+  setInitialPlayableCards() {
+    const playableCardNums = [];
+
+    for (const cardId in this.gameStateTurnStart.hand) {
+      const lowNum = this.gameStateTurnStart.hand[cardId]!.type_arg;
+      for (const possibleConnectNum of getConnectingNumbers(lowNum)) {
+        if (this.cardMap[possibleConnectNum]) {
+          playableCardNums.push(lowNum);
+          break;
+        }
+      }
+      const numReversed = lowNum.split('').reverse().join('');
+      for (const possibleConnectNum of getConnectingNumbers(numReversed)) {
+        if (this.cardMap[possibleConnectNum]) {
+          playableCardNums.push(numReversed);
+          break;
+        }
+      }
+    }
+    this.playableCardNumbers = playableCardNums;
+  }
+
   /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
   override onUpdateActionButtons(
     ...[stateName, args]: BGA.GameStateTuple<['name', 'args']>
@@ -307,28 +331,6 @@ class TetherGame extends Gamegui {
 
     switch (stateName) {
       case 'playerTurn':
-        this.generateCardMap();
-        const playableCardNums = [];
-
-        for (const cardId in this.gameStateTurnStart.hand) {
-          const lowNum = this.gameStateTurnStart.hand[cardId]!.type_arg;
-          for (const possibleConnectNum of getConnectingNumbers(lowNum)) {
-            if (this.cardMap[possibleConnectNum]) {
-              playableCardNums.push(lowNum);
-              break;
-            }
-          }
-          const numReversed = lowNum.split('').reverse().join('');
-          for (const possibleConnectNum of getConnectingNumbers(numReversed)) {
-            if (this.cardMap[possibleConnectNum]) {
-              playableCardNums.push(numReversed);
-              break;
-            }
-          }
-        }
-        console.log(playableCardNums);
-        this.playableCardNumbers = playableCardNums;
-
         this.addActionButton(
           'connect-astronauts-button',
           _('Connect Astronauts'),
@@ -336,12 +338,6 @@ class TetherGame extends Gamegui {
             this.highlightPlayableAstronauts();
           }
         );
-        if (this.playableCardNumbers.length === 0) {
-          document
-            .getElementById('connect-astronauts-button')
-            ?.classList.add('disabled');
-        }
-
         this.addActionButton(
           'set-adrift-button',
           _('Set Astronauts Adrift'),
@@ -668,6 +664,7 @@ class TetherGame extends Gamegui {
     this.clientState = {
       status: 'choosingAction',
     };
+    this.setInitialPlayableCards();
     this.restoreUIToTurnStart();
   }
 
@@ -817,6 +814,33 @@ class TetherGame extends Gamegui {
     };
   }
 
+  updatePlayableCards() {
+    // iterate over the cards in our current group
+    const currentGroup = this.gameStateCurrent.board[this.currentGroup];
+    if (!currentGroup) {
+      throw new Error(
+        'there was no current group found in updatePlayableCards'
+      );
+    }
+    const playableNumbers = [];
+    for (const col in currentGroup.cards) {
+      for (const card of currentGroup.cards[col]!) {
+        if (!card) continue;
+        const uprightNum =
+          card.uprightFor === this.playerDirection
+            ? card.lowNum
+            : card.lowNum.split('').toReversed().join('');
+
+        for (const possibleConnectNum of getConnectingNumbers(uprightNum)) {
+          if (this.cardMap[possibleConnectNum]) {
+            playableNumbers.push(possibleConnectNum);
+          }
+        }
+      }
+    }
+    this.playableCardNumbers = playableNumbers;
+  }
+
   handleChooseCardToPlay(
     { first, flipped } = { first: false, flipped: false }
   ) {
@@ -868,6 +892,7 @@ class TetherGame extends Gamegui {
       this.updateBoardUI();
     }
 
+    this.updatePlayableCards();
     this.highlightPlayableAstronauts();
   }
 
@@ -976,8 +1001,6 @@ class TetherGame extends Gamegui {
   }
 
   notif_drawFromDeck(notif: BGA.Notif<'drawFromDeck'>) {
-    console.log('notif_drawFromDeck', notif);
-
     const cardEl = this.createCardElement({
       id: notif.args.card_id,
       number: notif.args.card_num,
@@ -1027,6 +1050,15 @@ class TetherGame extends Gamegui {
     this.gameStateTurnStart.board = notif.args.board;
     this.gameStateTurnStart.hand = notif.args.hand;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
+    // these are put here because onUpdateActionButtons is called before the
+    // state is updated here and we need the new state to calculate playable cards
+    this.generateCardMap();
+    this.setInitialPlayableCards();
+    if (this.playableCardNumbers.length === 0) {
+      document
+        .getElementById('connect-astronauts-button')
+        ?.classList.add('disabled');
+    }
     this.updateBoardUI();
   }
 }
