@@ -265,17 +265,16 @@ class Game extends \Table
 
             if (!isset($cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"])) {
                 $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"] = 0;
-                $greatestX = 0;
             }
             if (!isset($cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"])) {
                 $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"] = 0;
-                $greatestY = 0;
             }
 
-            if ($x > $greatestX) {
+
+            if ($x > $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"]) {
                 $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"] = $x;
             }
-            if ($y > $greatestY) {
+            if ($y > $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"]) {
                 $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"] = $y;
             }
         }
@@ -328,7 +327,7 @@ class Game extends \Table
 
         $cardsByGroup = $this->getCollectionFromDB(
             "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
-            FROM card 
+            FROM card
             WHERE card_location = 'group'"
         );
         $result['board'] = $this->createGroupObjectForUI($cardsByGroup);
