@@ -21,6 +21,7 @@ import 'ebg/counter';
 import { Group, connectCardToGroup } from './connectCardToGroup';
 import { generateGroupUI } from './generateGroupUI';
 import { getConnectingNumbers } from './getConnectingNumbers';
+import { getConnection } from './getConnection';
 import { clone } from 'dojo';
 
 interface PlayedCard {
@@ -242,9 +243,11 @@ class TetherGame extends Gamegui {
     this.gameStateCurrent = clone(this.gameStateTurnStart);
 
     console.log('player direction', this.playerDirection);
+    console.log(gamedatas.board);
 
     this.generateCardMap();
     this.setInitialPlayableCards();
+
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -879,19 +882,16 @@ class TetherGame extends Gamegui {
         this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
       const uprightFor = card.flipped ? otherDirection : this.playerDirection;
 
+      const cardToConnect = {
+        id: card.id,
+        lowNum: card.number,
+        uprightFor,
+      };
+
       connectCardToGroup({
         group,
-        card: {
-          id: card.id,
-          lowNum: card.number,
-          uprightFor,
-        },
-        // TODO: support connecting at a different place
-        connection: {
-          card: group.cards[0]![0]!,
-          x: 0,
-          y: 0,
-        },
+        card: cardToConnect,
+        connection: getConnection(cardToConnect, group, this.playerDirection),
         orientation: this.playerDirection,
       });
       this.updateBoardUI();

@@ -1,9 +1,13 @@
-import { Card, Group } from './connectCardToGroup';
+import { Card, Group, Orientation } from './connectCardToGroup';
 import { getConnectingNumbers } from './getConnectingNumbers';
 
-export function getConnection(card: Card, group: Group) {
+export function getConnection(
+  card: Card,
+  group: Group,
+  orientation: Orientation
+) {
   const numToConnect =
-    card.uprightFor === 'vertical'
+    card.uprightFor === orientation
       ? card.lowNum
       : card.lowNum.split('').toReversed().join('');
   const possibleNumbers = getConnectingNumbers(numToConnect);
@@ -16,7 +20,7 @@ export function getConnection(card: Card, group: Group) {
       }
 
       const uprightNum =
-        card.uprightFor === 'vertical'
+        card.uprightFor === orientation
           ? card.lowNum
           : card.lowNum.split('').toReversed().join('');
       if (possibleNumbers.includes(uprightNum)) {
