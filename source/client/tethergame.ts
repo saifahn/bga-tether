@@ -338,6 +338,11 @@ class TetherGame extends Gamegui {
             this.highlightPlayableAstronauts();
           }
         );
+        if (this.playableCardNumbers.length === 0) {
+          document
+            .getElementById('connect-astronauts-button')
+            ?.classList.add('disabled');
+        }
         this.addActionButton(
           'set-adrift-button',
           _('Set Astronauts Adrift'),
