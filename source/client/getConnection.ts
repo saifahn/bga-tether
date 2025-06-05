@@ -20,7 +20,7 @@ export function getConnection(card: Card, group: Group) {
           ? card.lowNum
           : card.lowNum.split('').toReversed().join('');
       if (possibleNumbers.includes(uprightNum)) {
-        return { x: parseInt(x, 10), y };
+        return { card, x: parseInt(x, 10), y };
       }
     }
   }

@@ -40,7 +40,11 @@ test('getConnection should return the correct coordinates', () => {
     uprightFor: 'horizontal',
   };
   const result = getConnection(card, group);
-  assert.equal(result, { x: 1, y: 1 });
+  assert.equal(result, {
+    card: { id: '19', lowNum: '19', uprightFor: 'horizontal' },
+    x: 1,
+    y: 1,
+  });
 });
 
 test.run();
