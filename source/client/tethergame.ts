@@ -243,7 +243,6 @@ class TetherGame extends Gamegui {
     this.gameStateCurrent = clone(this.gameStateTurnStart);
 
     console.log('player direction', this.playerDirection);
-    console.log(gamedatas.board);
 
     this.generateCardMap();
     this.setInitialPlayableCards();
