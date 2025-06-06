@@ -171,7 +171,33 @@ define("getConnectingNumbers", ["require", "exports"], function (require, export
         return [decremented, incremented];
     }
 });
-define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "getConnectingNumbers", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, getConnectingNumbers_1, dojo_1) {
+define("getConnection", ["require", "exports", "getConnectingNumbers"], function (require, exports, getConnectingNumbers_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getConnection = getConnection;
+    function getConnection(card, group, orientation) {
+        var numToConnect = card.uprightFor === orientation
+            ? card.lowNum
+            : card.lowNum.split('').toReversed().join('');
+        var possibleNumbers = (0, getConnectingNumbers_1.getConnectingNumbers)(numToConnect);
+        for (var x in group.cards) {
+            for (var y = 0; y < group.cards[x].length; y++) {
+                var card_1 = group.cards[x][y];
+                if (card_1 === null) {
+                    continue;
+                }
+                var uprightNum = card_1.uprightFor === orientation
+                    ? card_1.lowNum
+                    : card_1.lowNum.split('').toReversed().join('');
+                if (possibleNumbers.includes(uprightNum)) {
+                    return { card: card_1, x: parseInt(x, 10), y: y };
+                }
+            }
+        }
+        throw new Error('the card is not a valid option to connect to the group');
+    }
+});
+define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "getConnectingNumbers", "getConnection", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, getConnectingNumbers_2, getConnection_1, dojo_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var TetherGame = (function (_super) {
@@ -326,6 +352,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             this.gameStateTurnStart.hand = gamedatas.hand;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
             console.log('player direction', this.playerDirection);
+            console.log(gamedatas.board);
             this.generateCardMap();
             this.setInitialPlayableCards();
             this.updateBoardUI();
@@ -373,7 +400,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             var playableCardNums = [];
             for (var cardId in this.gameStateTurnStart.hand) {
                 var lowNum = this.gameStateTurnStart.hand[cardId].type_arg;
-                for (var _i = 0, _a = (0, getConnectingNumbers_1.getConnectingNumbers)(lowNum); _i < _a.length; _i++) {
+                for (var _i = 0, _a = (0, getConnectingNumbers_2.getConnectingNumbers)(lowNum); _i < _a.length; _i++) {
                     var possibleConnectNum = _a[_i];
                     if (this.cardMap[possibleConnectNum]) {
                         playableCardNums.push(lowNum);
@@ -381,7 +408,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     }
                 }
                 var numReversed = lowNum.split('').reverse().join('');
-                for (var _b = 0, _c = (0, getConnectingNumbers_1.getConnectingNumbers)(numReversed); _b < _c.length; _b++) {
+                for (var _b = 0, _c = (0, getConnectingNumbers_2.getConnectingNumbers)(numReversed); _b < _c.length; _b++) {
                     var possibleConnectNum = _c[_b];
                     if (this.cardMap[possibleConnectNum]) {
                         playableCardNums.push(numReversed);
@@ -393,12 +420,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         };
         TetherGame.prototype.onUpdateActionButtons = function () {
             var _this = this;
-            var _a, _b;
-            var _c = [];
+            var _a, _b, _c;
+            var _d = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                _c[_i] = arguments[_i];
+                _d[_i] = arguments[_i];
             }
-            var stateName = _c[0], args = _c[1];
+            var stateName = _d[0], args = _d[1];
             console.log('onUpdateActionButtons: ' + stateName, args);
             if (!this.isCurrentPlayerActive())
                 return;
@@ -407,6 +434,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     this.addActionButton('connect-astronauts-button', _('Connect Astronauts'), function () {
                         _this.highlightPlayableAstronauts();
                     });
+                    if (this.playableCardNumbers.length === 0) {
+                        (_a = document
+                            .getElementById('connect-astronauts-button')) === null || _a === void 0 ? void 0 : _a.classList.add('disabled');
+                    }
                     this.addActionButton('set-adrift-button', _('Set Astronauts Adrift'), function (e) {
                         _this.handleChooseSetAdriftAction(e);
                     });
@@ -433,7 +464,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     if (this.clientState.status !== 'choosingCardSideToPlay') {
                         throw new Error('cardForConnecting not in correct state for this call');
                     }
-                    var _d = this.clientState.card, first_1 = _d.first, number = _d.number, numReversed = _d.numReversed;
+                    var _e = this.clientState.card, first_1 = _e.first, number = _e.number, numReversed = _e.numReversed;
                     this.addActionButton('play-upright-button', _("Play card as ".concat(number)), function () {
                         _this.handleChooseCardToPlay({
                             first: first_1,
@@ -442,8 +473,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     });
                     var isNumPlayable = this.isNumPlayable(number);
                     if (!isNumPlayable) {
-                        (_a = document
-                            .getElementById('play-upright-button')) === null || _a === void 0 ? void 0 : _a.classList.add('disabled');
+                        (_b = document
+                            .getElementById('play-upright-button')) === null || _b === void 0 ? void 0 : _b.classList.add('disabled');
                     }
                     this.addActionButton('play-flipped-button', _("Play card as ".concat(numReversed)), function () {
                         _this.handleChooseCardToPlay({
@@ -453,8 +484,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     });
                     var isFlippedNumPlayable = this.isNumPlayable(numReversed);
                     if (!isFlippedNumPlayable) {
-                        (_b = document
-                            .getElementById('play-flipped-button')) === null || _b === void 0 ? void 0 : _b.classList.add('disabled');
+                        (_c = document
+                            .getElementById('play-flipped-button')) === null || _c === void 0 ? void 0 : _c.classList.add('disabled');
                     }
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelConnectAstronautsAction();
@@ -761,7 +792,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     var uprightNum = card.uprightFor === this.playerDirection
                         ? card.lowNum
                         : card.lowNum.split('').toReversed().join('');
-                    for (var _b = 0, _c = (0, getConnectingNumbers_1.getConnectingNumbers)(uprightNum); _b < _c.length; _b++) {
+                    for (var _b = 0, _c = (0, getConnectingNumbers_2.getConnectingNumbers)(uprightNum); _b < _c.length; _b++) {
                         var possibleConnectNum = _c[_b];
                         if (this.cardMap[possibleConnectNum]) {
                             playableNumbers.push(possibleConnectNum);
@@ -796,18 +827,15 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 }
                 var otherDirection = this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
                 var uprightFor = card.flipped ? otherDirection : this.playerDirection;
+                var cardToConnect = {
+                    id: card.id,
+                    lowNum: card.number,
+                    uprightFor: uprightFor,
+                };
                 (0, connectCardToGroup_1.connectCardToGroup)({
                     group: group,
-                    card: {
-                        id: card.id,
-                        lowNum: card.number,
-                        uprightFor: uprightFor,
-                    },
-                    connection: {
-                        card: group.cards[0][0],
-                        x: 0,
-                        y: 0,
-                    },
+                    card: cardToConnect,
+                    connection: (0, getConnection_1.getConnection)(cardToConnect, group, this.playerDirection),
                     orientation: this.playerDirection,
                 });
                 this.updateBoardUI();

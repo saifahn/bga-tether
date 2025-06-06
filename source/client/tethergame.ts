@@ -21,6 +21,7 @@ import 'ebg/counter';
 import { Group, connectCardToGroup } from './connectCardToGroup';
 import { generateGroupUI } from './generateGroupUI';
 import { getConnectingNumbers } from './getConnectingNumbers';
+import { getConnection } from './getConnection';
 import { clone } from 'dojo';
 
 interface PlayedCard {
@@ -245,6 +246,7 @@ class TetherGame extends Gamegui {
 
     this.generateCardMap();
     this.setInitialPlayableCards();
+
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -338,6 +340,11 @@ class TetherGame extends Gamegui {
             this.highlightPlayableAstronauts();
           }
         );
+        if (this.playableCardNumbers.length === 0) {
+          document
+            .getElementById('connect-astronauts-button')
+            ?.classList.add('disabled');
+        }
         this.addActionButton(
           'set-adrift-button',
           _('Set Astronauts Adrift'),
@@ -874,19 +881,16 @@ class TetherGame extends Gamegui {
         this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
       const uprightFor = card.flipped ? otherDirection : this.playerDirection;
 
+      const cardToConnect = {
+        id: card.id,
+        lowNum: card.number,
+        uprightFor,
+      };
+
       connectCardToGroup({
         group,
-        card: {
-          id: card.id,
-          lowNum: card.number,
-          uprightFor,
-        },
-        // TODO: support connecting at a different place
-        connection: {
-          card: group.cards[0]![0]!,
-          x: 0,
-          y: 0,
-        },
+        card: cardToConnect,
+        connection: getConnection(cardToConnect, group, this.playerDirection),
         orientation: this.playerDirection,
       });
       this.updateBoardUI();
