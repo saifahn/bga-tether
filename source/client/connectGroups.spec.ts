@@ -1,4 +1,4 @@
-import { Group } from './genGroupUI';
+import { Group } from './connectCardToGroup';
 import { connectGroups } from './connectGroups';
 import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
