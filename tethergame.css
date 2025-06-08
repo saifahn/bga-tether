@@ -93,6 +93,9 @@
 .card--selected {
   outline: 0.4rem solid yellowgreen;
 }
+.card--blank {
+  opacity: 0;
+}
 
 #card-01 {
   background-image: url("img/cards.jpg");

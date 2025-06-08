@@ -1,6 +1,9 @@
 import { Card, Group, Orientation } from './connectCardToGroup';
 import { getConnectingNumbers } from './getConnectingNumbers';
 
+/**
+ * Finds the connection in the given group that will connect with the given card.
+ */
 export function getConnection(
   card: Card,
   group: Group,

@@ -105,6 +105,10 @@ $card-height: math.div(1955px, 7);
   &--selected {
     outline: 0.4rem solid yellowgreen;
   }
+
+  &--blank {
+    opacity: 0;
+  }
 }
 
 $id-list: '01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13',
