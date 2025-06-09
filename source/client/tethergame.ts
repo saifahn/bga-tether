@@ -779,7 +779,9 @@ class TetherGame extends Gamegui {
     const connectGroupHandler = (e: Event) => this.handleConnectGroup(e);
     groupCards.forEach((card) => {
       if (card instanceof HTMLElement) {
-        if (this.isCardPlayable(card)) {
+        const isCurrentGroup =
+          parseInt(card.dataset['groupNum']!, 10) === this.currentGroup;
+        if (!isCurrentGroup && this.isCardPlayable(card)) {
           card.classList.add('card--selectable');
           card.addEventListener('click', connectGroupHandler);
           this.eventHandlers.push({
