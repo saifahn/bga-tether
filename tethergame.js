@@ -511,7 +511,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                                     if (card === null) {
                                         continue;
                                     }
-                                    var uprightNum = card.uprightFor === 'vertical'
+                                    var uprightNum = card.uprightFor === this.playerDirection
                                         ? card.lowNum
                                         : card.lowNum.split('').toReversed().join('');
                                     this.cardMap[uprightNum] = card.id;
@@ -927,7 +927,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             var connectGroupHandler = function (e) { return _this.handleConnectGroup(e); };
             groupCards.forEach(function (card) {
                 if (card instanceof HTMLElement) {
-                    if (_this.isCardPlayable(card)) {
+                    var isCurrentGroup = parseInt(card.dataset['groupNum'], 10) === _this.currentGroup;
+                    if (!isCurrentGroup && _this.isCardPlayable(card)) {
                         card.classList.add('card--selectable');
                         card.addEventListener('click', connectGroupHandler);
                         _this.eventHandlers.push({

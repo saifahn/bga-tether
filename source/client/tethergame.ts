@@ -293,7 +293,7 @@ class TetherGame extends Gamegui {
             continue;
           }
           const uprightNum =
-            card.uprightFor === 'vertical'
+            card.uprightFor === this.playerDirection
               ? card.lowNum
               : card.lowNum.split('').toReversed().join('');
           // TODO: should we add x, y?
