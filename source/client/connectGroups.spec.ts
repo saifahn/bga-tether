@@ -426,4 +426,85 @@ test('should successfully connect two groups horizontally that are somewhat comp
   });
 });
 
+test('can connect a groups in the middle of a row, replacing blank spaces/nulls', () => {
+  const connectGreater: Group = {
+    number: 3,
+    cards: {
+      0: [
+        { id: '29', lowNum: '29', uprightFor: 'horizontal' },
+        { id: '39', lowNum: '39', uprightFor: 'horizontal' },
+      ],
+      1: [{ id: '28', lowNum: '28', uprightFor: 'horizontal' }, null],
+      2: [{ id: '27', lowNum: '27', uprightFor: 'horizontal' }, null],
+      3: [
+        { id: '26', lowNum: '26', uprightFor: 'horizontal' },
+        { id: '36', lowNum: '36', uprightFor: 'horizontal' },
+      ],
+    },
+  };
+  const connectLesser: Group = {
+    number: 2,
+    cards: {
+      0: [
+        {
+          id: '38',
+          lowNum: '38',
+          uprightFor: 'horizontal',
+        },
+      ],
+    },
+  };
+
+  const result = connectGroups({
+    largerGroup: {
+      group: connectGreater,
+      connection: {
+        card: {
+          id: '39',
+          lowNum: '39',
+          uprightFor: 'horizontal',
+        },
+        x: 0,
+        y: 1,
+      },
+    },
+    smallerGroup: {
+      group: connectLesser,
+      connection: {
+        card: {
+          id: '38',
+          lowNum: '38',
+          uprightFor: 'horizontal',
+        },
+        x: 0,
+        y: 0,
+      },
+    },
+    orientation: 'horizontal',
+  });
+
+  assert.equal(result, {
+    number: 2,
+    cards: {
+      0: [
+        { id: '29', lowNum: '29', uprightFor: 'horizontal' },
+        { id: '39', lowNum: '39', uprightFor: 'horizontal' },
+      ],
+      1: [
+        { id: '28', lowNum: '28', uprightFor: 'horizontal' },
+        {
+          id: '38',
+          lowNum: '38',
+          uprightFor: 'horizontal',
+        },
+      ],
+      2: [{ id: '27', lowNum: '27', uprightFor: 'horizontal' }, null],
+      3: [
+        { id: '26', lowNum: '26', uprightFor: 'horizontal' },
+        { id: '36', lowNum: '36', uprightFor: 'horizontal' },
+      ],
+    },
+  });
+});
+
 test.run();

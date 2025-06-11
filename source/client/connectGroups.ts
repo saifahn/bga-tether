@@ -27,6 +27,7 @@ export function connectGroups({
   ) {
     throw new Error('The connecting card details are not correct');
   }
+
   const newGroupNum = Math.min(
     smallerGroup.group.number,
     largerGroup.group.number
@@ -85,6 +86,10 @@ export function connectGroups({
   const rightGroupYOffset = leftGroupYOffset < 0 ? leftGroupYOffset * -1 : 0;
   leftGroupYOffset = leftGroupYOffset < 0 ? 0 : leftGroupYOffset;
 
+  // flipped because of horizontal
+  const rightGroupXOffset =
+    largerGroup.connection.x - smallerGroup.connection.x + 1;
+
   const newGroupHeight = Math.max(
     numRowsLeftGroup + leftGroupYOffset,
     numRowsRightGroup + rightGroupYOffset
@@ -93,21 +98,23 @@ export function connectGroups({
   const newCards: Record<number, (Card | null)[]> = {};
 
   for (let x = 0; x < numColsLeftGroup; x++) {
-    // work down the column - if the card should go there, add it, otherwise null
     if (!newCards[x]) {
       newCards[x] = [];
     }
+    // work down the column - if the card should go there, add it, otherwise null
     for (let y = 0; y < newGroupHeight; y++) {
       newCards[x]![y] =
         largerGroup.group.cards[x]?.[y - leftGroupYOffset] ?? null;
     }
   }
   for (let x = 0; x < numColsRightGroup; x++) {
-    const xRightGroup = x + numColsLeftGroup;
+    const xRightGroup = x + rightGroupXOffset;
     if (!newCards[xRightGroup]) {
       newCards[xRightGroup] = [];
     }
     for (let y = 0; y < newGroupHeight; y++) {
+      // don't replace a card that already exists there with a null
+      if (newCards[xRightGroup][y]) continue;
       newCards[xRightGroup][y] =
         smallerGroup.group.cards[x]?.[y - rightGroupYOffset] ?? null;
     }
