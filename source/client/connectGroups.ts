@@ -87,8 +87,11 @@ export function connectGroups({
   leftGroupYOffset = leftGroupYOffset < 0 ? 0 : leftGroupYOffset;
 
   // flipped because of horizontal
-  const rightGroupXOffset =
+  // +1 because the card is always connected on the right-hand side sequentially
+  let rightGroupXOffset =
     largerGroup.connection.x - smallerGroup.connection.x + 1;
+  const leftGroupXOffset = rightGroupXOffset < 0 ? rightGroupXOffset * -1 : 0;
+  rightGroupXOffset = rightGroupXOffset < 0 ? 0 : rightGroupXOffset;
 
   const newGroupHeight = Math.max(
     numRowsLeftGroup + leftGroupYOffset,
@@ -98,12 +101,13 @@ export function connectGroups({
   const newCards: Record<number, (Card | null)[]> = {};
 
   for (let x = 0; x < numColsLeftGroup; x++) {
-    if (!newCards[x]) {
-      newCards[x] = [];
+    const xLeftGroup = x + leftGroupXOffset;
+    if (!newCards[xLeftGroup]) {
+      newCards[xLeftGroup] = [];
     }
     // work down the column - if the card should go there, add it, otherwise null
     for (let y = 0; y < newGroupHeight; y++) {
-      newCards[x]![y] =
+      newCards[xLeftGroup][y] =
         largerGroup.group.cards[x]?.[y - leftGroupYOffset] ?? null;
     }
   }

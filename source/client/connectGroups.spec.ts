@@ -426,7 +426,7 @@ test('should successfully connect two groups horizontally that are somewhat comp
   });
 });
 
-test('can connect a groups in the middle of a row, replacing blank spaces/nulls', () => {
+test('can connect groups where cards replace null/blank spaces, and the second group will extend the horizontal length past the start of the first group', () => {
   const connectGreater: Group = {
     number: 3,
     cards: {
@@ -435,10 +435,9 @@ test('can connect a groups in the middle of a row, replacing blank spaces/nulls'
         { id: '39', lowNum: '39', uprightFor: 'horizontal' },
       ],
       1: [{ id: '28', lowNum: '28', uprightFor: 'horizontal' }, null],
-      2: [{ id: '27', lowNum: '27', uprightFor: 'horizontal' }, null],
-      3: [
-        { id: '26', lowNum: '26', uprightFor: 'horizontal' },
-        { id: '36', lowNum: '36', uprightFor: 'horizontal' },
+      2: [
+        { id: '27', lowNum: '27', uprightFor: 'horizontal' },
+        { id: '37', lowNum: '37', uprightFor: 'horizontal' },
       ],
     },
   };
@@ -446,9 +445,30 @@ test('can connect a groups in the middle of a row, replacing blank spaces/nulls'
     number: 2,
     cards: {
       0: [
+        null,
+        {
+          id: '05',
+          lowNum: '05',
+          uprightFor: 'vertical',
+        },
+      ],
+      1: [
+        null,
+        {
+          id: '49',
+          lowNum: '49',
+          uprightFor: 'horizontal',
+        },
+      ],
+      2: [
         {
           id: '38',
           lowNum: '38',
+          uprightFor: 'horizontal',
+        },
+        {
+          id: '48',
+          lowNum: '48',
           uprightFor: 'horizontal',
         },
       ],
@@ -476,7 +496,7 @@ test('can connect a groups in the middle of a row, replacing blank spaces/nulls'
           lowNum: '38',
           uprightFor: 'horizontal',
         },
-        x: 0,
+        x: 2,
         y: 0,
       },
     },
@@ -487,21 +507,32 @@ test('can connect a groups in the middle of a row, replacing blank spaces/nulls'
     number: 2,
     cards: {
       0: [
-        { id: '29', lowNum: '29', uprightFor: 'horizontal' },
-        { id: '39', lowNum: '39', uprightFor: 'horizontal' },
+        null,
+        null,
+        {
+          id: '05',
+          lowNum: '05',
+          uprightFor: 'vertical',
+        },
       ],
       1: [
+        { id: '29', lowNum: '29', uprightFor: 'horizontal' },
+        { id: '39', lowNum: '39', uprightFor: 'horizontal' },
+        { id: '49', lowNum: '49', uprightFor: 'horizontal' },
+      ],
+      2: [
         { id: '28', lowNum: '28', uprightFor: 'horizontal' },
         {
           id: '38',
           lowNum: '38',
           uprightFor: 'horizontal',
         },
+        { id: '48', lowNum: '48', uprightFor: 'horizontal' },
       ],
-      2: [{ id: '27', lowNum: '27', uprightFor: 'horizontal' }, null],
       3: [
-        { id: '26', lowNum: '26', uprightFor: 'horizontal' },
-        { id: '36', lowNum: '36', uprightFor: 'horizontal' },
+        { id: '27', lowNum: '27', uprightFor: 'horizontal' },
+        { id: '37', lowNum: '37', uprightFor: 'horizontal' },
+        null,
       ],
     },
   });
