@@ -1,131 +1,181 @@
 import { Group, Connection, Orientation, Card } from './connectCardToGroup';
 
 interface ConnectGroupsArgs {
-  smallerGroup: {
+  group1: {
     group: Group;
     connection: Connection;
   };
-  largerGroup: {
+  group2: {
     group: Group;
     connection: Connection;
   };
   orientation: Orientation;
 }
 
+function getGroupsByConnectionOrder({
+  group1,
+  group2,
+  orientation,
+}: ConnectGroupsArgs) {
+  // currently we are comparing the number from currentGroup connection to the cardToConnect
+  // then we decide which group is lesser
+  // then we can use that to decide which is the smaller/largerGroup
+  // move that logic here
+  // here we will determine "getHigherConnectingNumberGroup"
+  const group1NumToCompare =
+    group1.connection.card.uprightFor === orientation
+      ? group1.connection.card.lowNum
+      : group1.connection.card.lowNum.split('').toReversed().join('');
+  const group2NumToCompare =
+    group2.connection.card.uprightFor === orientation
+      ? group2.connection.card.lowNum
+      : group2.connection.card.lowNum.split('').toReversed().join('');
+
+  const group1IsGreater =
+    parseInt(group1NumToCompare, 10) > parseInt(group2NumToCompare, 10);
+
+  // higherConnectingNumber = "right side" for horizontal, (left side in data)
+  // higher connectingNumber = "bottom" for vertical
+  return {
+    groupConnectFrom: group1IsGreater ? group2 : group1,
+    groupConnectTo: group1IsGreater ? group1 : group2,
+  };
+}
+
 export function connectGroups({
-  smallerGroup,
-  largerGroup,
+  group1,
+  group2,
   orientation,
 }: ConnectGroupsArgs) {
   if (
-    smallerGroup.group.cards[smallerGroup.connection.x]?.[
-      smallerGroup.connection.y
-    ]?.id !== smallerGroup.connection.card.id ||
-    largerGroup.group.cards[largerGroup.connection.x]?.[
-      largerGroup.connection.y
-    ]?.id !== largerGroup.connection.card.id
+    group1.group.cards[group1.connection.x]?.[group1.connection.y]?.id !==
+      group1.connection.card.id ||
+    group2.group.cards[group2.connection.x]?.[group2.connection.y]?.id !==
+      group2.connection.card.id
   ) {
     throw new Error('The connecting card details are not correct');
   }
 
-  const newGroupNum = Math.min(
-    smallerGroup.group.number,
-    largerGroup.group.number
-  );
+  const { groupConnectFrom, groupConnectTo } = getGroupsByConnectionOrder({
+    group1,
+    group2,
+    orientation,
+  });
 
-  if (orientation === 'vertical') {
-    let numberOfColumnsAboveGroup = Object.keys(
-      smallerGroup.group.cards
-    ).length;
-    let numberOfColumnsBelowGroup = Object.keys(largerGroup.group.cards).length;
-    const numberOfRowsAboveGroup = smallerGroup.group.cards[0]?.length ?? 0;
-    const numberOfRowsBelowGroup = largerGroup.group.cards[0]?.length ?? 0;
+  const newGroupNum = Math.min(group1.group.number, group2.group.number);
 
-    // if we have a negative offset, we can make a positive offset on the other group instead
-    // this will make it easier to reason about and generate the new group
-    let belowGroupOffset = smallerGroup.connection.x - largerGroup.connection.x;
-    const aboveGroupOffset = belowGroupOffset < 0 ? belowGroupOffset * -1 : 0;
-    belowGroupOffset = belowGroupOffset < 0 ? 0 : belowGroupOffset;
+  // if (orientation === 'vertical') {
+  //   let numberOfColumnsAboveGroup = Object.keys(
+  //     smallerGroup.group.cards
+  //   ).length;
+  //   let numberOfColumnsBelowGroup = Object.keys(largerGroup.group.cards).length;
+  //   const numberOfRowsAboveGroup = smallerGroup.group.cards[0]?.length ?? 0;
+  //   const numberOfRowsBelowGroup = largerGroup.group.cards[0]?.length ?? 0;
 
-    const newGroupWidth = Math.max(
-      numberOfColumnsAboveGroup + aboveGroupOffset,
-      numberOfColumnsBelowGroup + belowGroupOffset
-    );
-    let newCards: Record<number, (Card | null)[]> = {};
+  //   // if we have a negative offset, we can make a positive offset on the other group instead
+  //   // this will make it easier to reason about and generate the new group
+  //   let belowGroupOffset = smallerGroup.connection.x - largerGroup.connection.x;
+  //   const aboveGroupOffset = belowGroupOffset < 0 ? belowGroupOffset * -1 : 0;
+  //   belowGroupOffset = belowGroupOffset < 0 ? 0 : belowGroupOffset;
 
-    for (let i = 0; i < newGroupWidth; i++) {
-      const upperGroupCards =
-        smallerGroup.group.cards[i - aboveGroupOffset] ??
-        new Array(numberOfRowsAboveGroup).fill(null);
-      newCards[i] = upperGroupCards;
+  //   const newGroupWidth = Math.max(
+  //     numberOfColumnsAboveGroup + aboveGroupOffset,
+  //     numberOfColumnsBelowGroup + belowGroupOffset
+  //   );
+  //   let newCards: Record<number, (Card | null)[]> = {};
 
-      const lowerGroupCards =
-        largerGroup.group.cards[i - belowGroupOffset] ??
-        new Array(numberOfRowsBelowGroup).fill(null);
-      newCards[i] = newCards[i]!.concat(lowerGroupCards);
-      continue;
-    }
+  //   for (let i = 0; i < newGroupWidth; i++) {
+  //     const upperGroupCards =
+  //       smallerGroup.group.cards[i - aboveGroupOffset] ??
+  //       new Array(numberOfRowsAboveGroup).fill(null);
+  //     newCards[i] = upperGroupCards;
 
-    return {
-      number: newGroupNum,
-      cards: newCards,
-    };
-  }
+  //     const lowerGroupCards =
+  //       largerGroup.group.cards[i - belowGroupOffset] ??
+  //       new Array(numberOfRowsBelowGroup).fill(null);
+  //     newCards[i] = newCards[i]!.concat(lowerGroupCards);
+  //     continue;
+  //   }
 
-  // for horizontal groups, everything is actually flipped
-  // so the group with the higher number will be on the left side
-  const numColsLeftGroup = Object.keys(largerGroup.group.cards).length;
-  const numColsRightGroup = Object.keys(smallerGroup.group.cards).length;
-  const numRowsLeftGroup = largerGroup.group.cards[0]?.length ?? 0;
-  const numRowsRightGroup = smallerGroup.group.cards[0]?.length ?? 0;
+  //   return {
+  //     number: newGroupNum,
+  //     cards: newCards,
+  //   };
+  // }
 
-  // TODO: normalized in relation to the connection point
-  // yOffsetRelativeToConnection - a bit long, we can make this a bit more parse-able later
-  // a negative offset means the left group is positioned higher than the right group
-  let leftGroupYOffset = smallerGroup.connection.y - largerGroup.connection.y;
-  const rightGroupYOffset = leftGroupYOffset < 0 ? leftGroupYOffset * -1 : 0;
-  leftGroupYOffset = leftGroupYOffset < 0 ? 0 : leftGroupYOffset;
+  const temporaryCombinedGroup: Record<
+    string,
+    Record<string, Card | undefined>
+  > = {};
+  // go through all of the fromGroup, add it into the combined group
+  const fromGroupYShift = 0 - groupConnectFrom.connection.y;
+  const fromGroupXShift = 1 - groupConnectFrom.connection.x;
+  const yCoords = new Set<number>();
 
-  // flipped because of horizontal
-  // +1 because the card is always connected on the right-hand side sequentially
-  let rightGroupXOffset =
-    largerGroup.connection.x - smallerGroup.connection.x + 1;
-  const leftGroupXOffset = rightGroupXOffset < 0 ? rightGroupXOffset * -1 : 0;
-  rightGroupXOffset = rightGroupXOffset < 0 ? 0 : rightGroupXOffset;
-
-  const newGroupHeight = Math.max(
-    numRowsLeftGroup + leftGroupYOffset,
-    numRowsRightGroup + rightGroupYOffset
-  );
-
-  const newCards: Record<number, (Card | null)[]> = {};
-
-  for (let x = 0; x < numColsLeftGroup; x++) {
-    const xLeftGroup = x + leftGroupXOffset;
-    if (!newCards[xLeftGroup]) {
-      newCards[xLeftGroup] = [];
-    }
-    // work down the column - if the card should go there, add it, otherwise null
-    for (let y = 0; y < newGroupHeight; y++) {
-      newCards[xLeftGroup][y] =
-        largerGroup.group.cards[x]?.[y - leftGroupYOffset] ?? null;
-    }
-  }
-  for (let x = 0; x < numColsRightGroup; x++) {
-    const xRightGroup = x + rightGroupXOffset;
-    if (!newCards[xRightGroup]) {
-      newCards[xRightGroup] = [];
-    }
-    for (let y = 0; y < newGroupHeight; y++) {
-      // don't replace a card that already exists there with a null
-      if (newCards[xRightGroup][y]) continue;
-      newCards[xRightGroup][y] =
-        smallerGroup.group.cards[x]?.[y - rightGroupYOffset] ?? null;
+  for (const [x, column] of Object.entries(groupConnectFrom.group.cards)) {
+    for (const [y, card] of column.entries()) {
+      if (!card) continue;
+      if (!temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift]) {
+        temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift] = {};
+      }
+      const offsetY = y + fromGroupYShift;
+      yCoords.add(offsetY);
+      temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift]![offsetY] =
+        card;
     }
   }
 
-  return {
+  const toGroupYShift = 0 - groupConnectTo.connection.y;
+  const toGroupXShift = 0 - groupConnectTo.connection.x;
+  for (const [x, column] of Object.entries(groupConnectTo.group.cards)) {
+    for (const [y, card] of column.entries()) {
+      if (!card) continue;
+      if (!temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift]) {
+        temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift] = {};
+      }
+      const offsetY = y + toGroupYShift;
+      yCoords.add(offsetY);
+      temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift]![offsetY] = card;
+    }
+  }
+
+  // normalize the insides
+  const nonNormalizedXs = Object.keys(temporaryCombinedGroup);
+  let xOffset = 0;
+  nonNormalizedXs.forEach((xCoord) => {
+    const parsedX = parseInt(xCoord, 10);
+    if (parsedX < xOffset) xOffset = parsedX;
+  });
+  xOffset = xOffset * -1;
+
+  // get the height of the new group
+  const newGroupHeight = yCoords.size;
+  let yOffset = 0;
+  yCoords.forEach((yCoord) => {
+    if (yCoord < yOffset) yOffset = yCoord;
+  });
+  yOffset = yOffset * -1;
+
+  // loop over the temporary combined group now using the xOffset to create a new group
+  const newGroup: Group = {
     number: newGroupNum,
-    cards: newCards,
+    cards: {},
   };
+  for (const oldX of Object.keys(temporaryCombinedGroup)) {
+    const newX = parseInt(oldX, 10) + xOffset;
+    if (!newGroup.cards[newX]) {
+      newGroup.cards[newX] = [];
+    }
+    for (let y = 0; y < newGroupHeight; y++) {
+      const oldY = y - yOffset;
+      newGroup.cards[newX].push(temporaryCombinedGroup[oldX]?.[oldY] || null);
+    }
+  }
+
+  // // from the horizontal perspective, they are connecting numbers ascending left to right
+  // // but the data is stored from the vertical perspective so it will be from right to left
+  // // the lower number will be the FROM group and the higher number will be the TO group
+  // // TO group connection point will be at relative 0,0 with the FROM group connection point next to it horizontally, at 1,0
+
+  return newGroup;
 }
