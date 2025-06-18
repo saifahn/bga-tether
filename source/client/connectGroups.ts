@@ -64,44 +64,8 @@ export function connectGroups({
 
   const newGroupNum = Math.min(group1.group.number, group2.group.number);
 
-  // if (orientation === 'vertical') {
-  //   let numberOfColumnsAboveGroup = Object.keys(
-  //     smallerGroup.group.cards
-  //   ).length;
-  //   let numberOfColumnsBelowGroup = Object.keys(largerGroup.group.cards).length;
-  //   const numberOfRowsAboveGroup = smallerGroup.group.cards[0]?.length ?? 0;
-  //   const numberOfRowsBelowGroup = largerGroup.group.cards[0]?.length ?? 0;
-
-  //   // if we have a negative offset, we can make a positive offset on the other group instead
-  //   // this will make it easier to reason about and generate the new group
-  //   let belowGroupOffset = smallerGroup.connection.x - largerGroup.connection.x;
-  //   const aboveGroupOffset = belowGroupOffset < 0 ? belowGroupOffset * -1 : 0;
-  //   belowGroupOffset = belowGroupOffset < 0 ? 0 : belowGroupOffset;
-
-  //   const newGroupWidth = Math.max(
-  //     numberOfColumnsAboveGroup + aboveGroupOffset,
-  //     numberOfColumnsBelowGroup + belowGroupOffset
-  //   );
-  //   let newCards: Record<number, (Card | null)[]> = {};
-
-  //   for (let i = 0; i < newGroupWidth; i++) {
-  //     const upperGroupCards =
-  //       smallerGroup.group.cards[i - aboveGroupOffset] ??
-  //       new Array(numberOfRowsAboveGroup).fill(null);
-  //     newCards[i] = upperGroupCards;
-
-  //     const lowerGroupCards =
-  //       largerGroup.group.cards[i - belowGroupOffset] ??
-  //       new Array(numberOfRowsBelowGroup).fill(null);
-  //     newCards[i] = newCards[i]!.concat(lowerGroupCards);
-  //     continue;
-  //   }
-
-  //   return {
-  //     number: newGroupNum,
-  //     cards: newCards,
-  //   };
-  // }
+  let relativeFromGroupXCoord = orientation === 'horizontal' ? 1 : 0;
+  let relativeToGroupYCoord = orientation === 'vertical' ? 1 : 0;
 
   const temporaryCombinedGroup: Record<
     string,
@@ -109,7 +73,8 @@ export function connectGroups({
   > = {};
   // go through all of the fromGroup, add it into the combined group
   const fromGroupYShift = 0 - groupConnectFrom.connection.y;
-  const fromGroupXShift = 1 - groupConnectFrom.connection.x;
+  const fromGroupXShift =
+    relativeFromGroupXCoord - groupConnectFrom.connection.x;
   const yCoords = new Set<number>();
 
   for (const [x, column] of Object.entries(groupConnectFrom.group.cards)) {
@@ -125,7 +90,7 @@ export function connectGroups({
     }
   }
 
-  const toGroupYShift = 0 - groupConnectTo.connection.y;
+  const toGroupYShift = relativeToGroupYCoord - groupConnectTo.connection.y;
   const toGroupXShift = 0 - groupConnectTo.connection.x;
   for (const [x, column] of Object.entries(groupConnectTo.group.cards)) {
     for (const [y, card] of column.entries()) {
