@@ -296,12 +296,10 @@ class TetherGame extends Gamegui {
             card.uprightFor === this.playerDirection
               ? card.lowNum
               : card.lowNum.split('').toReversed().join('');
-          // TODO: should we add x, y?
           this.cardMap[uprightNum] = card.id;
         }
       }
     }
-    console.log('cardMap:', this.cardMap);
   }
 
   /** See {@link BGA.Gamegui#onEnteringState} for more information. */
@@ -351,7 +349,6 @@ class TetherGame extends Gamegui {
       }
     }
     this.playableCardNumbers = playableCardNums;
-    console.log('initial playable cards', this.playableCardNumbers);
   }
 
   /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
@@ -905,8 +902,6 @@ class TetherGame extends Gamegui {
     this.gameStateCurrent.board[combinedGroup.number] = combinedGroup;
     this.currentGroup = combinedGroup.number;
 
-    console.log('group after being combined', combinedGroup);
-
     this.clearSelectableCards();
     this.clearEventListeners();
     this.updateBoardUI();
@@ -956,7 +951,6 @@ class TetherGame extends Gamegui {
       }
     }
     this.playableCardNumbers = playableNumbers;
-    console.log('updated playableCardNumbers', this.playableCardNumbers);
   }
 
   handleChooseCardToPlay(

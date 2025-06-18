@@ -623,7 +623,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 }
                 finally { if (e_8) throw e_8.error; }
             }
-            console.log('cardMap:', this.cardMap);
         };
         TetherGame.prototype.onEnteringState = function () {
             var _a = [];
@@ -687,7 +686,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 }
             }
             this.playableCardNumbers = playableCardNums;
-            console.log('initial playable cards', this.playableCardNumbers);
         };
         TetherGame.prototype.onUpdateActionButtons = function () {
             var _this = this;
@@ -1099,7 +1097,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             delete this.gameStateCurrent.board[higherGroupNum];
             this.gameStateCurrent.board[combinedGroup.number] = combinedGroup;
             this.currentGroup = combinedGroup.number;
-            console.log('group after being combined', combinedGroup);
             this.clearSelectableCards();
             this.clearEventListeners();
             this.updateBoardUI();
@@ -1159,7 +1156,6 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 }
             }
             this.playableCardNumbers = playableNumbers;
-            console.log('updated playableCardNumbers', this.playableCardNumbers);
         };
         TetherGame.prototype.handleChooseCardToPlay = function (_a) {
             var _b = _a === void 0 ? { first: false, flipped: false } : _a, first = _b.first, flipped = _b.flipped;
