@@ -17,11 +17,6 @@ function getGroupsByConnectionOrder({
   group2,
   orientation,
 }: ConnectGroupsArgs) {
-  // currently we are comparing the number from currentGroup connection to the cardToConnect
-  // then we decide which group is lesser
-  // then we can use that to decide which is the smaller/largerGroup
-  // move that logic here
-  // here we will determine "getHigherConnectingNumberGroup"
   const group1NumToCompare =
     group1.connection.card.uprightFor === orientation
       ? group1.connection.card.lowNum
@@ -37,8 +32,8 @@ function getGroupsByConnectionOrder({
   // higherConnectingNumber = "right side" for horizontal, (left side in data)
   // higher connectingNumber = "bottom" for vertical
   return {
-    groupConnectFrom: group1IsGreater ? group2 : group1,
-    groupConnectTo: group1IsGreater ? group1 : group2,
+    groupFrom: group1IsGreater ? group2 : group1,
+    groupTo: group1IsGreater ? group1 : group2,
   };
 }
 
@@ -56,7 +51,9 @@ export function connectGroups({
     throw new Error('The connecting card details are not correct');
   }
 
-  const { groupConnectFrom, groupConnectTo } = getGroupsByConnectionOrder({
+  // The FROM group is the group that has the card with a lesser number at the
+  // connection point
+  const { groupFrom, groupTo } = getGroupsByConnectionOrder({
     group1,
     group2,
     orientation,
@@ -64,47 +61,51 @@ export function connectGroups({
 
   const newGroupNum = Math.min(group1.group.number, group2.group.number);
 
-  let relativeFromGroupXCoord = orientation === 'horizontal' ? 1 : 0;
-  let relativeToGroupYCoord = orientation === 'vertical' ? 1 : 0;
+  // We will first connect the two groups at a relative position of 0,0 and 0,1
+  // for a vertical connection and 0,0 and 1,0 for a horizontal connection.
+  // We will then fill in the rest of each group around this relative position
+  // and then adjust the values accordingly so that the "top left" value is 0,0.
+  let relativeToY = orientation === 'vertical' ? 1 : 0;
+  // The data is always represented from the vertical perspective, so although
+  // we expect the FROM group to have a lower coordinate value, when connecting
+  // for the horizontal perspective the FROM group/lesser number will have a
+  // greater coordinate value from the vertical perspective.
+  let relativeFromX = orientation === 'horizontal' ? 1 : 0;
 
-  const temporaryCombinedGroup: Record<
-    string,
-    Record<string, Card | undefined>
-  > = {};
-  // go through all of the fromGroup, add it into the combined group
-  const fromGroupYShift = 0 - groupConnectFrom.connection.y;
-  const fromGroupXShift =
-    relativeFromGroupXCoord - groupConnectFrom.connection.x;
-  const yCoords = new Set<number>();
+  const temporaryCombinedGroup: Record<string, Record<string, Card>> = {};
+  const rows = new Set<number>();
 
-  for (const [x, column] of Object.entries(groupConnectFrom.group.cards)) {
+  const fromGroupYShift = 0 - groupFrom.connection.y;
+  const fromGroupXShift = relativeFromX - groupFrom.connection.x;
+
+  for (const [x, column] of Object.entries(groupFrom.group.cards)) {
     for (const [y, card] of column.entries()) {
       if (!card) continue;
       if (!temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift]) {
         temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift] = {};
       }
       const offsetY = y + fromGroupYShift;
-      yCoords.add(offsetY);
+      rows.add(offsetY);
       temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift]![offsetY] =
         card;
     }
   }
 
-  const toGroupYShift = relativeToGroupYCoord - groupConnectTo.connection.y;
-  const toGroupXShift = 0 - groupConnectTo.connection.x;
-  for (const [x, column] of Object.entries(groupConnectTo.group.cards)) {
+  const toGroupYShift = relativeToY - groupTo.connection.y;
+  const toGroupXShift = 0 - groupTo.connection.x;
+  for (const [x, column] of Object.entries(groupTo.group.cards)) {
     for (const [y, card] of column.entries()) {
       if (!card) continue;
       if (!temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift]) {
         temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift] = {};
       }
       const offsetY = y + toGroupYShift;
-      yCoords.add(offsetY);
+      rows.add(offsetY);
       temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift]![offsetY] = card;
     }
   }
 
-  // normalize the insides
+  // adjust the coordinates to start from 0,0
   const nonNormalizedXs = Object.keys(temporaryCombinedGroup);
   let xOffset = 0;
   nonNormalizedXs.forEach((xCoord) => {
@@ -114,10 +115,10 @@ export function connectGroups({
   xOffset = xOffset * -1;
 
   // get the height of the new group
-  const newGroupHeight = yCoords.size;
+  const newGroupHeight = rows.size;
   let yOffset = 0;
-  yCoords.forEach((yCoord) => {
-    if (yCoord < yOffset) yOffset = yCoord;
+  rows.forEach((rowNum) => {
+    if (rowNum < yOffset) yOffset = rowNum;
   });
   yOffset = yOffset * -1;
 
@@ -136,11 +137,6 @@ export function connectGroups({
       newGroup.cards[newX].push(temporaryCombinedGroup[oldX]?.[oldY] || null);
     }
   }
-
-  // // from the horizontal perspective, they are connecting numbers ascending left to right
-  // // but the data is stored from the vertical perspective so it will be from right to left
-  // // the lower number will be the FROM group and the higher number will be the TO group
-  // // TO group connection point will be at relative 0,0 with the FROM group connection point next to it horizontally, at 1,0
 
   return newGroup;
 }
