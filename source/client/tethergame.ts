@@ -880,49 +880,32 @@ class TetherGame extends Gamegui {
       this.gameStateCurrent.board[this.currentGroup]!,
       this.playerDirection!
     );
-    const currentGroupNumToCompare =
-      currentGroupConnectionPoint.card.uprightFor === this.playerDirection
-        ? currentGroupConnectionPoint.card.lowNum
-        : currentGroupConnectionPoint.card.lowNum
-            .split('')
-            .toReversed()
-            .join('');
-    const connectNumToCompare =
-      cardToConnect.uprightFor === this.playerDirection
-        ? cardToConnect.lowNum
-        : cardToConnect.lowNum.split('').toReversed().join('');
-    const currentGroupIsLesser =
-      parseInt(currentGroupNumToCompare, 10) <
-      parseInt(connectNumToCompare, 10);
 
-    const smallerGroup = {
-      group: currentGroupIsLesser
-        ? this.gameStateCurrent.board[this.currentGroup]!
-        : this.gameStateCurrent.board[groupToConnect!]!,
-      connection: currentGroupIsLesser
-        ? currentGroupConnectionPoint
-        : { card: cardToConnect, x: parseInt(x, 10), y: parseInt(y, 10) },
-    };
-    const largerGroup = {
-      group: !currentGroupIsLesser
-        ? this.gameStateCurrent.board[this.currentGroup]!
-        : this.gameStateCurrent.board[groupToConnect!]!,
-      connection: !currentGroupIsLesser
-        ? currentGroupConnectionPoint
-        : { card: cardToConnect, x: parseInt(x, 10), y: parseInt(y, 10) },
-    };
     const combinedGroup = connectGroups({
-      smallerGroup,
-      largerGroup,
+      group1: {
+        group: this.gameStateCurrent.board[this.currentGroup]!,
+        connection: currentGroupConnectionPoint,
+      },
+      group2: {
+        group: this.gameStateCurrent.board[groupToConnect]!,
+        connection: {
+          card: cardToConnect,
+          x: parseInt(x, 10),
+          y: parseInt(y, 10),
+        },
+      },
       orientation: this.playerDirection!,
     });
-    // in the current implementation, the currentGroup has the biggest group number
-    // this is now combined with the smaller one, so we can delete it from the state
-    delete this.gameStateCurrent.board[this.currentGroup];
+    const higherGroupNum = Math.max(
+      this.currentGroup,
+      parseInt(groupToConnect, 10)
+    );
+    // the higher group is now combined into the lower group, so we can get rid of the existing group
+    delete this.gameStateCurrent.board[higherGroupNum];
     this.gameStateCurrent.board[combinedGroup.number] = combinedGroup;
     this.currentGroup = combinedGroup.number;
 
-    console.log(combinedGroup);
+    console.log('group after being combined', combinedGroup);
 
     this.clearSelectableCards();
     this.clearEventListeners();
