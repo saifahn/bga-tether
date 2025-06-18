@@ -21,6 +21,7 @@ import 'ebg/counter';
 import { Group, connectCardToGroup } from './connectCardToGroup';
 import { generateGroupUI } from './generateGroupUI';
 import { getConnectingNumbers } from './getConnectingNumbers';
+import { connectGroups } from './connectGroups';
 import { getConnection } from './getConnection';
 import { clone } from 'dojo';
 
@@ -181,19 +182,32 @@ class TetherGame extends Gamegui {
         groupEl.classList.add('group--flipped');
       }
 
-      for (const row of generatedGroup) {
+      for (const [x, col] of generatedGroup.entries()) {
         const columnEl = document.createElement('div');
         columnEl.classList.add('column');
 
-        for (const card of row) {
+        for (const [y, card] of col.entries()) {
           if (card) {
             const cardEl = this.createCardElement({
               id: card.id,
               number: card.lowNum,
               flipped: !card.lowUprightForV,
             });
+            cardEl.dataset['x'] = x.toString();
+            cardEl.dataset['y'] = y.toString();
+            cardEl.dataset['groupNum'] = group;
+            cardEl.dataset['uprightFor'] = card.lowUprightForV
+              ? 'vertical'
+              : 'horizontal';
+            cardEl.classList.add('js-group-card');
             columnEl.appendChild(cardEl);
+            continue;
           }
+          // create a blank card to take up the same space for null
+          const blankCard = document.createElement('div');
+          blankCard.classList.add('card');
+          blankCard.classList.add('card--blank');
+          columnEl.appendChild(blankCard);
         }
         groupEl.appendChild(columnEl);
       }
@@ -271,6 +285,20 @@ class TetherGame extends Gamegui {
       this.cardMap[lowNum] = cardId;
       const numReversed = lowNum.split('').reverse().join('');
       this.cardMap[numReversed] = cardId;
+    }
+    for (const group of Object.values(this.gameStateTurnStart.board)) {
+      for (const column of Object.values(group.cards)) {
+        for (const card of column) {
+          if (card === null) {
+            continue;
+          }
+          const uprightNum =
+            card.uprightFor === this.playerDirection
+              ? card.lowNum
+              : card.lowNum.split('').toReversed().join('');
+          this.cardMap[uprightNum] = card.id;
+        }
+      }
     }
   }
 
@@ -743,6 +771,24 @@ class TetherGame extends Gamegui {
         }
       }
     });
+
+    const groupCards = document.querySelectorAll('.js-group-card');
+    const connectGroupHandler = (e: Event) => this.handleConnectGroup(e);
+    groupCards.forEach((card) => {
+      if (card instanceof HTMLElement) {
+        const isCurrentGroup =
+          parseInt(card.dataset['groupNum']!, 10) === this.currentGroup;
+        if (!isCurrentGroup && this.isCardPlayable(card)) {
+          card.classList.add('card--selectable');
+          card.addEventListener('click', connectGroupHandler);
+          this.eventHandlers.push({
+            element: card,
+            event: 'click',
+            handler: connectGroupHandler,
+          });
+        }
+      }
+    });
   }
 
   handleChooseCardFromHandConnect(e: Event) {
@@ -802,6 +848,65 @@ class TetherGame extends Gamegui {
         '${you} must choose which side of the card to play.'
       ),
     });
+  }
+
+  handleConnectGroup(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error(
+        "handleChooseCardFromAdriftConnect called when it shouldn't have been"
+      );
+    }
+    const groupToConnect = e.target.dataset['groupNum'];
+    const x = e.target.dataset['x'];
+    const y = e.target.dataset['y'];
+
+    if (!groupToConnect || !x || !y) {
+      throw new Error(
+        "handleConnectGroup couldn't get the right data from the card"
+      );
+    }
+
+    const cardToConnect = {
+      id: e.target.dataset['cardId']!,
+      lowNum: e.target.dataset['cardNumber']!,
+      uprightFor: e.target.dataset['uprightFor'] as 'vertical' | 'horizontal',
+    };
+    // find connection point between current group and selected group
+    const currentGroupConnectionPoint = getConnection(
+      cardToConnect,
+      this.gameStateCurrent.board[this.currentGroup]!,
+      this.playerDirection!
+    );
+
+    const combinedGroup = connectGroups({
+      group1: {
+        group: this.gameStateCurrent.board[this.currentGroup]!,
+        connection: currentGroupConnectionPoint,
+      },
+      group2: {
+        group: this.gameStateCurrent.board[groupToConnect]!,
+        connection: {
+          card: cardToConnect,
+          x: parseInt(x, 10),
+          y: parseInt(y, 10),
+        },
+      },
+      orientation: this.playerDirection!,
+    });
+    const higherGroupNum = Math.max(
+      this.currentGroup,
+      parseInt(groupToConnect, 10)
+    );
+    // the higher group is now combined into the lower group, so we can get rid of the existing group
+    delete this.gameStateCurrent.board[higherGroupNum];
+    this.gameStateCurrent.board[combinedGroup.number] = combinedGroup;
+    this.currentGroup = combinedGroup.number;
+
+    this.clearSelectableCards();
+    this.clearEventListeners();
+    this.updateBoardUI();
+    this.updatePlayableCards();
+    this.highlightPlayableAstronauts();
   }
 
   /**
