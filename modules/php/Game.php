@@ -587,6 +587,27 @@ class Game extends \Table
 
                     $updateCards = "UPDATE card SET scored_at=$threshold WHERE card_location_arg LIKE '$groupNum\_%'";
                     $this->DbQuery($updateCards);
+
+                    $players = $this->loadPlayersBasicInfos();
+                    foreach ($players as $player_id => $info) {
+                        if ($info["player_no"] == 1) {
+                            $vPlayer = $info;
+                            $vPlayerId = $player_id;
+                        } else {
+                            $hPlayer = $info;
+                            $hPlayerId = $player_id;
+                        }
+                    }
+                    $this->notifyAllPlayers('updateScore', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} and triggered scoring. The vertical player ${player_name} scored ${v_scored} points and the horizontal player ${player_name2} scored ${h_scored} points.'), [
+                        'threshold' => $threshold,
+                        'player_id' => $vPlayerId,
+                        'player_name' => $vPlayer['player_name'],
+                        'v_scored' => $vScore,
+                        'player_id2' => $hPlayerId,
+                        'player_name2' => $hPlayer['player_name'],
+                        'h_scored' => $hScore,
+                    ]);
+
                     break;
                 }
             }
