@@ -403,7 +403,6 @@ class Game extends \Table
     function initTables()
     {
         try {
-            $this->activeNextPlayer();
             // TODO $this->initStats();
             $this->createDeck();
             $this->drawAdriftCards();
