@@ -1039,6 +1039,11 @@ class TetherGame extends Gamegui {
     );
     this.notifqueue.setSynchronous('drawOtherPlayer', 500);
 
+    dojo.subscribe('updateHScore', this, 'notif_updatePlayerScore');
+    this.notifqueue.setSynchronous('updateHScore', 500);
+    dojo.subscribe('updateVScore', this, 'notif_updatePlayerScore');
+    this.notifqueue.setSynchronous('updateVScore', 500);
+
     dojo.subscribe('updateGameState', this, 'notif_updateGameState');
     this.notifqueue.setSynchronous('updateGameState', 500);
 
@@ -1169,6 +1174,10 @@ class TetherGame extends Gamegui {
         ?.classList.add('disabled');
     }
     this.updateBoardUI();
+  }
+
+  notif_updatePlayerScore(notif: BGA.Notif<'updatePlayerScore'>) {
+    this.scoreCtrl[notif.args.player_id]?.toValue(notif.args.new_total);
   }
 }
 

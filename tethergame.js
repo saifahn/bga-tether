@@ -409,6 +409,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 dojo.subscribe('drawOtherPlayer', _this, 'notif_drawOtherPlayer');
                 _this.notifqueue.setIgnoreNotificationCheck('drawOtherPlayer', function (notif) { return notif.args.player_id === _this.player_id; });
                 _this.notifqueue.setSynchronous('drawOtherPlayer', 500);
+                dojo.subscribe('updateHScore', _this, 'notif_updatePlayerScore');
+                _this.notifqueue.setSynchronous('updateHScore', 500);
+                dojo.subscribe('updateVScore', _this, 'notif_updatePlayerScore');
+                _this.notifqueue.setSynchronous('updateVScore', 500);
                 dojo.subscribe('updateGameState', _this, 'notif_updateGameState');
                 _this.notifqueue.setSynchronous('updateGameState', 500);
             };
@@ -1277,6 +1281,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     .getElementById('connect-astronauts-button')) === null || _a === void 0 ? void 0 : _a.classList.add('disabled');
             }
             this.updateBoardUI();
+        };
+        TetherGame.prototype.notif_updatePlayerScore = function (notif) {
+            var _a;
+            (_a = this.scoreCtrl[notif.args.player_id]) === null || _a === void 0 ? void 0 : _a.toValue(notif.args.new_total);
         };
         return TetherGame;
     }(Gamegui));

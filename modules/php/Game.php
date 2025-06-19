@@ -254,28 +254,29 @@ class Game extends \Table
         foreach ($cards as $card) {
             $groupAndCoords = explode("_", $card["groupAndCoords"]);
             // 0 is group number, 1 is x coord, 2 is y coord
+            $groupNum = $groupAndCoords[0];
             $x = $groupAndCoords[1];
             $y = $groupAndCoords[2];
 
-            $cardsByGroupAndCoords[$groupAndCoords[0]][$x][$y] = array(
+            $cardsByGroupAndCoords[$groupNum][$x][$y] = array(
                 "id" => $card['id'],
                 "lowNum" => $card['cardNum'],
                 "uprightFor" => $card['uprightFor'],
             );
 
-            if (!isset($cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"])) {
-                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"] = 0;
+            if (!isset($cardsByGroupAndCoords[$groupNum]["greatestX"])) {
+                $cardsByGroupAndCoords[$groupNum]["greatestX"] = 0;
             }
-            if (!isset($cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"])) {
-                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"] = 0;
+            if (!isset($cardsByGroupAndCoords[$groupNum]["greatestY"])) {
+                $cardsByGroupAndCoords[$groupNum]["greatestY"] = 0;
             }
 
 
-            if ($x > $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"]) {
-                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestX"] = $x;
+            if ($x > $cardsByGroupAndCoords[$groupNum]["greatestX"]) {
+                $cardsByGroupAndCoords[$groupNum]["greatestX"] = $x;
             }
-            if ($y > $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"]) {
-                $cardsByGroupAndCoords[$groupAndCoords[0]]["greatestY"] = $y;
+            if ($y > $cardsByGroupAndCoords[$groupNum]["greatestY"]) {
+                $cardsByGroupAndCoords[$groupNum]["greatestY"] = $y;
             }
         }
 
@@ -291,7 +292,6 @@ class Game extends \Table
                     $this->debug("x: $x, y: $y");
 
                     $itemToSet = $cardsByGroupAndCoords[$groupNum][$x][$y] ?? NULL;
-                    // FIXME: check this actually returns null or the card as expected
                     array_push($groups[$groupNum]["cards"][$x], $itemToSet);
                 }
             }
@@ -403,7 +403,6 @@ class Game extends \Table
     function initTables()
     {
         try {
-            $this->activeNextPlayer();
             // TODO $this->initStats();
             $this->createDeck();
             $this->drawAdriftCards();
@@ -515,6 +514,7 @@ class Game extends \Table
                 "player_name" => $this->getPlayerNameById($current_player_id),
             ]);
             $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected some astronauts.'), []);
+            $this->handleScoring();
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");
             $this->dump('err', $e);
@@ -522,6 +522,102 @@ class Game extends \Table
         }
 
         $this->gamestate->nextState('drawAtEndOfTurn');
+    }
+
+    function handleScoring()
+    {
+        // grab the group that was updated - maybe we can't do this because we just send all the groups
+        // so grab all groups
+        // check all of their scored at values and compare with their counts
+        $cards = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords, scored_at lastScored
+            FROM card
+            WHERE card_location = 'group'"
+        );
+        $groupsBySizeAndLastScored = array();
+        foreach ($cards as $card) {
+            $groupAndCoords = explode("_", $card["groupAndCoords"]);
+            $groupNum = $groupAndCoords[0];
+            $x = $groupAndCoords[1];
+            $y = $groupAndCoords[2];
+
+            if (!isset($groupsBySizeAndLastScored[$groupNum]["greatestX"])) {
+                $groupsBySizeAndLastScored[$groupNum]["greatestX"] = 0;
+            }
+            if (!isset($groupsBySizeAndLastScored[$groupNum]["greatestY"])) {
+                $groupsBySizeAndLastScored[$groupNum]["greatestY"] = 0;
+            }
+            if ($x > $groupsBySizeAndLastScored[$groupNum]["greatestX"]) {
+                $groupsBySizeAndLastScored[$groupNum]["greatestX"] = $x;
+            }
+            if ($y > $groupsBySizeAndLastScored[$groupNum]["greatestY"]) {
+                $groupsBySizeAndLastScored[$groupNum]["greatestY"] = $y;
+            }
+
+            if (!isset($groupsBySizeAndLastScored[$groupNum]["size"])) {
+                $groupsBySizeAndLastScored[$groupNum]["size"] = 0;
+            }
+            $groupsBySizeAndLastScored[$groupNum]["size"]++;
+
+            if (!isset($groupsBySizeAndLastScored[$groupNum]["lastScoredAt"])) {
+                $groupsBySizeAndLastScored[$groupNum]["lastScoredAt"] = 0;
+            }
+            if ((int) $card["lastScored"] > $groupsBySizeAndLastScored[$groupNum]["lastScoredAt"]) {
+                $groupsBySizeAndLastScored[$groupNum]["lastScoredAt"] = (int) $card["lastScored"];
+            }
+        }
+
+        $hScore = 0;
+        $vScore = 0;
+        foreach ($groupsBySizeAndLastScored as $groupNum => $group) {
+            foreach ([6, 10, 14] as $threshold) {
+                if ($group["size"] >= $threshold && $group["lastScoredAt"] < $threshold) {
+                    // +1 because the coordinates start at 0
+                    $hScore = $group["greatestX"] + 1;
+                    $vScore = $group["greatestY"] + 1;
+                    // vertical player is player 1
+                    // TODO: improve SQL efficiency
+                    $players = $this->getCollectionFromDB("SELECT player_id id, player_name playerName, player_score score, player_no turnOrder FROM player");
+                    foreach ($players as $player) {
+                        if ($player["turnOrder"] == 1) {
+                            $vPlayer = $player;
+                        } else {
+                            $hPlayer = $player;
+                        }
+                    }
+                    $updatedVScore = $vPlayer["score"] + $vScore;
+                    $updatedHScore = $hPlayer["score"] + $hScore;
+
+                    $updateVScore = "UPDATE player SET player_score=$updatedVScore WHERE player_no=1";
+                    $updateHSCore = "UPDATE player SET player_score=$updatedHScore WHERE player_no=2";
+                    $this->DbQuery($updateVScore);
+                    $this->DbQuery($updateHSCore);
+
+                    $updateCards = "UPDATE card SET scored_at=$threshold WHERE card_location_arg LIKE '$groupNum\_%'";
+                    $this->DbQuery($updateCards);
+
+                    $this->notifyAllPlayers('scoringTriggered', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} cards and triggered scoring.'), [
+                        'threshold' => $threshold,
+                    ]);
+                    $this->notifyAllPlayers('updateVScore', clienttranslate('The vertical player ${player_name} scored ${scored} points, bringing their total to ${new_total}'), [
+                        'player_id' => $vPlayer["id"],
+                        'player_name' => $vPlayer['playerName'],
+                        'scored' => $vScore,
+                        'new_total' => $updatedVScore
+                    ]);
+                    $this->notifyAllPlayers('updateHScore', clienttranslate('The horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.'), [
+                        'player_id' => $hPlayer["id"],
+                        'player_name' => $hPlayer['playerName'],
+                        'scored' => $hScore,
+                        'new_total' => $updatedHScore,
+                    ]);
+                    break;
+                }
+            }
+            if ($hScore > 0 && $vScore > 0) {
+                break;
+            }
+        }
     }
 
     /**

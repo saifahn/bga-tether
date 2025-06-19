@@ -28,7 +28,10 @@ CREATE TABLE IF NOT EXISTS `card` (
   -- deck, hand, adrift, board
   `card_location` varchar(16) NOT NULL,
   -- `card_location_arg`
-  -- if hand, player_id of the hand. if board, the group number and x/y coord
+  -- if hand, player_id of the hand. if board, the group number and x/y coord in the format group_x_y
   `card_location_arg` varchar(11) NOT NULL,
+  -- `scored_at`
+  -- the size threshold at which the card was last scored. Can be empty, 6, 10, or 14.
+  `scored_at` int(10) unsigned,
   PRIMARY KEY (`card_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8 AUTO_INCREMENT = 1;
