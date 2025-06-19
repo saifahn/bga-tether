@@ -607,7 +607,7 @@ class Game extends \Table
                         'scored' => $vScore,
                         'new_total' => $updatedVScore
                     ]);
-                    $this->notifyAllPlayers('updateHScore', clienttranslate(('the horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.')), [
+                    $this->notifyAllPlayers('updateHScore', clienttranslate('The horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.'), [
                         'player_id' => $hPlayer["id"],
                         'player_name' => $hPlayer['playerName'],
                         'scored' => $hScore,
