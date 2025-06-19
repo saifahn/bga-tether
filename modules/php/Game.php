@@ -534,8 +534,6 @@ class Game extends \Table
             FROM card
             WHERE card_location = 'group'"
         );
-        // $players = $this->getCollectionFromDb("SELECT player_no num, player_id id, player_score score FROM player");
-        // iterate over the cards and sort them by their group
         $groupsBySizeAndLastScored = array();
         foreach ($cards as $card) {
             $groupAndCoords = explode("_", $card["groupAndCoords"]);
