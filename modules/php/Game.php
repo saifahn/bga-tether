@@ -580,34 +580,40 @@ class Game extends \Table
                     $vScore = $group["greatestY"] + 1;
                     // vertical player is player 1
                     // TODO: improve SQL efficiency
-                    $updateVScore = "UPDATE player SET player_score=player_score+$vScore WHERE player_no=1";
-                    $updateHSCore = "UPDATE player SET player_score=player_score+$hScore WHERE player_no=2";
+                    $players = $this->getCollectionFromDB("SELECT player_id id, player_name playerName, player_score score, player_no turnOrder FROM player");
+                    foreach ($players as $player) {
+                        if ($player["turnOrder"] == 1) {
+                            $vPlayer = $player;
+                        } else {
+                            $hPlayer = $player;
+                        }
+                    }
+                    $updatedVScore = $vPlayer["score"] + $vScore;
+                    $updatedHScore = $hPlayer["score"] + $hScore;
+
+                    $updateVScore = "UPDATE player SET player_score=$updatedVScore WHERE player_no=1";
+                    $updateHSCore = "UPDATE player SET player_score=$updatedHScore WHERE player_no=2";
                     $this->DbQuery($updateVScore);
                     $this->DbQuery($updateHSCore);
 
                     $updateCards = "UPDATE card SET scored_at=$threshold WHERE card_location_arg LIKE '$groupNum\_%'";
                     $this->DbQuery($updateCards);
 
-                    $players = $this->loadPlayersBasicInfos();
-                    foreach ($players as $player_id => $info) {
-                        if ($info["player_no"] == 1) {
-                            $vPlayer = $info;
-                            $vPlayerId = $player_id;
-                        } else {
-                            $hPlayer = $info;
-                            $hPlayerId = $player_id;
-                        }
-                    }
-                    $this->notifyAllPlayers('updateScore', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} and triggered scoring. The vertical player ${player_name} scored ${v_scored} points and the horizontal player ${player_name2} scored ${h_scored} points.'), [
+                    $this->notifyAllPlayers('scoringTriggered', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} cards and triggered scoring.'), [
                         'threshold' => $threshold,
-                        'player_id' => $vPlayerId,
-                        'player_name' => $vPlayer['player_name'],
-                        'v_scored' => $vScore,
-                        'player_id2' => $hPlayerId,
-                        'player_name2' => $hPlayer['player_name'],
-                        'h_scored' => $hScore,
                     ]);
-
+                    $this->notifyAllPlayers('updateVScore', clienttranslate('The vertical player ${player_name} scored ${scored} points, bringing their total to ${new_total}'), [
+                        'player_id' => $vPlayer["id"],
+                        'player_name' => $vPlayer['playerName'],
+                        'scored' => $vScore,
+                        'new_total' => $updatedVScore
+                    ]);
+                    $this->notifyAllPlayers('updateHScore', clienttranslate(('the horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.')), [
+                        'player_id' => $hPlayer["id"],
+                        'player_name' => $hPlayer['playerName'],
+                        'scored' => $hScore,
+                        'new_total' => $updatedHScore,
+                    ]);
                     break;
                 }
             }
