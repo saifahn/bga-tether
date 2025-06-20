@@ -19,7 +19,6 @@ declare(strict_types=1);
 if (false) {
 	/** @var tethergame $game */
 	$game->stPlayerTurn();
-	$game->stFinishConnectingAstronauts();
 	$game->stDrawAtEndOfTurn();
 	$game->stNextPlayer();
 }
@@ -43,17 +42,8 @@ $machinestates = array(
 		'args' => 'argPlayerTurn',
 		'possibleactions' => ['actConnectAstronauts', 'actSetAdrift'],
 		'transitions' => array(
-			'finishConnectingAstronauts' => 15,
 			'drawAtEndOfTurn' => 25,
-		),
-	),
-	15 => array(
-		'name' => 'finishConnectingAstronauts',
-		'description' => clienttranslate('${actplayer} has connected astronauts'),
-		'type' => 'game',
-		'action' => 'stFinishConnectingAstronauts',
-		'transitions' => array(
-			'nextPlayer' => 25,
+			'goToGameEnd' => 99,
 		),
 	),
 	25 => array(

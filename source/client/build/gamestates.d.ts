@@ -30,17 +30,8 @@ interface DefinedGameStates extends ValidateGameStates<{
 		'args': 'argPlayerTurn',
 		'possibleactions': ['actConnectAstronauts', 'actSetAdrift'],
 		'transitions': {
-			'finishConnectingAstronauts': 15,
 			'drawAtEndOfTurn': 25,
-		},
-	},
-	15: {
-		'name': 'finishConnectingAstronauts',
-		'description': '${actplayer} has connected astronauts',
-		'type': 'game',
-		'action': 'stFinishConnectingAstronauts',
-		'transitions': {
-			'nextPlayer': 25,
+			'goToGameEnd': 99,
 		},
 	},
 	25: {

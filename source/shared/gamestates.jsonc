@@ -60,17 +60,9 @@
       ]
     },
     "transitions": {
-      "finishConnectingAstronauts": 15,
-      "drawAtEndOfTurn": 25
+      "drawAtEndOfTurn": 25,
+      "goToGameEnd": 99
     }
-  },
-
-  "15": {
-    "name": "finishConnectingAstronauts",
-    "description": "${actplayer} has connected astronauts",
-    "type": "game",
-    "action": "stFinishConnectingAstronauts",
-    "transitions": { "nextPlayer": 25 }
   },
 
   "25": {
