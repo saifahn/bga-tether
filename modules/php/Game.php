@@ -570,7 +570,7 @@ class Game extends \Table
         $hScore = 0;
         $vScore = 0;
         foreach ($groupsBySizeAndLastScored as $groupNum => $group) {
-            foreach ([6, 10, 14] as $threshold) {
+            foreach ([14, 10, 6] as $threshold) {
                 if ($group["size"] >= $threshold && $group["lastScoredAt"] < $threshold) {
                     // +1 because the coordinates start at 0
                     $hScore = $group["greatestX"] + 1;
