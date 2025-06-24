@@ -570,7 +570,7 @@ class Game extends \Table
         $hScore = 0;
         $vScore = 0;
         foreach ($groupsBySizeAndLastScored as $groupNum => $group) {
-            foreach ([6, 10, 14] as $threshold) {
+            foreach ([14, 10, 6] as $threshold) {
                 if ($group["size"] >= $threshold && $group["lastScoredAt"] < $threshold) {
                     // +1 because the coordinates start at 0
                     $hScore = $group["greatestX"] + 1;
@@ -611,6 +611,16 @@ class Game extends \Table
                         'scored' => $hScore,
                         'new_total' => $updatedHScore,
                     ]);
+                    if ($threshold == 14) {
+                        $this->notifyAllPlayers('endgame', clienttranslate('A group of 14 or more astronauts was created this round, so the game is now over.'), []);
+                        $this->gamestate->nextState('goToGameEnd');
+                        return;
+                    }
+                    if (abs($updatedVScore - $updatedHScore) >= 6) {
+                        $this->notifyAllPlayers('endgame', clienttranslate('A player has a 6 or more point lead against the other player, so the game is now over.'), []);
+                        $this->gamestate->nextState('goToGameEnd');
+                        return;
+                    }
                     break;
                 }
             }
