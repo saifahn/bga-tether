@@ -64,13 +64,15 @@
 
 .deck {
   border: 1px solid black;
-  border-radius: 5px;
+  border-radius: 10px;
   width: 200px;
   height: 279.2857142857px;
   zoom: 0.75;
   transform: rotate(90deg);
-  background-color: steelblue;
+  background-image: url("img/card-back.jpg");
+  background-size: contain;
   margin: -60px 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .card {
@@ -78,6 +80,7 @@
   border-radius: 10px;
   width: 200px;
   height: 279.2857142857px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 .card--flipped {
   transform: rotate(180deg);
