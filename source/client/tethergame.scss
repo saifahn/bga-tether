@@ -39,12 +39,13 @@ $card-height: math.div(1955px, 7);
 }
 
 #hand {
+  width: fit-content;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 10px;
   background-color: cornsilk;
-  border: 1px dashed darkseagreen;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 #groups {
@@ -71,17 +72,54 @@ $card-height: math.div(1955px, 7);
   flex-direction: column;
 }
 
-.deck {
+.deck-stack {
+  zoom: 0.75;
+  position: relative;
+  margin: 0 0 2rem;
+  height: 200px;
+}
+
+.deck-card {
+  position: absolute;
   border: 1px solid black;
   border-radius: 10px;
   width: $card-width;
   height: $card-height;
-  zoom: 0.75;
   transform: rotate(90deg);
-  background-image: url('img/card-back.jpg');
   background-size: contain;
   margin: -60px 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+  &--top {
+    background-image: url('img/card-back.jpg');
+  }
+
+  &:nth-child(1) {
+    box-shadow: 0 22px 44px -10px rgba(0, 0, 0, 0.28);
+    top: 0;
+    z-index: 4;
+  }
+
+  &:nth-child(2) {
+    top: 4px;
+    background-color: #e1e1e1;
+    z-index: 3;
+  }
+
+  &:nth-child(3) {
+    top: 8px;
+    background-color: #e1e1e1;
+    box-shadow: 0 9px 14px -10px rgba(0, 0, 0, 0.14);
+    z-index: 2;
+  }
+
+  &:nth-child(n + 4) {
+    top: 12px;
+    background-color: #e1e1e1;
+    box-shadow: 0 9px 14px -10px rgba(0, 0, 0, 0.14);
+    opacity: 0;
+    z-index: 1;
+  }
 }
 
 .card {

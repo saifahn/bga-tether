@@ -137,11 +137,21 @@ class TetherGame extends Gamegui {
     }
     adriftZone.innerHTML = '';
 
-    const deck = document.createElement('div');
-    deck.id = 'deck';
-    deck.classList.add('deck');
-    deck.classList.add('js-deck');
-    adriftZone.appendChild(deck);
+    const deckStack = document.createElement('li');
+    deckStack.classList.add('deck-stack');
+    const deckTopCard = document.createElement('ul');
+    deckTopCard.id = 'deck';
+    deckTopCard.classList.add('deck-card');
+    deckTopCard.classList.add('deck-card--top');
+    deckTopCard.classList.add('js-deck');
+    deckStack.appendChild(deckTopCard);
+    adriftZone.appendChild(deckStack);
+
+    for (let i = 0; i < 3; i++) {
+      const nextCard = document.createElement('ul');
+      nextCard.classList.add('deck-card');
+      deckStack.appendChild(nextCard);
+    }
 
     for (const cardId in this.gameStateCurrent.adrift) {
       const cardEl = this.createAdriftCardElement(
