@@ -448,11 +448,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 throw new Error('adrift-zone not found');
             }
             adriftZone.innerHTML = '';
-            var deck = document.createElement('div');
-            deck.id = 'deck';
-            deck.classList.add('deck');
-            deck.classList.add('js-deck');
-            adriftZone.appendChild(deck);
+            var deckStack = document.createElement('li');
+            deckStack.classList.add('deck-stack');
+            var deckTopCard = document.createElement('ul');
+            deckTopCard.id = 'deck';
+            deckTopCard.classList.add('deck-card');
+            deckTopCard.classList.add('deck-card--top');
+            deckTopCard.classList.add('js-deck');
+            deckStack.appendChild(deckTopCard);
+            adriftZone.appendChild(deckStack);
+            for (var i = 0; i < 3; i++) {
+                var nextCard = document.createElement('ul');
+                nextCard.classList.add('deck-card');
+                deckStack.appendChild(nextCard);
+            }
             for (var cardId in this.gameStateCurrent.adrift) {
                 var cardEl = this.createAdriftCardElement(cardId, this.gameStateCurrent.adrift[cardId].cardNum);
                 adriftZone.appendChild(cardEl);

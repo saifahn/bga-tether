@@ -23,11 +23,14 @@
 	3°) ... anything else: It is really easy to add and remove CSS classes dynamically from your Javascript with dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why, very often, using CSS classes for the logic of your user interface allow you to do complex thing easily.
 */
 #adrift-zone {
-  padding: 40px;
-  margin: 20px;
-  display: inline-block;
-  background-color: darksalmon;
+  padding: 20px 36px;
+  margin: 16px;
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
   border-radius: 4px;
+  border: 2px dashed rgb(61, 61, 61);
 }
 
 #hand {
@@ -66,8 +69,7 @@
 .deck-stack {
   zoom: 0.75;
   position: relative;
-  margin: 0 0 2rem;
-  height: 200px;
+  flex-basis: 250px;
 }
 
 .deck-card {
@@ -78,7 +80,7 @@
   height: 279.2857142857px;
   transform: rotate(90deg);
   background-size: contain;
-  margin: -60px 20px;
+  margin: -40px 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 .deck-card--top {
@@ -120,7 +122,7 @@
 }
 .card--adrift {
   transform: rotate(90deg);
-  margin: -60px 20px;
+  margin: -40px 20px;
 }
 .card--selectable {
   outline: 0.25rem dashed black;

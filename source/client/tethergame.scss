@@ -31,11 +31,14 @@ $card-width: math.div(1600px, 8);
 $card-height: math.div(1955px, 7);
 
 #adrift-zone {
-  padding: 40px;
-  margin: 20px;
-  display: inline-block;
-  background-color: darksalmon;
+  padding: 20px 36px;
+  margin: 16px;
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
   border-radius: 4px;
+  border: 2px dashed rgb(61, 61, 61);
 }
 
 #hand {
@@ -75,8 +78,7 @@ $card-height: math.div(1955px, 7);
 .deck-stack {
   zoom: 0.75;
   position: relative;
-  margin: 0 0 2rem;
-  height: 200px;
+  flex-basis: 250px;
 }
 
 .deck-card {
@@ -87,7 +89,7 @@ $card-height: math.div(1955px, 7);
   height: $card-height;
   transform: rotate(90deg);
   background-size: contain;
-  margin: -60px 20px;
+  margin: -40px 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 
   &--top {
@@ -135,7 +137,7 @@ $card-height: math.div(1955px, 7);
 
   &--adrift {
     transform: rotate(90deg);
-    margin: -60px 20px;
+    margin: -40px 20px;
   }
 
   &--selectable {
