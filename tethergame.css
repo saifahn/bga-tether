@@ -23,20 +23,24 @@
 	3°) ... anything else: It is really easy to add and remove CSS classes dynamically from your Javascript with dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why, very often, using CSS classes for the logic of your user interface allow you to do complex thing easily.
 */
 #adrift-zone {
-  padding: 40px;
-  margin: 20px;
-  display: inline-block;
-  background-color: darksalmon;
+  padding: 20px 36px;
+  margin: 16px;
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
   border-radius: 4px;
+  border: 2px dashed rgba(61, 61, 61, 0.5);
 }
 
 #hand {
+  width: fit-content;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 10px;
-  background-color: cornsilk;
-  border: 1px dashed darkseagreen;
+  background-color: rgb(98, 61, 18);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 #groups {
@@ -48,7 +52,7 @@
 
 .group {
   padding: 1rem;
-  border: 4px dashed darkslateblue;
+  border: 4px dashed rgba(72, 61, 139, 0.5);
   border-radius: 4px;
   height: fit-content;
   display: flex;
@@ -62,15 +66,48 @@
   flex-direction: column;
 }
 
-.deck {
+.deck-stack {
+  zoom: 0.75;
+  position: relative;
+  flex-basis: 250px;
+}
+
+.deck-card {
+  position: absolute;
   border: 1px solid black;
-  border-radius: 5px;
+  border-radius: 10px;
   width: 200px;
   height: 279.2857142857px;
-  zoom: 0.75;
   transform: rotate(90deg);
-  background-color: steelblue;
-  margin: -60px 20px;
+  background-size: contain;
+  margin: -40px 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.deck-card--top {
+  background-image: url("img/card-back.jpg");
+}
+.deck-card:nth-child(1) {
+  box-shadow: 0 22px 44px -10px rgba(0, 0, 0, 0.28);
+  top: 0;
+  z-index: 4;
+}
+.deck-card:nth-child(2) {
+  top: 4px;
+  background-color: #e1e1e1;
+  z-index: 3;
+}
+.deck-card:nth-child(3) {
+  top: 8px;
+  background-color: #e1e1e1;
+  box-shadow: 0 9px 14px -10px rgba(0, 0, 0, 0.14);
+  z-index: 2;
+}
+.deck-card:nth-child(n+4) {
+  top: 12px;
+  background-color: #e1e1e1;
+  box-shadow: 0 9px 14px -10px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  z-index: 1;
 }
 
 .card {
@@ -78,16 +115,18 @@
   border-radius: 10px;
   width: 200px;
   height: 279.2857142857px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.14);
 }
 .card--flipped {
   transform: rotate(180deg);
 }
 .card--adrift {
   transform: rotate(90deg);
-  margin: -60px 20px;
+  margin: -40px 20px;
 }
 .card--selectable {
-  outline: 0.25rem dashed black;
+  outline: 0.2rem dashed whitesmoke;
+  outline-offset: -0.2rem;
   cursor: pointer;
 }
 .card--selected {
