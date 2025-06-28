@@ -39,7 +39,10 @@ interface GameState {
 
 type ClientState =
   | {
-      status: 'choosingAction';
+      status:
+        | 'choosingAction'
+        | 'connectingAstronautsNext'
+        | 'connectingAstronautsInitial';
     }
   | {
       status: 'settingAdrift';
@@ -57,9 +60,7 @@ type ClientState =
         number: string;
         numReversed: string;
       };
-    }
-  // TODO: are we going to store the group or cards here?
-  | { status: 'connectingAstronautsNext' | 'connectingAstronautsInitial' };
+    };
 
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
@@ -361,6 +362,16 @@ class TetherGame extends Gamegui {
     this.playableCardNumbers = playableCardNums;
   }
 
+  // checks that current group has at least two cards in it
+  isCurrentGroupValid() {
+    const currentGroup = this.gameStateCurrent.board[this.currentGroup];
+    if (!currentGroup) return false;
+    return (
+      Object.keys(currentGroup.cards).length > 1 ||
+      currentGroup.cards[0]!.length > 1
+    );
+  }
+
   /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
   override onUpdateActionButtons(
     ...[stateName, args]: BGA.GameStateTuple<['name', 'args']>
@@ -500,6 +511,11 @@ class TetherGame extends Gamegui {
             this.finishConnectingAstronauts();
           }
         );
+        if (!this.isCurrentGroupValid()) {
+          document
+            .getElementById('finish-connecting-button')
+            ?.classList.add('disabled');
+        }
         this.addActionButton(
           'cancel-button',
           _('Restart turn'),

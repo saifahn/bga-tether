@@ -700,14 +700,21 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             }
             this.playableCardNumbers = playableCardNums;
         };
+        TetherGame.prototype.isCurrentGroupValid = function () {
+            var currentGroup = this.gameStateCurrent.board[this.currentGroup];
+            if (!currentGroup)
+                return false;
+            return (Object.keys(currentGroup.cards).length > 1 ||
+                currentGroup.cards[0].length > 1);
+        };
         TetherGame.prototype.onUpdateActionButtons = function () {
             var _this = this;
-            var _a, _b, _c;
-            var _d = [];
+            var _a, _b, _c, _d;
+            var _e = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                _d[_i] = arguments[_i];
+                _e[_i] = arguments[_i];
             }
-            var _e = __read(_d, 2), stateName = _e[0], args = _e[1];
+            var _f = __read(_e, 2), stateName = _f[0], args = _f[1];
             console.log('onUpdateActionButtons: ' + stateName, args);
             if (!this.isCurrentPlayerActive())
                 return;
@@ -746,7 +753,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     if (this.clientState.status !== 'choosingCardSideToPlay') {
                         throw new Error('cardForConnecting not in correct state for this call');
                     }
-                    var _f = this.clientState.card, first_1 = _f.first, number = _f.number, numReversed = _f.numReversed;
+                    var _g = this.clientState.card, first_1 = _g.first, number = _g.number, numReversed = _g.numReversed;
                     this.addActionButton('play-upright-button', _("Play card as ".concat(number)), function () {
                         _this.handleChooseCardToPlay({
                             first: first_1,
@@ -777,6 +784,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     this.addActionButton('finish-connecting-button', _('Finish connecting astronauts'), function () {
                         _this.finishConnectingAstronauts();
                     });
+                    if (!this.isCurrentGroupValid()) {
+                        (_d = document
+                            .getElementById('finish-connecting-button')) === null || _d === void 0 ? void 0 : _d.classList.add('disabled');
+                    }
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelConnectAstronautsAction();
                     }, undefined, false, 'red');
