@@ -7,7 +7,7 @@ export interface Card {
 }
 
 export interface Group {
-  number: number; // incremental number to keep track of the groups
+  id: string;
   cards: {
     [x: number]: (null | Card)[];
   };

@@ -74,7 +74,7 @@ class TetherGame extends Gamegui {
     status: 'choosingAction',
   };
 
-  currentGroup = 0;
+  currentGroup = '';
 
   gameStateTurnStart: GameState = {
     adrift: {},
@@ -804,8 +804,7 @@ class TetherGame extends Gamegui {
     const connectGroupHandler = (e: Event) => this.handleConnectGroup(e);
     groupCards.forEach((card) => {
       if (card instanceof HTMLElement) {
-        const isCurrentGroup =
-          parseInt(card.dataset['groupNum']!, 10) === this.currentGroup;
+        const isCurrentGroup = card.dataset['groupNum']! === this.currentGroup;
         if (!isCurrentGroup && this.isCardPlayable(card)) {
           card.classList.add('card--selectable');
           card.addEventListener('click', connectGroupHandler);
@@ -921,14 +920,13 @@ class TetherGame extends Gamegui {
       },
       orientation: this.playerDirection!,
     });
-    const higherGroupNum = Math.max(
-      this.currentGroup,
-      parseInt(groupToConnect, 10)
-    );
+
+    const toDeleteGroupId =
+      combinedGroup.id === groupToConnect ? this.currentGroup : groupToConnect;
     // the higher group is now combined into the lower group, so we can get rid of the existing group
-    delete this.gameStateCurrent.board[higherGroupNum];
-    this.gameStateCurrent.board[combinedGroup.number] = combinedGroup;
-    this.currentGroup = combinedGroup.number;
+    delete this.gameStateCurrent.board[toDeleteGroupId];
+    this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
+    this.currentGroup = combinedGroup.id;
 
     this.clearSelectableCards();
     this.clearEventListeners();
@@ -940,14 +938,13 @@ class TetherGame extends Gamegui {
   /**
    * utility function to create a group representation from a card
    */
-  createGroupFromCard(card: PlayedCard): Group {
+  createGroupFromCard(card: PlayedCard, id: string): Group {
     const otherDirection =
       this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
     const uprightFor = card.flipped ? otherDirection : this.playerDirection!;
-    const newGroupNum = Object.keys(this.gameStateCurrent.board).length + 1;
 
     return {
-      number: newGroupNum,
+      id,
       cards: {
         0: [{ id: card.id, lowNum: card.number, uprightFor }],
       },
@@ -994,10 +991,12 @@ class TetherGame extends Gamegui {
     const card = { id, number, flipped };
 
     if (first) {
-      const existingGroupsLen = Object.keys(this.gameStateCurrent.board).length;
-      this.currentGroup = existingGroupsLen + 1;
-      this.gameStateCurrent.board[this.currentGroup] =
-        this.createGroupFromCard(card);
+      const newGroupId = crypto.randomUUID().substring(0, 6);
+      this.currentGroup = newGroupId;
+      this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(
+        card,
+        newGroupId
+      );
       this.updateBoardUI();
     } else {
       // connect card to that group

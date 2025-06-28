@@ -16,7 +16,7 @@ export function generateGroupUI(group: Group) {
   const numCols = Object.keys(group.cards).length;
   const numRows = group.cards[0]?.length;
   if (!numRows) {
-    throw new Error(`somehow there are no rows in group: ${group.number}`);
+    throw new Error(`somehow there are no rows in group: ${group.id}`);
   }
   const boardSpaces: GroupUI = [];
 

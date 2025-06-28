@@ -156,7 +156,7 @@ define("generateGroupUI", ["require", "exports"], function (require, exports) {
         var numCols = Object.keys(group.cards).length;
         var numRows = (_a = group.cards[0]) === null || _a === void 0 ? void 0 : _a.length;
         if (!numRows) {
-            throw new Error("somehow there are no rows in group: ".concat(group.number));
+            throw new Error("somehow there are no rows in group: ".concat(group.id));
         }
         var boardSpaces = [];
         for (var x = 0; x < numCols; x++) {
@@ -231,7 +231,7 @@ define("connectGroups", ["require", "exports"], function (require, exports) {
             group2: group2,
             orientation: orientation,
         }), groupFrom = _m.groupFrom, groupTo = _m.groupTo;
-        var newGroupNum = Math.min(group1.group.number, group2.group.number);
+        var newGroupId = group1.group.id;
         var relativeToY = orientation === 'vertical' ? 1 : 0;
         var relativeFromX = orientation === 'horizontal' ? 1 : 0;
         var temporaryCombinedGroup = {};
@@ -321,7 +321,7 @@ define("connectGroups", ["require", "exports"], function (require, exports) {
         });
         yOffset = yOffset * -1;
         var newGroup = {
-            number: newGroupNum,
+            id: newGroupId,
             cards: {},
         };
         try {
@@ -384,7 +384,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             _this.clientState = {
                 status: 'choosingAction',
             };
-            _this.currentGroup = 0;
+            _this.currentGroup = '';
             _this.gameStateTurnStart = {
                 adrift: {},
                 board: {},
@@ -1030,7 +1030,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             var connectGroupHandler = function (e) { return _this.handleConnectGroup(e); };
             groupCards.forEach(function (card) {
                 if (card instanceof HTMLElement) {
-                    var isCurrentGroup = parseInt(card.dataset['groupNum'], 10) === _this.currentGroup;
+                    var isCurrentGroup = card.dataset['groupNum'] === _this.currentGroup;
                     if (!isCurrentGroup && _this.isCardPlayable(card)) {
                         card.classList.add('card--selectable');
                         card.addEventListener('click', connectGroupHandler);
@@ -1117,22 +1117,21 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 },
                 orientation: this.playerDirection,
             });
-            var higherGroupNum = Math.max(this.currentGroup, parseInt(groupToConnect, 10));
-            delete this.gameStateCurrent.board[higherGroupNum];
-            this.gameStateCurrent.board[combinedGroup.number] = combinedGroup;
-            this.currentGroup = combinedGroup.number;
+            var toDeleteGroupId = combinedGroup.id === groupToConnect ? this.currentGroup : groupToConnect;
+            delete this.gameStateCurrent.board[toDeleteGroupId];
+            this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
+            this.currentGroup = combinedGroup.id;
             this.clearSelectableCards();
             this.clearEventListeners();
             this.updateBoardUI();
             this.updatePlayableCards();
             this.highlightPlayableAstronauts();
         };
-        TetherGame.prototype.createGroupFromCard = function (card) {
+        TetherGame.prototype.createGroupFromCard = function (card, id) {
             var otherDirection = this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
             var uprightFor = card.flipped ? otherDirection : this.playerDirection;
-            var newGroupNum = Object.keys(this.gameStateCurrent.board).length + 1;
             return {
-                number: newGroupNum,
+                id: id,
                 cards: {
                     0: [{ id: card.id, lowNum: card.number, uprightFor: uprightFor }],
                 },
@@ -1190,10 +1189,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             delete this.gameStateCurrent[from][id];
             var card = { id: id, number: number, flipped: flipped };
             if (first) {
-                var existingGroupsLen = Object.keys(this.gameStateCurrent.board).length;
-                this.currentGroup = existingGroupsLen + 1;
-                this.gameStateCurrent.board[this.currentGroup] =
-                    this.createGroupFromCard(card);
+                var newGroupId = crypto.randomUUID().substring(0, 6);
+                this.currentGroup = newGroupId;
+                this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(card, newGroupId);
                 this.updateBoardUI();
             }
             else {
