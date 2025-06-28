@@ -27,7 +27,6 @@ interface DefinedGameStates extends ValidateGameStates<{
 		'descriptionmyturn': '${you} must connect astronauts or set an astronaut adrift',
 		'action': 'stPlayerTurn',
 		'type': 'activeplayer',
-		'args': 'argPlayerTurn',
 		'possibleactions': ['actConnectAstronauts', 'actSetAdrift'],
 		'transitions': {
 			'drawAtEndOfTurn': 25,
@@ -63,9 +62,7 @@ interface DefinedGameStates extends ValidateGameStates<{
 	},
 }> {}
 
-interface GameStateArgs {
-	'argPlayerTurn': object,
-}
+interface GameStateArgs {}
 
 interface GameStatePossibleActions {
 	'actConnectAstronauts': {

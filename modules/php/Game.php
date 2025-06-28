@@ -72,30 +72,6 @@ class Game extends \Table
         });*/
     }
 
-    /**
-     * Game state arguments, example content.
-     *
-     * This method returns some additional information that is very specific to the `playerTurn` game state.
-     *
-     * @return array
-     * @see ./states.inc.php
-     */
-    public function argPlayerTurn(): array
-    {
-        $res = array('_private' => array());
-        // can't call getCurrentPlayer or getActivePlayer here because this is
-        // happening in a transition for all players
-        $players = $this->loadPlayersBasicInfos();
-
-
-        foreach ($players as $player_id => $player_info) {
-            $possibleMoves = $this->getPossibleConnections($player_id);
-            $res['_private'][$player_id] = $possibleMoves;
-        }
-
-        return $res;
-    }
-
     protected function canCardsBeConnected(string $cardNum, mixed $cardToCompare)
     {
         $cardToCompareNum = $cardToCompare['type_arg'];
