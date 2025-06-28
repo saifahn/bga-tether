@@ -59,8 +59,6 @@ export function connectGroups({
     orientation,
   });
 
-  const newGroupId = group1.group.id;
-
   // We will first connect the two groups at a relative position of 0,0 and 0,1
   // for a vertical connection and 0,0 and 1,0 for a horizontal connection.
   // We will then fill in the rest of each group around this relative position
@@ -124,7 +122,7 @@ export function connectGroups({
 
   // loop over the temporary combined group now using the xOffset to create a new group
   const newGroup: Group = {
-    id: newGroupId,
+    id: group1.group.id,
     cards: {},
   };
   for (const oldX of Object.keys(temporaryCombinedGroup)) {

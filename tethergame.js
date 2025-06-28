@@ -231,7 +231,6 @@ define("connectGroups", ["require", "exports"], function (require, exports) {
             group2: group2,
             orientation: orientation,
         }), groupFrom = _m.groupFrom, groupTo = _m.groupTo;
-        var newGroupId = group1.group.id;
         var relativeToY = orientation === 'vertical' ? 1 : 0;
         var relativeFromX = orientation === 'horizontal' ? 1 : 0;
         var temporaryCombinedGroup = {};
@@ -321,7 +320,7 @@ define("connectGroups", ["require", "exports"], function (require, exports) {
         });
         yOffset = yOffset * -1;
         var newGroup = {
-            id: newGroupId,
+            id: group1.group.id,
             cards: {},
         };
         try {
