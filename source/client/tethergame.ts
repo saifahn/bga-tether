@@ -378,6 +378,8 @@ class TetherGame extends Gamegui {
             this.highlightPlayableAstronauts();
           }
         );
+        // this must be present to account for the case of re/loading the page
+        // and notif_updateGameState will not be called again until the next turn
         if (this.playableCardNumbers.length === 0) {
           document
             .getElementById('connect-astronauts-button')
@@ -1170,6 +1172,7 @@ class TetherGame extends Gamegui {
   }
 
   notif_updateGameState(notif: BGA.Notif<'updateGameState'>) {
+    console.log('notif_updateGameState is called');
     this.gameStateTurnStart.adrift = notif.args.adrift;
     this.gameStateTurnStart.board = notif.args.board;
     this.gameStateTurnStart.hand = notif.args.hand;
@@ -1178,10 +1181,13 @@ class TetherGame extends Gamegui {
     // state is updated here and we need the new state to calculate playable cards
     this.generateCardMap();
     this.setInitialPlayableCards();
+    const connectAstronautsButton = document.getElementById(
+      'connect-astronauts-button'
+    );
     if (this.playableCardNumbers.length === 0) {
-      document
-        .getElementById('connect-astronauts-button')
-        ?.classList.add('disabled');
+      connectAstronautsButton?.classList.add('disabled');
+    } else {
+      connectAstronautsButton?.classList.remove('disabled');
     }
     this.updateBoardUI();
   }

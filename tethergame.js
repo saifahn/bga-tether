@@ -1278,16 +1278,19 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             hand.appendChild(cardEl);
         };
         TetherGame.prototype.notif_updateGameState = function (notif) {
-            var _a;
+            console.log('notif_updateGameState is called');
             this.gameStateTurnStart.adrift = notif.args.adrift;
             this.gameStateTurnStart.board = notif.args.board;
             this.gameStateTurnStart.hand = notif.args.hand;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
             this.generateCardMap();
             this.setInitialPlayableCards();
+            var connectAstronautsButton = document.getElementById('connect-astronauts-button');
             if (this.playableCardNumbers.length === 0) {
-                (_a = document
-                    .getElementById('connect-astronauts-button')) === null || _a === void 0 ? void 0 : _a.classList.add('disabled');
+                connectAstronautsButton === null || connectAstronautsButton === void 0 ? void 0 : connectAstronautsButton.classList.add('disabled');
+            }
+            else {
+                connectAstronautsButton === null || connectAstronautsButton === void 0 ? void 0 : connectAstronautsButton.classList.remove('disabled');
             }
             this.updateBoardUI();
         };
