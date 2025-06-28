@@ -38,7 +38,7 @@ $card-height: math.div(1955px, 7);
   flex-wrap: wrap;
   justify-content: center;
   border-radius: 4px;
-  border: 2px dashed rgb(61, 61, 61);
+  border: 2px dashed rgba(61, 61, 61, 0.5);
 }
 
 #hand {
@@ -47,7 +47,7 @@ $card-height: math.div(1955px, 7);
   flex-wrap: wrap;
   gap: 8px;
   padding: 10px;
-  background-color: cornsilk;
+  background-color: rgb(98, 61, 18);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -60,7 +60,7 @@ $card-height: math.div(1955px, 7);
 
 .group {
   padding: 1rem;
-  border: 4px dashed darkslateblue;
+  border: 4px dashed rgba(72, 61, 139, 0.5);
   border-radius: 4px;
   height: fit-content;
   display: flex;
@@ -129,7 +129,7 @@ $card-height: math.div(1955px, 7);
   border-radius: 10px;
   width: $card-width;
   height: $card-height;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.14);
 
   &--flipped {
     transform: rotate(180deg);
@@ -141,7 +141,8 @@ $card-height: math.div(1955px, 7);
   }
 
   &--selectable {
-    outline: 0.25rem dashed black;
+    outline: 0.2rem dashed whitesmoke;
+    outline-offset: -0.2rem;
     cursor: pointer;
   }
 

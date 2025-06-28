@@ -30,7 +30,7 @@
   flex-wrap: wrap;
   justify-content: center;
   border-radius: 4px;
-  border: 2px dashed rgb(61, 61, 61);
+  border: 2px dashed rgba(61, 61, 61, 0.5);
 }
 
 #hand {
@@ -39,7 +39,7 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 10px;
-  background-color: cornsilk;
+  background-color: rgb(98, 61, 18);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -52,7 +52,7 @@
 
 .group {
   padding: 1rem;
-  border: 4px dashed darkslateblue;
+  border: 4px dashed rgba(72, 61, 139, 0.5);
   border-radius: 4px;
   height: fit-content;
   display: flex;
@@ -115,7 +115,7 @@
   border-radius: 10px;
   width: 200px;
   height: 279.2857142857px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.14);
 }
 .card--flipped {
   transform: rotate(180deg);
@@ -125,7 +125,8 @@
   margin: -40px 20px;
 }
 .card--selectable {
-  outline: 0.25rem dashed black;
+  outline: 0.2rem dashed whitesmoke;
+  outline-offset: -0.2rem;
   cursor: pointer;
 }
 .card--selected {
