@@ -39,7 +39,6 @@ $machinestates = array(
 		'descriptionmyturn' => clienttranslate('${you} must connect astronauts or set an astronaut adrift'),
 		'action' => 'stPlayerTurn',
 		'type' => 'activeplayer',
-		'args' => 'argPlayerTurn',
 		'possibleactions' => ['actConnectAstronauts', 'actSetAdrift'],
 		'transitions' => array(
 			'drawAtEndOfTurn' => 25,
