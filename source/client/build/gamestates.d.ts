@@ -35,7 +35,7 @@ interface DefinedGameStates extends ValidateGameStates<{
 	},
 	25: {
 		'name': 'drawAtEndOfTurn',
-		'description': '${actplayer} draws a card if they have fewer than 6 cards in hand',
+		'description': 'The active player draws a card if they have fewer than 6 cards in hand to end their turn',
 		'type': 'game',
 		'action': 'stDrawAtEndOfTurn',
 		'transitions': {

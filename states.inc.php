@@ -47,7 +47,7 @@ $machinestates = array(
 	),
 	25 => array(
 		'name' => 'drawAtEndOfTurn',
-		'description' => clienttranslate('${actplayer} draws a card if they have fewer than 6 cards in hand'),
+		'description' => clienttranslate('The active player draws a card if they have fewer than 6 cards in hand to end their turn'),
 		'type' => 'game',
 		'action' => 'stDrawAtEndOfTurn',
 		'transitions' => array(
