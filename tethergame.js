@@ -131,7 +131,7 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
             return;
         }
         if (((_g = group.cards[connection.x - 1]) === null || _g === void 0 ? void 0 : _g[connection.y]) === null) {
-            group.cards[connection.x - 1][connection.y] === card;
+            group.cards[connection.x - 1][connection.y] = card;
             return;
         }
         for (var i = numCols; i >= 0; i--) {
