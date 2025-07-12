@@ -50,9 +50,9 @@ export function connectCardToGroup({
 
   if (orientation === 'vertical') {
     for (let i = 0; i < numCols; i++) {
-      // i is equal to x when we are in the right column/x coordinate
-      // in that column, we'll add the card, but for each other column we also
-      // need to add a null to balance the rows
+      // i is equal to x when we are in the right column/x coordinate.
+      // In that column, we'll add the card, but for each other column we also
+      // need to add a null to balance the rows.
       if (!group.cards[i]) {
         throw new Error(
           "something has gone wrong - cards for the column don't exist for some reason"
@@ -103,7 +103,7 @@ export function connectCardToGroup({
   }
 
   if (group.cards[connection.x - 1]?.[connection.y] === null) {
-    group.cards[connection.x - 1]![connection.y] === card;
+    group.cards[connection.x - 1]![connection.y] = card;
     return;
   }
   // if adding at the beginning of the row, we need to shift all the other columns to the right

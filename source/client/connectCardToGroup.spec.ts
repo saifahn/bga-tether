@@ -5,7 +5,7 @@ import * as assert from 'uvu/assert';
 // #region vertical connections
 test('should extend columns correctly when connecting a card vertically at the end', () => {
   const group: Group = {
-    number: 2,
+    id: '2',
     cards: {
       0: [
         { id: '1', lowNum: '01', uprightFor: 'vertical' },
@@ -34,7 +34,7 @@ test('should extend columns correctly when connecting a card vertically at the e
   });
 
   assert.equal(group, {
-    number: 2,
+    id: '2',
     cards: {
       0: [
         { id: '1', lowNum: '01', uprightFor: 'vertical' },
@@ -48,7 +48,7 @@ test('should extend columns correctly when connecting a card vertically at the e
 
 test('should extend columns correctly when connecting a card vertically at the beginning', () => {
   const group: Group = {
-    number: 2,
+    id: '2',
     cards: {
       0: [
         { id: '2', lowNum: '02', uprightFor: 'vertical' },
@@ -76,7 +76,7 @@ test('should extend columns correctly when connecting a card vertically at the b
     },
   });
   assert.equal(group, {
-    number: 2,
+    id: '2',
     cards: {
       0: [
         { id: '1', lowNum: '01', uprightFor: 'vertical' },
@@ -94,7 +94,7 @@ test('can connect a card of a different orientation vertically to a group of mix
   // 50 40
   // 51
   const group: Group = {
-    number: 2,
+    id: '2',
     cards: {
       0: [
         null,
@@ -137,7 +137,7 @@ test('can connect a card of a different orientation vertically to a group of mix
   });
 
   assert.equal(group, {
-    number: 2,
+    id: '2',
     cards: {
       0: [
         {
@@ -170,7 +170,7 @@ test('can connect a card of a different orientation vertically to a group of mix
 test('should extend rows correctly when connecting a card horizontally at the beginning', () => {
   // data is always represented from the vertical player's perspective
   const group: Group = {
-    number: 2,
+    id: '2',
     cards: {
       0: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }, null],
       1: [
@@ -198,7 +198,7 @@ test('should extend rows correctly when connecting a card horizontally at the be
     },
   });
   assert.equal(group, {
-    number: 2,
+    id: '2',
     cards: {
       0: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }, null],
       1: [
@@ -219,7 +219,7 @@ test('should extend rows correctly when connecting a card horizontally at the en
   // 30 20
   //    21
   const group: Group = {
-    number: 2,
+    id: '2',
     cards: {
       0: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }, null],
       1: [
@@ -247,7 +247,7 @@ test('should extend rows correctly when connecting a card horizontally at the en
     },
   });
   assert.equal(group, {
-    number: 2,
+    id: '2',
     cards: {
       0: [{ id: '4', lowNum: '04', uprightFor: 'horizontal' }, null],
       1: [{ id: '3', lowNum: '03', uprightFor: 'horizontal' }, null],
@@ -268,7 +268,7 @@ test('can connect a card of a different orientation horizontally to a group of m
   // 79 80
   //    70 71
   const group: Group = {
-    number: 2,
+    id: '2',
     cards: {
       0: [{ id: '17', lowNum: '17', uprightFor: 'vertical' }, null],
       1: [
@@ -299,7 +299,7 @@ test('can connect a card of a different orientation horizontally to a group of m
   });
 
   assert.equal(group, {
-    number: 2,
+    id: '2',
     cards: {
       0: [{ id: '17', lowNum: '17', uprightFor: 'vertical' }, null],
       1: [
@@ -327,7 +327,7 @@ test('can connect a card horizontally and fill in blank spaces correctly', () =>
   // 12
   // 02
   const group: Group = {
-    number: 2,
+    id: '2',
     cards: {
       0: [
         { id: '02', lowNum: '02', uprightFor: 'horizontal' },
@@ -358,7 +358,7 @@ test('can connect a card horizontally and fill in blank spaces correctly', () =>
   });
 
   assert.equal(group, {
-    number: 2,
+    id: '2',
     cards: {
       0: [null, null, null, { id: '33', lowNum: '33', uprightFor: 'vertical' }],
       1: [
@@ -366,6 +366,82 @@ test('can connect a card horizontally and fill in blank spaces correctly', () =>
         { id: '12', lowNum: '12', uprightFor: 'horizontal' },
         { id: '22', lowNum: '22', uprightFor: 'vertical' },
         { id: '23', lowNum: '23', uprightFor: 'vertical' },
+      ],
+    },
+  });
+});
+
+test('can connect a card that fills in a blank space (null), and the card is connected at an earlier x coordinate in the data representation (to the right for the horizontal perspective)', () => {
+  const group: Group = {
+    id: '2',
+    cards: {
+      0: [
+        null,
+        null,
+        { id: '33', lowNum: '33', uprightFor: 'vertical' },
+        { id: '34', lowNum: '34', uprightFor: 'vertical' },
+      ],
+      1: [null, null, { id: '23', lowNum: '23', uprightFor: 'vertical' }, null],
+      2: [
+        { id: '11', lowNum: '11', uprightFor: 'vertical' },
+        { id: '12', lowNum: '12', uprightFor: 'vertical' },
+        { id: '13', lowNum: '13', uprightFor: 'vertical' },
+        null,
+      ],
+      3: [
+        { id: '01', lowNum: '01', uprightFor: 'vertical' },
+        { id: '02', lowNum: '02', uprightFor: 'vertical' },
+        { id: '03', lowNum: '03', uprightFor: 'vertical' },
+        null,
+      ],
+    },
+  };
+
+  connectCardToGroup({
+    group,
+    card: {
+      id: '22',
+      lowNum: '22',
+      uprightFor: 'vertical',
+    },
+    orientation: 'horizontal',
+    connection: {
+      card: {
+        id: '12',
+        lowNum: '12',
+        uprightFor: 'vertical',
+      },
+      x: 2,
+      y: 1,
+    },
+  });
+
+  assert.equal(group, {
+    id: '2',
+    cards: {
+      0: [
+        null,
+        null,
+        { id: '33', lowNum: '33', uprightFor: 'vertical' },
+        { id: '34', lowNum: '34', uprightFor: 'vertical' },
+      ],
+      1: [
+        null,
+        { id: '22', lowNum: '22', uprightFor: 'vertical' },
+        { id: '23', lowNum: '23', uprightFor: 'vertical' },
+        null,
+      ],
+      2: [
+        { id: '11', lowNum: '11', uprightFor: 'vertical' },
+        { id: '12', lowNum: '12', uprightFor: 'vertical' },
+        { id: '13', lowNum: '13', uprightFor: 'vertical' },
+        null,
+      ],
+      3: [
+        { id: '01', lowNum: '01', uprightFor: 'vertical' },
+        { id: '02', lowNum: '02', uprightFor: 'vertical' },
+        { id: '03', lowNum: '03', uprightFor: 'vertical' },
+        null,
       ],
     },
   });
