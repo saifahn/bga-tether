@@ -26,15 +26,22 @@ function getGroupsByConnectionOrder({
       ? group2.connection.card.lowNum
       : group2.connection.card.lowNum.split('').toReversed().join('');
 
-  const group1IsGreater =
+  const group1ConnectionIsGreaterNum =
     parseInt(group1NumToCompare, 10) > parseInt(group2NumToCompare, 10);
 
-  // higherConnectingNumber = "right side" for horizontal, (left side in data)
-  // higher connectingNumber = "bottom" for vertical
-  return {
-    groupFrom: group1IsGreater ? group2 : group1,
-    groupTo: group1IsGreater ? group1 : group2,
-  };
+  // higher connecting number = "to the right" for horizontal, (left side in data)
+  // higher connecting number = "above" for vertical
+  if (orientation === 'horizontal') {
+    return {
+      groupFrom: group1ConnectionIsGreaterNum ? group2 : group1,
+      groupTo: group1ConnectionIsGreaterNum ? group1 : group2,
+    };
+  } else {
+    return {
+      groupFrom: group1ConnectionIsGreaterNum ? group1 : group2,
+      groupTo: group1ConnectionIsGreaterNum ? group2 : group1,
+    };
+  }
 }
 
 export function connectGroups({

@@ -9,8 +9,8 @@ test('can connect two simple groups vertically', () => {
     id: '81ff95',
     cards: {
       0: [
-        { id: '1', lowNum: '01', uprightFor: 'vertical' },
         { id: '2', lowNum: '02', uprightFor: 'vertical' },
+        { id: '1', lowNum: '01', uprightFor: 'vertical' },
       ],
     },
   };
@@ -18,8 +18,8 @@ test('can connect two simple groups vertically', () => {
     id: 'cf306b',
     cards: {
       0: [
-        { id: '3', lowNum: '03', uprightFor: 'vertical' },
         { id: '4', lowNum: '04', uprightFor: 'vertical' },
+        { id: '3', lowNum: '03', uprightFor: 'vertical' },
       ],
     },
   };
@@ -30,7 +30,7 @@ test('can connect two simple groups vertically', () => {
       connection: {
         card: { id: '2', lowNum: '02', uprightFor: 'vertical' },
         x: 0,
-        y: 1,
+        y: 0,
       },
     },
     group2: {
@@ -38,7 +38,7 @@ test('can connect two simple groups vertically', () => {
       connection: {
         card: { id: '3', lowNum: '03', uprightFor: 'vertical' },
         x: 0,
-        y: 0,
+        y: 1,
       },
     },
     orientation: 'vertical',
@@ -48,10 +48,10 @@ test('can connect two simple groups vertically', () => {
     id: '81ff95',
     cards: {
       0: [
-        { id: '1', lowNum: '01', uprightFor: 'vertical' },
-        { id: '2', lowNum: '02', uprightFor: 'vertical' },
-        { id: '3', lowNum: '03', uprightFor: 'vertical' },
         { id: '4', lowNum: '04', uprightFor: 'vertical' },
+        { id: '3', lowNum: '03', uprightFor: 'vertical' },
+        { id: '2', lowNum: '02', uprightFor: 'vertical' },
+        { id: '1', lowNum: '01', uprightFor: 'vertical' },
       ],
     },
   });
@@ -61,9 +61,9 @@ test('can vertically connect two groups of different width with negative offset'
     id: 'cf306b',
     cards: {
       0: [
-        null,
-        { id: '57', lowNum: '57', uprightFor: 'vertical' },
         { id: '58', lowNum: '58', uprightFor: 'vertical' },
+        { id: '57', lowNum: '57', uprightFor: 'vertical' },
+        null,
       ],
       1: [
         null,
@@ -75,27 +75,27 @@ test('can vertically connect two groups of different width with negative offset'
         null,
       ],
       2: [
-        {
-          id: '36',
-          lowNum: '36',
-          uprightFor: 'vertical',
-        },
+        null,
         {
           id: '37',
           lowNum: '37',
           uprightFor: 'vertical',
         },
-        null,
+        {
+          id: '36',
+          lowNum: '36',
+          uprightFor: 'vertical',
+        },
       ],
     },
   };
   const group2: Group = {
     id: '81ff95',
     cards: {
-      0: [{ id: '69', lowNum: '69', uprightFor: 'vertical' }, null],
+      0: [null, { id: '69', lowNum: '69', uprightFor: 'vertical' }],
       1: [
-        { id: '59', lowNum: '59', uprightFor: 'vertical' },
         { id: '60', lowNum: '60', uprightFor: 'vertical' },
+        { id: '59', lowNum: '59', uprightFor: 'vertical' },
       ],
     },
   };
@@ -106,7 +106,7 @@ test('can vertically connect two groups of different width with negative offset'
       connection: {
         card: { id: '58', lowNum: '58', uprightFor: 'vertical' },
         x: 0,
-        y: 2,
+        y: 0,
       },
     },
     group2: {
@@ -114,7 +114,7 @@ test('can vertically connect two groups of different width with negative offset'
       connection: {
         card: { id: '59', lowNum: '59', uprightFor: 'vertical' },
         x: 1,
-        y: 0,
+        y: 1,
       },
     },
     orientation: 'vertical',
@@ -125,19 +125,21 @@ test('can vertically connect two groups of different width with negative offset'
     cards: {
       0: [
         null,
-        null,
-        null,
         { id: '69', lowNum: '69', uprightFor: 'vertical' },
+        null,
+        null,
         null,
       ],
       1: [
-        null,
-        { id: '57', lowNum: '57', uprightFor: 'vertical' },
-        { id: '58', lowNum: '58', uprightFor: 'vertical' },
-        { id: '59', lowNum: '59', uprightFor: 'vertical' },
         { id: '60', lowNum: '60', uprightFor: 'vertical' },
+        { id: '59', lowNum: '59', uprightFor: 'vertical' },
+        { id: '58', lowNum: '58', uprightFor: 'vertical' },
+        { id: '57', lowNum: '57', uprightFor: 'vertical' },
+        null,
       ],
       2: [
+        null,
+        null,
         null,
         {
           id: '47',
@@ -145,23 +147,21 @@ test('can vertically connect two groups of different width with negative offset'
           uprightFor: 'vertical',
         },
         null,
-        null,
-        null,
       ],
       3: [
-        {
-          id: '36',
-          lowNum: '36',
-          uprightFor: 'vertical',
-        },
+        null,
+        null,
+        null,
         {
           id: '37',
           lowNum: '37',
           uprightFor: 'vertical',
         },
-        null,
-        null,
-        null,
+        {
+          id: '36',
+          lowNum: '36',
+          uprightFor: 'vertical',
+        },
       ],
     },
   });
@@ -172,14 +172,14 @@ test('can connect two groups vertically, with one extending past the beginning o
     id: 'cf306b',
     cards: {
       0: [
-        { id: '57', lowNum: '57', uprightFor: 'vertical' },
-        null,
         { id: '59', lowNum: '59', uprightFor: 'vertical' },
+        null,
+        { id: '57', lowNum: '57', uprightFor: 'vertical' },
       ],
       1: [
-        { id: '47', lowNum: '47', uprightFor: 'vertical' },
-        { id: '48', lowNum: '48', uprightFor: 'vertical' },
         { id: '49', lowNum: '49', uprightFor: 'vertical' },
+        { id: '48', lowNum: '48', uprightFor: 'vertical' },
+        { id: '47', lowNum: '47', uprightFor: 'vertical' },
       ],
     },
   };
@@ -188,11 +188,11 @@ test('can connect two groups vertically, with one extending past the beginning o
     id: '81ff95',
     cards: {
       0: [
-        { id: '66', lowNum: '66', uprightFor: 'vertical' },
-        { id: '67', lowNum: '67', uprightFor: 'vertical' },
         { id: '68', lowNum: '68', uprightFor: 'vertical' },
+        { id: '67', lowNum: '67', uprightFor: 'vertical' },
+        { id: '66', lowNum: '66', uprightFor: 'vertical' },
       ],
-      1: [null, null, { id: '58', lowNum: '58', uprightFor: 'vertical' }],
+      1: [{ id: '58', lowNum: '58', uprightFor: 'vertical' }, null, null],
     },
   };
 
@@ -200,17 +200,21 @@ test('can connect two groups vertically, with one extending past the beginning o
     group1: {
       group: group1,
       connection: {
-        card: group1.cards[0][0]!,
+        card: {
+          id: '57',
+          lowNum: '57',
+          uprightFor: 'vertical',
+        },
         x: 0,
-        y: 0,
+        y: 2,
       },
     },
     group2: {
       group: group2,
       connection: {
-        card: group2.cards[1][2]!,
+        card: { id: '58', lowNum: '58', uprightFor: 'vertical' },
         x: 1,
-        y: 2,
+        y: 0,
       },
     },
     orientation: 'vertical',
@@ -219,22 +223,22 @@ test('can connect two groups vertically, with one extending past the beginning o
     id: 'cf306b',
     cards: {
       0: [
-        { id: '66', lowNum: '66', uprightFor: 'vertical' },
-        { id: '67', lowNum: '67', uprightFor: 'vertical' },
-        { id: '68', lowNum: '68', uprightFor: 'vertical' },
         null,
+        { id: '68', lowNum: '68', uprightFor: 'vertical' },
+        { id: '67', lowNum: '67', uprightFor: 'vertical' },
+        { id: '66', lowNum: '66', uprightFor: 'vertical' },
       ],
       1: [
-        null,
-        { id: '57', lowNum: '57', uprightFor: 'vertical' },
-        { id: '58', lowNum: '58', uprightFor: 'vertical' },
         { id: '59', lowNum: '59', uprightFor: 'vertical' },
+        { id: '58', lowNum: '58', uprightFor: 'vertical' },
+        { id: '57', lowNum: '57', uprightFor: 'vertical' },
+        null,
       ],
       2: [
-        null,
-        { id: '47', lowNum: '47', uprightFor: 'vertical' },
-        { id: '48', lowNum: '48', uprightFor: 'vertical' },
         { id: '49', lowNum: '49', uprightFor: 'vertical' },
+        { id: '48', lowNum: '48', uprightFor: 'vertical' },
+        { id: '47', lowNum: '47', uprightFor: 'vertical' },
+        null,
       ],
     },
   };
@@ -244,17 +248,25 @@ test('can connect two groups vertically, with one extending past the beginning o
     group1: {
       group: group1,
       connection: {
-        card: group1.cards[0][2]!,
+        card: {
+          id: '59',
+          lowNum: '59',
+          uprightFor: 'vertical',
+        },
         x: 0,
-        y: 2,
+        y: 0,
       },
     },
     group2: {
       group: group2,
       connection: {
-        card: group2.cards[1][2]!,
+        card: {
+          id: '58',
+          lowNum: '58',
+          uprightFor: 'vertical',
+        },
         x: 1,
-        y: 2,
+        y: 0,
       },
     },
     orientation: 'vertical',
