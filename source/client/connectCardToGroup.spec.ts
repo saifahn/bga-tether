@@ -8,10 +8,10 @@ test('should extend columns correctly when connecting a card vertically at the e
     id: '2',
     cards: {
       0: [
-        { id: '1', lowNum: '01', uprightFor: 'vertical' },
         { id: '2', lowNum: '02', uprightFor: 'vertical' },
+        { id: '1', lowNum: '01', uprightFor: 'vertical' },
       ],
-      1: [null, { id: '19', lowNum: '19', uprightFor: 'horizontal' }],
+      1: [{ id: '19', lowNum: '19', uprightFor: 'horizontal' }, null],
     },
   };
   connectCardToGroup({
@@ -29,7 +29,7 @@ test('should extend columns correctly when connecting a card vertically at the e
         uprightFor: 'vertical',
       },
       x: 0,
-      y: 1,
+      y: 0,
     },
   });
 
@@ -37,9 +37,9 @@ test('should extend columns correctly when connecting a card vertically at the e
     id: '2',
     cards: {
       0: [
-        { id: '1', lowNum: '01', uprightFor: 'vertical' },
-        { id: '2', lowNum: '02', uprightFor: 'vertical' },
         { id: '3', lowNum: '03', uprightFor: 'vertical' },
+        { id: '2', lowNum: '02', uprightFor: 'vertical' },
+        { id: '1', lowNum: '01', uprightFor: 'vertical' },
       ],
       1: [null, { id: '19', lowNum: '19', uprightFor: 'horizontal' }, null],
     },
@@ -51,10 +51,10 @@ test('should extend columns correctly when connecting a card vertically at the b
     id: '2',
     cards: {
       0: [
-        { id: '2', lowNum: '02', uprightFor: 'vertical' },
         { id: '3', lowNum: '03', uprightFor: 'vertical' },
+        { id: '2', lowNum: '02', uprightFor: 'vertical' },
       ],
-      1: [null, { id: '29', lowNum: '29', uprightFor: 'horizontal' }],
+      1: [{ id: '29', lowNum: '29', uprightFor: 'horizontal' }, null],
     },
   };
   connectCardToGroup({
@@ -72,47 +72,47 @@ test('should extend columns correctly when connecting a card vertically at the b
         uprightFor: 'vertical',
       },
       x: 0,
-      y: 0,
+      y: 1,
     },
   });
   assert.equal(group, {
     id: '2',
     cards: {
       0: [
-        { id: '1', lowNum: '01', uprightFor: 'vertical' },
-        { id: '2', lowNum: '02', uprightFor: 'vertical' },
         { id: '3', lowNum: '03', uprightFor: 'vertical' },
+        { id: '2', lowNum: '02', uprightFor: 'vertical' },
+        { id: '1', lowNum: '01', uprightFor: 'vertical' },
       ],
-      1: [null, null, { id: '29', lowNum: '29', uprightFor: 'horizontal' }],
+      1: [{ id: '29', lowNum: '29', uprightFor: 'horizontal' }, null, null],
     },
   });
 });
 
 test('can connect a card of a different orientation vertically to a group of mixed orientations, with the card replacing a blank space (null)', () => {
   // for vertical:
-  //    39
-  // 50 40
   // 51
+  // 50 40
+  //    39
   const group: Group = {
     id: '2',
     cards: {
       0: [
-        null,
-        {
-          id: '05',
-          lowNum: '05',
-          uprightFor: 'horizontal',
-        },
         {
           id: '15',
           lowNum: '15',
           uprightFor: 'horizontal',
         },
+        {
+          id: '05',
+          lowNum: '05',
+          uprightFor: 'horizontal',
+        },
+        null,
       ],
       1: [
-        { id: '39', lowNum: '39', uprightFor: 'vertical' },
-        { id: '04', lowNum: '04', uprightFor: 'horizontal' },
         null,
+        { id: '04', lowNum: '04', uprightFor: 'horizontal' },
+        { id: '39', lowNum: '39', uprightFor: 'vertical' },
       ],
     },
   };
@@ -141,9 +141,9 @@ test('can connect a card of a different orientation vertically to a group of mix
     cards: {
       0: [
         {
-          id: '49',
-          lowNum: '49',
-          uprightFor: 'vertical',
+          id: '15',
+          lowNum: '15',
+          uprightFor: 'horizontal',
         },
         {
           id: '05',
@@ -151,15 +151,15 @@ test('can connect a card of a different orientation vertically to a group of mix
           uprightFor: 'horizontal',
         },
         {
-          id: '15',
-          lowNum: '15',
-          uprightFor: 'horizontal',
+          id: '49',
+          lowNum: '49',
+          uprightFor: 'vertical',
         },
       ],
       1: [
-        { id: '39', lowNum: '39', uprightFor: 'vertical' },
-        { id: '04', lowNum: '04', uprightFor: 'horizontal' },
         null,
+        { id: '04', lowNum: '04', uprightFor: 'horizontal' },
+        { id: '39', lowNum: '39', uprightFor: 'vertical' },
       ],
     },
   });
