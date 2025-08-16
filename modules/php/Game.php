@@ -420,9 +420,10 @@ class Game extends \Table
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
-    function formatCards(array $cards): string
+    // TODO: instead of getCardsInLocation 'hand', do something custom?
+    function formatCards(array $cards, string $cardNumKey): string
     {
-        return implode(', ', array_map(fn($card) => $this->formatCardName($card['type_arg']), $cards));
+        return implode(', ', array_map(fn($card) => $this->formatCardName($card[$cardNumKey]), $cards));
     }
 
     function actConnectAstronauts(#[JsonParam] array $gameStateJSON)
@@ -442,6 +443,9 @@ class Game extends \Table
 
         // array of missing cards
         $handDifferenceCards = array_diff_key($initialHandState, $gameStateJSON['hand']);
+        $adriftDifferenceCards = array_diff_key($initialAdriftState, $gameStateJSON['adrift']);
+        $this->dump('adrift difference cards', $adriftDifferenceCards);
+
         try {
             // TODO: make more efficient - one SQL query at the end
             // groups
@@ -463,14 +467,24 @@ class Game extends \Table
                 }
             }
             $opponent_id = $this->getPlayerAfter($current_player_id);
-            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected some astronauts, playing the card(s) ${cards} from their hand.'), [
+            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
-                "cards" => $this->formatCards($handDifferenceCards)
+                "cards" => $this->formatCards($handDifferenceCards, 'type_arg'),
             ]);
-            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected some astronauts, playing the card(s) ${cards} from your hand.'), [
-                "cards" => $this->formatCards($handDifferenceCards)
+            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
+                "cards" => $this->formatCards($handDifferenceCards, 'type_arg')
             ]);
+            if (count($adriftDifferenceCards) > 0) {
+                $this->notifyPlayer($opponent_id, 'updateAdriftOtherPlayer', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
+                    "player_id" => $current_player_id,
+                    "player_name" => $this->getPlayerNameById($current_player_id),
+                    "cards" => $this->formatCards($adriftDifferenceCards, 'cardNum')
+                ]);
+                $this->notifyPlayer($current_player_id, 'updateAdrift', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
+                    "cards" => $this->formatCards($adriftDifferenceCards, 'cardNum')
+                ]);
+            }
             $this->handleScoring();
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");
