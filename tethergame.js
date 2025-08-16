@@ -99,7 +99,7 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
                     throw new Error("something has gone wrong - cards for the column don't exist for some reason");
                 }
                 var itemToAdd = i === connection.x ? card : null;
-                var connectAfter_1 = cardNumShown > connectionCardNumShown;
+                var connectAfter_1 = connectionCardNumShown > cardNumShown;
                 var itemAdjacentToConnectionIndex = group.cards[i][connectAfter_1 ? connection.y + 1 : connection.y - 1];
                 if (itemAdjacentToConnectionIndex === null) {
                     group.cards[i][connectAfter_1 ? connection.y + 1 : connection.y - 1] =
@@ -210,11 +210,19 @@ define("connectGroups", ["require", "exports"], function (require, exports) {
         var group2NumToCompare = group2.connection.card.uprightFor === orientation
             ? group2.connection.card.lowNum
             : group2.connection.card.lowNum.split('').toReversed().join('');
-        var group1IsGreater = parseInt(group1NumToCompare, 10) > parseInt(group2NumToCompare, 10);
-        return {
-            groupFrom: group1IsGreater ? group2 : group1,
-            groupTo: group1IsGreater ? group1 : group2,
-        };
+        var group1ConnectionIsGreaterNum = parseInt(group1NumToCompare, 10) > parseInt(group2NumToCompare, 10);
+        if (orientation === 'horizontal') {
+            return {
+                groupFrom: group1ConnectionIsGreaterNum ? group2 : group1,
+                groupTo: group1ConnectionIsGreaterNum ? group1 : group2,
+            };
+        }
+        else {
+            return {
+                groupFrom: group1ConnectionIsGreaterNum ? group1 : group2,
+                groupTo: group1ConnectionIsGreaterNum ? group2 : group1,
+            };
+        }
     }
     function connectGroups(_a) {
         var e_1, _b, e_2, _c, e_3, _d, e_4, _e, e_5, _f;
@@ -1221,7 +1229,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         };
         TetherGame.prototype.finishConnectingAstronauts = function () {
             this.bgaPerformAction('actConnectAstronauts', {
-                boardStateJSON: JSON.stringify(this.gameStateCurrent.board),
+                gameStateJSON: JSON.stringify(this.gameStateCurrent),
             });
             this.clearSelectableCards();
         };

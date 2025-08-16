@@ -19,11 +19,11 @@ declare namespace BGA {
     };
     hand: {
       [cardId: string]: {
-        id: string;
-        type: string;
-        type_arg: string;
-        location: string;
-        location_arg: string;
+        id: string; // set non-deterministically at game setup
+        type: string; // orientation
+        type_arg: string; // card number (lower)
+        location: string; // deck, hand, adrift, board
+        location_arg: string; // if hand, player_id of hand. if board, group_x_y to represent position
       };
     };
     board: {

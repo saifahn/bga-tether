@@ -420,13 +420,32 @@ class Game extends \Table
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
-    function actConnectAstronauts(#[JsonParam] array $boardStateJSON)
+    function formatCards(array $cards): string
     {
-        // get previous board state
+        return implode(', ', array_map(fn($card) => $this->formatCardName($card['type_arg']), $cards));
+    }
+
+    function actConnectAstronauts(#[JsonParam] array $gameStateJSON)
+    {
+        $initialAdriftState = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type_arg cardNum
+            FROM card 
+            WHERE card_location = 'adrift'"
+        );
+        $current_player_id = (int) $this->getCurrentPlayerId();
+        $initialHandState = $this->cards->getCardsInLocation('hand', $current_player_id);
+        $initialCardsByGroup = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
+            FROM card
+            WHERE card_location = 'group'"
+        );
+
+        // array of missing cards
+        $handDifferenceCards = array_diff_key($initialHandState, $gameStateJSON['hand']);
         try {
             // TODO: make more efficient - one SQL query at the end
             // groups
-            foreach ($boardStateJSON as $groupNum => $group) {
+            foreach ($gameStateJSON['board'] as $groupNum => $group) {
                 // get the cards
                 foreach ($group["cards"] as $xCoord => $cards) {
                     $yCoord = 0;
@@ -443,14 +462,15 @@ class Game extends \Table
                     }
                 }
             }
-            // TODO: personalize the notification
-            $current_player_id = (int) $this->getCurrentPlayerId();
             $opponent_id = $this->getPlayerAfter($current_player_id);
-            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected some astronauts.'), [
+            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected some astronauts, playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
+                "cards" => $this->formatCards($handDifferenceCards)
             ]);
-            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected some astronauts.'), []);
+            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected some astronauts, playing the card(s) ${cards} from your hand.'), [
+                "cards" => $this->formatCards($handDifferenceCards)
+            ]);
             $this->handleScoring();
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");

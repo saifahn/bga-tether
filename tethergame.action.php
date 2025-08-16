@@ -31,10 +31,10 @@ class action_tethergame extends APP_GameAction
 	{
 		self::setAjaxMode();
 
-		/** @var string $boardStateJSON */
-		$boardStateJSON = self::getArg('boardStateJSON', AT_json, true);
+		/** @var string $gameStateJSON */
+		$gameStateJSON = self::getArg('gameStateJSON', AT_json, true);
 
-		$this->game->actConnectAstronauts( $boardStateJSON );
+		$this->game->actConnectAstronauts( $gameStateJSON );
 		self::ajaxResponse();
 	}
 
