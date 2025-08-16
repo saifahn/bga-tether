@@ -426,6 +426,27 @@ class Game extends \Table
         return implode(', ', array_map(fn($card) => $this->formatCardName($card[$cardNumKey]), $cards));
     }
 
+    /**
+     * Takes the whole raw collection of cards in groups and sorts them into cards
+     * by group number.
+     */
+    function getCardsByGroup(array $cards)
+    {
+        // takes array of cards and splits them into groups
+        $groups = array();
+        foreach ($cards as $card) {
+            $groupAndCoords = explode("_", $card["groupAndCoords"]);
+            $groupNum = $groupAndCoords[0];
+
+            if (!isset($groups[$groupNum])) {
+                // create a new group
+                $groups[$groupNum] = array();
+            }
+            $groups[$groupNum][] = $card;
+        }
+        return $groups;
+    }
+
     function actConnectAstronauts(#[JsonParam] array $gameStateJSON)
     {
         $initialAdriftState = $this->getCollectionFromDB(
@@ -435,21 +456,23 @@ class Game extends \Table
         );
         $current_player_id = (int) $this->getCurrentPlayerId();
         $initialHandState = $this->cards->getCardsInLocation('hand', $current_player_id);
-        $initialCardsByGroup = $this->getCollectionFromDB(
+        $initialCardsInGroups = $this->getCollectionFromDB(
             "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
             FROM card
             WHERE card_location = 'group'"
         );
+        $initialCardsByGroup = $this->getCardsByGroup($initialCardsInGroups);
 
-        // array of missing cards
         $handDifferenceCards = array_diff_key($initialHandState, $gameStateJSON['hand']);
         $adriftDifferenceCards = array_diff_key($initialAdriftState, $gameStateJSON['adrift']);
-        $this->dump('adrift difference cards', $adriftDifferenceCards);
+
+        $groupsPresent = array();
 
         try {
             // TODO: make more efficient - one SQL query at the end
             // groups
             foreach ($gameStateJSON['board'] as $groupNum => $group) {
+                $groupsPresent[$groupNum] = $groupNum;
                 // get the cards
                 foreach ($group["cards"] as $xCoord => $cards) {
                     $yCoord = 0;
@@ -466,6 +489,12 @@ class Game extends \Table
                     }
                 }
             }
+
+            $groupNumsRemoved = array_diff_key($initialCardsByGroup, $groupsPresent);
+            // $groupsAndCardsPlayed = 
+            // need to figure out how to distinguish the new groups
+            // see the keys that were deleted
+            // we need the cards by group
             $opponent_id = $this->getPlayerAfter($current_player_id);
             $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
@@ -483,6 +512,16 @@ class Game extends \Table
                 ]);
                 $this->notifyPlayer($current_player_id, 'updateAdrift', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
                     "cards" => $this->formatCards($adriftDifferenceCards, 'cardNum')
+                ]);
+            }
+            if (count($groupNumsRemoved) > 0) {
+                $this->notifyPlayer($opponent_id, 'updateBoardOtherPlayer', clienttranslate('${player_name} connected to the group(s) ${groups} from the board.'), [
+                    "player_id" => $current_player_id,
+                    "player_name" => $this->getPlayerNameById($current_player_id),
+                    "groups" => implode(', ', array_keys($groupNumsRemoved))
+                ]);
+                $this->notifyPlayer($current_player_id, 'updateBoard', clienttranslate('You connected to the group(s) ${groups} from the board.'), [
+                    "groups" => implode(', ', array_keys($groupNumsRemoved))
                 ]);
             }
             $this->handleScoring();
