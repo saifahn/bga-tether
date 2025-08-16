@@ -59,7 +59,7 @@ export function connectCardToGroup({
         );
       }
       const itemToAdd = i === connection.x ? card : null;
-      const connectAfter = cardNumShown > connectionCardNumShown;
+      const connectAfter = connectionCardNumShown > cardNumShown;
       // We want to replace a null if it is present where we are inserting
       // the new card - it is an empty space that we can fill.
       const itemAdjacentToConnectionIndex =
