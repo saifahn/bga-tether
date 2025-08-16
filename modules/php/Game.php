@@ -72,43 +72,6 @@ class Game extends \Table
         });*/
     }
 
-    protected function canCardsBeConnected(string $cardNum, mixed $cardToCompare)
-    {
-        $cardToCompareNum = $cardToCompare['type_arg'];
-        $cardToCompareNumReversed = strrev($cardToCompareNum);
-        return $cardToCompareNum == $cardNum + 1 || $cardToCompareNum == $cardNum - 1 || $cardToCompareNumReversed == $cardNum + 1 || $cardToCompareNumReversed == $cardNum - 1;
-    }
-
-    public function getPossibleConnections(int $player_id): array
-    {
-        // TODO: improve this with a better SQL call that gets all the necessary data in one go
-        // adrift + hand
-        $hand = $this->cards->getCardsInLocation('hand', $player_id);
-        $adrift = $this->cards->getCardsInLocation('adrift');
-        $relevantCards = array_merge($hand, $adrift);
-        $viableCards = array();
-
-        foreach ($relevantCards as $card) {
-            // check both sides of the card
-            $cardNum = $card['type_arg'];
-            foreach ($relevantCards as $otherCard) {
-                if ($this->canCardsBeConnected($cardNum, $otherCard)) {
-                    array_push($viableCards, $cardNum);
-                    break;
-                }
-            }
-
-            $cardNumReversed = strrev($cardNum);
-            foreach ($relevantCards as $otherCard) {
-                if ($this->canCardsBeConnected($cardNumReversed, $otherCard)) {
-                    array_push($viableCards, $cardNumReversed);
-                    break;
-                }
-            }
-        }
-        return $viableCards;
-    }
-
     /**
      * Compute and return the current game progression.
      *
@@ -359,9 +322,6 @@ class Game extends \Table
 
         // Init global values with their initial values.
 
-        // Dummy content.
-        $this->setGameStateInitialValue("my_first_global_variable", 0);
-
         // Init game statistics.
         //
         // NOTE: statistics used in this file must be defined in your `stats.inc.php` file.
@@ -462,6 +422,7 @@ class Game extends \Table
 
     function actConnectAstronauts(#[JsonParam] array $boardStateJSON)
     {
+        // get previous board state
         try {
             // TODO: make more efficient - one SQL query at the end
             // groups
