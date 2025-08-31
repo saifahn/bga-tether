@@ -1034,7 +1034,7 @@ class TetherGame extends Gamegui {
 
   finishConnectingAstronauts() {
     this.bgaPerformAction('actConnectAstronauts', {
-      boardStateJSON: JSON.stringify(this.gameStateCurrent.board),
+      gameStateJSON: JSON.stringify(this.gameStateCurrent),
     });
     this.clearSelectableCards();
   }

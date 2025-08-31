@@ -72,43 +72,6 @@ class Game extends \Table
         });*/
     }
 
-    protected function canCardsBeConnected(string $cardNum, mixed $cardToCompare)
-    {
-        $cardToCompareNum = $cardToCompare['type_arg'];
-        $cardToCompareNumReversed = strrev($cardToCompareNum);
-        return $cardToCompareNum == $cardNum + 1 || $cardToCompareNum == $cardNum - 1 || $cardToCompareNumReversed == $cardNum + 1 || $cardToCompareNumReversed == $cardNum - 1;
-    }
-
-    public function getPossibleConnections(int $player_id): array
-    {
-        // TODO: improve this with a better SQL call that gets all the necessary data in one go
-        // adrift + hand
-        $hand = $this->cards->getCardsInLocation('hand', $player_id);
-        $adrift = $this->cards->getCardsInLocation('adrift');
-        $relevantCards = array_merge($hand, $adrift);
-        $viableCards = array();
-
-        foreach ($relevantCards as $card) {
-            // check both sides of the card
-            $cardNum = $card['type_arg'];
-            foreach ($relevantCards as $otherCard) {
-                if ($this->canCardsBeConnected($cardNum, $otherCard)) {
-                    array_push($viableCards, $cardNum);
-                    break;
-                }
-            }
-
-            $cardNumReversed = strrev($cardNum);
-            foreach ($relevantCards as $otherCard) {
-                if ($this->canCardsBeConnected($cardNumReversed, $otherCard)) {
-                    array_push($viableCards, $cardNumReversed);
-                    break;
-                }
-            }
-        }
-        return $viableCards;
-    }
-
     /**
      * Compute and return the current game progression.
      *
@@ -359,9 +322,6 @@ class Game extends \Table
 
         // Init global values with their initial values.
 
-        // Dummy content.
-        $this->setGameStateInitialValue("my_first_global_variable", 0);
-
         // Init game statistics.
         //
         // NOTE: statistics used in this file must be defined in your `stats.inc.php` file.
@@ -460,12 +420,75 @@ class Game extends \Table
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
-    function actConnectAstronauts(#[JsonParam] array $boardStateJSON)
+    // TODO: instead of getCardsInLocation 'hand', do a custom query and unify it so a custom cardNumKey is not necessary?
+    /**
+     * Takes an array of cards and returns them separated by commas.
+     */
+    function formatCardsIntoCommaSeparatedString(array $cards, string $cardNumKey): string
     {
+        return implode(', ', array_map(fn($card) => $this->formatCardName($card[$cardNumKey]), $cards));
+    }
+
+    /**
+     * Takes groups of cards (returned from getCardsByGroup)
+     * and returns a string representation of the cards from each group.
+     */
+    function getGroupsByCommaSeparatedCardStrings(array $groups)
+    {
+        $groupsOfCommaSeparatedCardStrings = array();
+        foreach ($groups as $groupNum => $group) {
+            $groupsOfCommaSeparatedCardStrings[$groupNum] = "[" . $this->formatCardsIntoCommaSeparatedString($group, 'cardNum') . "]";
+        }
+        return implode(', ', $groupsOfCommaSeparatedCardStrings);
+    }
+
+    /**
+     * Takes the whole raw collection of cards in groups and sorts them into cards
+     * by group number.
+     */
+    function getCardsByGroup(array $cards)
+    {
+        // takes array of cards and splits them into groups
+        $groups = array();
+        foreach ($cards as $card) {
+            $groupAndCoords = explode("_", $card["groupAndCoords"]);
+            $groupNum = $groupAndCoords[0];
+
+            if (!isset($groups[$groupNum])) {
+                // create a new group
+                $groups[$groupNum] = array();
+            }
+            $groups[$groupNum][] = $card;
+        }
+        return $groups;
+    }
+
+    function actConnectAstronauts(#[JsonParam] array $gameStateJSON)
+    {
+        $initialAdriftState = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type_arg cardNum
+            FROM card 
+            WHERE card_location = 'adrift'"
+        );
+        $current_player_id = (int) $this->getCurrentPlayerId();
+        $initialHandState = $this->cards->getCardsInLocation('hand', $current_player_id);
+        $initialCardsInGroups = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
+            FROM card
+            WHERE card_location = 'group'"
+        );
+        $initialCardsByGroup = $this->getCardsByGroup($initialCardsInGroups);
+
+        $handDifferenceCards = array_diff_key($initialHandState, $gameStateJSON['hand']);
+        $adriftDifferenceCards = array_diff_key($initialAdriftState, $gameStateJSON['adrift']);
+
+        $groupsPresent = array();
+
         try {
             // TODO: make more efficient - one SQL query at the end
             // groups
-            foreach ($boardStateJSON as $groupNum => $group) {
+            foreach ($gameStateJSON['board'] as $groupNum => $group) {
+                $groupsPresent[$groupNum] = $groupNum;
                 // get the cards
                 foreach ($group["cards"] as $xCoord => $cards) {
                     $yCoord = 0;
@@ -482,14 +505,42 @@ class Game extends \Table
                     }
                 }
             }
-            // TODO: personalize the notification
-            $current_player_id = (int) $this->getCurrentPlayerId();
+
+            // see the keys that were deleted
+            $groupNumsRemoved = array_diff_key($initialCardsByGroup, $groupsPresent);
+            // we need the cards by group
+            $groupsAndCardsPlayed = array_intersect_key($initialCardsByGroup, $groupNumsRemoved);
+
             $opponent_id = $this->getPlayerAfter($current_player_id);
-            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected some astronauts.'), [
+
+            $this->notifyPlayer($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
+                "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg'),
             ]);
-            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected some astronauts.'), []);
+            $this->notifyPlayer($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
+                "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg')
+            ]);
+            if (count($adriftDifferenceCards) > 0) {
+                $this->notifyPlayer($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
+                    "player_id" => $current_player_id,
+                    "player_name" => $this->getPlayerNameById($current_player_id),
+                    "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
+                ]);
+                $this->notifyPlayer($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
+                    "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
+                ]);
+            }
+            if (count($groupsAndCardsPlayed) > 0) {
+                $this->notifyPlayer($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
+                    "player_id" => $current_player_id,
+                    "player_name" => $this->getPlayerNameById($current_player_id),
+                    "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
+                ]);
+                $this->notifyPlayer($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
+                    "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
+                ]);
+            }
             $this->handleScoring();
         } catch (\Exception $e) {
             $this->error("Error while connecting astronauts");
