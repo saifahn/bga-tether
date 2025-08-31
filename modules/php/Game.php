@@ -420,11 +420,11 @@ class Game extends \Table
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
-    // TODO: instead of getCardsInLocation 'hand', do something custom?
+    // TODO: instead of getCardsInLocation 'hand', do a custom query and unify it so a custom cardNumKey is not necessary?
     /**
      * Takes an array of cards and returns them separated by commas.
      */
-    function formatCards(array $cards, string $cardNumKey): string
+    function formatCardsIntoCommaSeparatedString(array $cards, string $cardNumKey): string
     {
         return implode(', ', array_map(fn($card) => $this->formatCardName($card[$cardNumKey]), $cards));
     }
@@ -433,13 +433,13 @@ class Game extends \Table
      * Takes groups of cards (returned from getCardsByGroup)
      * and returns a string representation of the cards from each group.
      */
-    function getCardsStringByGroups(array $groups)
+    function getGroupsByCommaSeparatedCardStrings(array $groups)
     {
-        $groupsWithCardStrings = array();
+        $groupsOfCommaSeparatedCardStrings = array();
         foreach ($groups as $groupNum => $group) {
-            $groupsWithCardStrings[$groupNum] = $this->formatCards($group, 'cardNum');
+            $groupsOfCommaSeparatedCardStrings[$groupNum] = "[" . $this->formatCardsIntoCommaSeparatedString($group, 'cardNum') . "]";
         }
-        return implode('; ', $groupsWithCardStrings);
+        return implode(', ', $groupsOfCommaSeparatedCardStrings);
     }
 
     /**
@@ -516,29 +516,29 @@ class Game extends \Table
             $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
-                "cards" => $this->formatCards($handDifferenceCards, 'type_arg'),
+                "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg'),
             ]);
             $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
-                "cards" => $this->formatCards($handDifferenceCards, 'type_arg')
+                "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg')
             ]);
             if (count($adriftDifferenceCards) > 0) {
                 $this->notifyPlayer($opponent_id, 'updateAdriftOtherPlayer', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
-                    "cards" => $this->formatCards($adriftDifferenceCards, 'cardNum')
+                    "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
                 $this->notifyPlayer($current_player_id, 'updateAdrift', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
-                    "cards" => $this->formatCards($adriftDifferenceCards, 'cardNum')
+                    "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
             }
             if (count($groupsAndCardsPlayed) > 0) {
                 $this->notifyPlayer($opponent_id, 'updateBoardOtherPlayer', clienttranslate('${player_name} connected to the group(s) ${groups} from the board.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
-                    "groups" => $this->getCardsStringByGroups($groupsAndCardsPlayed)
+                    "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
                 $this->notifyPlayer($current_player_id, 'updateBoard', clienttranslate('You connected to the group(s) ${groups} from the board.'), [
-                    "groups" => $this->getCardsStringByGroups($groupsAndCardsPlayed)
+                    "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
             }
             $this->handleScoring();
