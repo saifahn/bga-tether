@@ -532,12 +532,12 @@ class Game extends \Table
                 ]);
             }
             if (count($groupsAndCardsPlayed) > 0) {
-                $this->notifyPlayer($opponent_id, 'updateBoardOtherPlayer', clienttranslate('${player_name} connected to the group(s) ${groups} from the board.'), [
+                $this->notifyPlayer($opponent_id, 'updateBoardOtherPlayer', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
-                $this->notifyPlayer($current_player_id, 'updateBoard', clienttranslate('You connected to the group(s) ${groups} from the board.'), [
+                $this->notifyPlayer($current_player_id, 'updateBoard', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
             }
