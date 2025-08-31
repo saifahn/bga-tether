@@ -513,31 +513,31 @@ class Game extends \Table
 
             $opponent_id = $this->getPlayerAfter($current_player_id);
 
-            $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
+            $this->notifyPlayer($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
                 "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg'),
             ]);
-            $this->notifyPlayer($current_player_id, 'connectAstronautComplete', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
+            $this->notifyPlayer($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
                 "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg')
             ]);
             if (count($adriftDifferenceCards) > 0) {
-                $this->notifyPlayer($opponent_id, 'updateAdriftOtherPlayer', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
+                $this->notifyPlayer($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
                     "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
-                $this->notifyPlayer($current_player_id, 'updateAdrift', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
+                $this->notifyPlayer($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
                     "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
             }
             if (count($groupsAndCardsPlayed) > 0) {
-                $this->notifyPlayer($opponent_id, 'updateBoardOtherPlayer', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
+                $this->notifyPlayer($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
-                $this->notifyPlayer($current_player_id, 'updateBoard', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
+                $this->notifyPlayer($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
             }
