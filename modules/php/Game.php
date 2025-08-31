@@ -421,9 +421,25 @@ class Game extends \Table
     }
 
     // TODO: instead of getCardsInLocation 'hand', do something custom?
+    /**
+     * Takes an array of cards and returns them separated by commas.
+     */
     function formatCards(array $cards, string $cardNumKey): string
     {
         return implode(', ', array_map(fn($card) => $this->formatCardName($card[$cardNumKey]), $cards));
+    }
+
+    /**
+     * Takes groups of cards (returned from getCardsByGroup)
+     * and returns a string representation of the cards from each group.
+     */
+    function getCardsStringByGroups(array $groups)
+    {
+        $groupsWithCardStrings = array();
+        foreach ($groups as $groupNum => $group) {
+            $groupsWithCardStrings[$groupNum] = $this->formatCards($group, 'cardNum');
+        }
+        return implode('; ', $groupsWithCardStrings);
     }
 
     /**
@@ -490,12 +506,13 @@ class Game extends \Table
                 }
             }
 
-            $groupNumsRemoved = array_diff_key($initialCardsByGroup, $groupsPresent);
-            // $groupsAndCardsPlayed = 
-            // need to figure out how to distinguish the new groups
             // see the keys that were deleted
+            $groupNumsRemoved = array_diff_key($initialCardsByGroup, $groupsPresent);
             // we need the cards by group
+            $groupsAndCardsPlayed = array_intersect_key($initialCardsByGroup, $groupNumsRemoved);
+
             $opponent_id = $this->getPlayerAfter($current_player_id);
+
             $this->notifyPlayer($opponent_id, 'updateBoardAndAdrift', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
@@ -514,14 +531,14 @@ class Game extends \Table
                     "cards" => $this->formatCards($adriftDifferenceCards, 'cardNum')
                 ]);
             }
-            if (count($groupNumsRemoved) > 0) {
+            if (count($groupsAndCardsPlayed) > 0) {
                 $this->notifyPlayer($opponent_id, 'updateBoardOtherPlayer', clienttranslate('${player_name} connected to the group(s) ${groups} from the board.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
-                    "groups" => implode(', ', array_keys($groupNumsRemoved))
+                    "groups" => $this->getCardsStringByGroups($groupsAndCardsPlayed)
                 ]);
                 $this->notifyPlayer($current_player_id, 'updateBoard', clienttranslate('You connected to the group(s) ${groups} from the board.'), [
-                    "groups" => implode(', ', array_keys($groupNumsRemoved))
+                    "groups" => $this->getCardsStringByGroups($groupsAndCardsPlayed)
                 ]);
             }
             $this->handleScoring();
