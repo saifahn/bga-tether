@@ -35,6 +35,7 @@ interface GameState {
   adrift: BGA.Gamedatas['adrift'];
   board: BGA.Gamedatas['board'];
   hand: BGA.Gamedatas['hand'];
+  latestGroup: number;
 }
 
 type ClientState =
@@ -80,12 +81,14 @@ class TetherGame extends Gamegui {
     adrift: {},
     board: {},
     hand: {},
+    latestGroup: 0,
   };
 
   gameStateCurrent: GameState = {
     adrift: {},
     board: {},
     hand: {},
+    latestGroup: 0,
   };
 
   playerDirection: 'horizontal' | 'vertical' | null = null;
@@ -272,6 +275,7 @@ class TetherGame extends Gamegui {
     this.generateCardMap();
     this.setInitialPlayableCards();
 
+    console.log('groups', this.gameStateCurrent.board);
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -991,7 +995,9 @@ class TetherGame extends Gamegui {
     const card = { id, number, flipped };
 
     if (first) {
-      const newGroupId = crypto.randomUUID().substring(0, 6);
+      const newGroupId = (
+        this.gameStateTurnStart['latestGroup'] + 1
+      ).toString();
       this.currentGroup = newGroupId;
       this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(
         card,
@@ -1191,6 +1197,7 @@ class TetherGame extends Gamegui {
     this.gameStateTurnStart.adrift = notif.args.adrift;
     this.gameStateTurnStart.board = notif.args.board;
     this.gameStateTurnStart.hand = notif.args.hand;
+    this.gameStateTurnStart.latestGroup = notif.args.largestGroup;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
     // these are put here because onUpdateActionButtons is called before the
     // state is updated here and we need the new state to calculate playable cards

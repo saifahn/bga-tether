@@ -120,7 +120,9 @@ class Game extends \Table
             FROM card 
             WHERE card_location = 'group'"
         );
-        $gameState['board'] = $this->createGroupObjectForUI($cardsByGroup);
+        $groups = $this->createGroupObjectForUI($cardsByGroup);
+        $gameState['board'] = $groups;
+        $gameState['latestGroup'] = max(array_keys($groups)) || 0;
 
         $this->notify->player($player_id, 'updateGameState', '', $gameState);
     }
@@ -254,7 +256,6 @@ class Game extends \Table
         $current_player_id = (int) $this->getCurrentPlayerId();
 
         // Get information about players.
-        // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
         $result["players"] = $this->getCollectionFromDb("SELECT player_id id, player_score score, player_no turnOrder FROM player");
 
         $result['adrift'] = $this->getCollectionFromDB(
@@ -269,7 +270,10 @@ class Game extends \Table
             FROM card
             WHERE card_location = 'group'"
         );
-        $result['board'] = $this->createGroupObjectForUI($cardsByGroup);
+        $groups = $this->createGroupObjectForUI($cardsByGroup);
+        $this->dump('get all datas groups', $groups);
+        $result['board'] = $groups;
+        $result['latestGroup'] = max(array_keys($groups)) || 0;
 
         return $result;
     }

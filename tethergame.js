@@ -327,8 +327,9 @@ define("connectGroups", ["require", "exports"], function (require, exports) {
                 yOffset = rowNum;
         });
         yOffset = yOffset * -1;
+        var newGroupId = Math.max(parseInt(group1.group.id, 10), parseInt(group2.group.id, 10));
         var newGroup = {
-            id: group1.group.id,
+            id: newGroupId.toString(),
             cards: {},
         };
         try {
@@ -396,11 +397,13 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 adrift: {},
                 board: {},
                 hand: {},
+                latestGroup: 0,
             };
             _this.gameStateCurrent = {
                 adrift: {},
                 board: {},
                 hand: {},
+                latestGroup: 0,
             };
             _this.playerDirection = null;
             _this.cardMap = {};
@@ -581,6 +584,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             console.log('player direction', this.playerDirection);
             this.generateCardMap();
             this.setInitialPlayableCards();
+            console.log('groups', this.gameStateCurrent.board);
             this.updateBoardUI();
             this.setupNotifications();
             console.log('Ending game setup');
@@ -1196,7 +1200,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             delete this.gameStateCurrent[from][id];
             var card = { id: id, number: number, flipped: flipped };
             if (first) {
-                var newGroupId = crypto.randomUUID().substring(0, 6);
+                var newGroupId = (this.gameStateTurnStart['latestGroup'] + 1).toString();
                 this.currentGroup = newGroupId;
                 this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(card, newGroupId);
                 this.updateBoardUI();
@@ -1298,6 +1302,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             this.gameStateTurnStart.adrift = notif.args.adrift;
             this.gameStateTurnStart.board = notif.args.board;
             this.gameStateTurnStart.hand = notif.args.hand;
+            this.gameStateTurnStart.latestGroup = notif.args.largestGroup;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
             this.generateCardMap();
             this.setInitialPlayableCards();

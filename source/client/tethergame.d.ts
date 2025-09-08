@@ -29,6 +29,7 @@ declare namespace BGA {
     board: {
       [groupNum: string]: import('./connectCardToGroup').Group;
     };
+    latestGroup: number;
   }
 
   /** Goto {@link NotifTypes} or hover name for info. */
