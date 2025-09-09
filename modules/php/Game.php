@@ -122,7 +122,7 @@ class Game extends \Table
         );
         $groups = $this->createGroupObjectForUI($cardsByGroup);
         $gameState['board'] = $groups;
-        $gameState['latestGroup'] = max(array_keys($groups)) || 0;
+        $gameState['latestGroup'] = count($groups) > 0 ? max(array_keys($groups)) : 0;
 
         $this->notify->player($player_id, 'updateGameState', '', $gameState);
     }
@@ -273,7 +273,7 @@ class Game extends \Table
         $groups = $this->createGroupObjectForUI($cardsByGroup);
         $this->dump('get all datas groups', $groups);
         $result['board'] = $groups;
-        $result['latestGroup'] = max(array_keys($groups)) || 0;
+        $result['latestGroup'] = count($groups) > 0 ? max(array_keys($groups)) : 0;
 
         return $result;
     }

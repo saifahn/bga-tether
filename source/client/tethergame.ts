@@ -268,6 +268,7 @@ class TetherGame extends Gamegui {
       ? {}
       : gamedatas.board;
     this.gameStateTurnStart.hand = gamedatas.hand;
+    this.gameStateTurnStart.latestGroup = gamedatas.latestGroup;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
 
     console.log('player direction', this.playerDirection);
@@ -275,7 +276,7 @@ class TetherGame extends Gamegui {
     this.generateCardMap();
     this.setInitialPlayableCards();
 
-    console.log('groups', this.gameStateCurrent.board);
+    console.log('gamestate', gamedatas);
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -998,6 +999,7 @@ class TetherGame extends Gamegui {
       const newGroupId = (
         this.gameStateTurnStart['latestGroup'] + 1
       ).toString();
+      console.log('first card played, the new group ID is', newGroupId);
       this.currentGroup = newGroupId;
       this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(
         card,
@@ -1197,7 +1199,8 @@ class TetherGame extends Gamegui {
     this.gameStateTurnStart.adrift = notif.args.adrift;
     this.gameStateTurnStart.board = notif.args.board;
     this.gameStateTurnStart.hand = notif.args.hand;
-    this.gameStateTurnStart.latestGroup = notif.args.largestGroup;
+    this.gameStateTurnStart.latestGroup = notif.args.latestGroup;
+    console.log('updated games state', notif.args);
     this.gameStateCurrent = clone(this.gameStateTurnStart);
     // these are put here because onUpdateActionButtons is called before the
     // state is updated here and we need the new state to calculate playable cards

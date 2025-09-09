@@ -580,11 +580,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 ? {}
                 : gamedatas.board;
             this.gameStateTurnStart.hand = gamedatas.hand;
+            this.gameStateTurnStart.latestGroup = gamedatas.latestGroup;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
             console.log('player direction', this.playerDirection);
             this.generateCardMap();
             this.setInitialPlayableCards();
-            console.log('groups', this.gameStateCurrent.board);
+            console.log('gamestate', gamedatas);
             this.updateBoardUI();
             this.setupNotifications();
             console.log('Ending game setup');
@@ -1201,6 +1202,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             var card = { id: id, number: number, flipped: flipped };
             if (first) {
                 var newGroupId = (this.gameStateTurnStart['latestGroup'] + 1).toString();
+                console.log('first card played, the new group ID is', newGroupId);
                 this.currentGroup = newGroupId;
                 this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(card, newGroupId);
                 this.updateBoardUI();
@@ -1302,7 +1304,8 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             this.gameStateTurnStart.adrift = notif.args.adrift;
             this.gameStateTurnStart.board = notif.args.board;
             this.gameStateTurnStart.hand = notif.args.hand;
-            this.gameStateTurnStart.latestGroup = notif.args.largestGroup;
+            this.gameStateTurnStart.latestGroup = notif.args.latestGroup;
+            console.log('updated games state', notif.args);
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
             this.generateCardMap();
             this.setInitialPlayableCards();
