@@ -224,7 +224,7 @@ class Game extends \Table
         $groups = array();
         foreach ($cardsByGroupAndCoords as $groupNum => $group) {
             $groups[$groupNum] = array(
-                "number" => $groupNum,
+                "id" => $groupNum,
                 "cards" => array(),
             );
             for ($x = 0; $x < $group["greatestX"] + 1; $x++) {

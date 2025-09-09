@@ -1102,10 +1102,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             if (!(e.target instanceof HTMLElement)) {
                 throw new Error("handleChooseCardFromAdriftConnect called when it shouldn't have been");
             }
-            var groupToConnect = e.target.dataset['groupNum'];
+            var groupToConnectId = e.target.dataset['groupNum'];
             var x = e.target.dataset['x'];
             var y = e.target.dataset['y'];
-            if (!groupToConnect || !x || !y) {
+            if (!groupToConnectId || !x || !y) {
                 throw new Error("handleConnectGroup couldn't get the right data from the card");
             }
             var cardToConnect = {
@@ -1120,7 +1120,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     connection: currentGroupConnectionPoint,
                 },
                 group2: {
-                    group: this.gameStateCurrent.board[groupToConnect],
+                    group: this.gameStateCurrent.board[groupToConnectId],
                     connection: {
                         card: cardToConnect,
                         x: parseInt(x, 10),
@@ -1129,8 +1129,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 },
                 orientation: this.playerDirection,
             });
-            var toDeleteGroupId = combinedGroup.id === groupToConnect ? this.currentGroup : groupToConnect;
-            delete this.gameStateCurrent.board[toDeleteGroupId];
+            delete this.gameStateCurrent.board[groupToConnectId];
             this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
             this.currentGroup = combinedGroup.id;
             this.clearSelectableCards();

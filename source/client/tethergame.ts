@@ -888,11 +888,11 @@ class TetherGame extends Gamegui {
         "handleChooseCardFromAdriftConnect called when it shouldn't have been"
       );
     }
-    const groupToConnect = e.target.dataset['groupNum'];
+    const groupToConnectId = e.target.dataset['groupNum'];
     const x = e.target.dataset['x'];
     const y = e.target.dataset['y'];
 
-    if (!groupToConnect || !x || !y) {
+    if (!groupToConnectId || !x || !y) {
       throw new Error(
         "handleConnectGroup couldn't get the right data from the card"
       );
@@ -916,7 +916,7 @@ class TetherGame extends Gamegui {
         connection: currentGroupConnectionPoint,
       },
       group2: {
-        group: this.gameStateCurrent.board[groupToConnect]!,
+        group: this.gameStateCurrent.board[groupToConnectId]!,
         connection: {
           card: cardToConnect,
           x: parseInt(x, 10),
@@ -926,10 +926,8 @@ class TetherGame extends Gamegui {
       orientation: this.playerDirection!,
     });
 
-    const toDeleteGroupId =
-      combinedGroup.id === groupToConnect ? this.currentGroup : groupToConnect;
-    // the higher group is now combined into the lower group, so we can get rid of the existing group
-    delete this.gameStateCurrent.board[toDeleteGroupId];
+    // the current group always has a higher ID, so we delete the lower one
+    delete this.gameStateCurrent.board[groupToConnectId];
     this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
     this.currentGroup = combinedGroup.id;
 
