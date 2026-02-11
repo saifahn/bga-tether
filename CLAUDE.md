@@ -135,4 +135,47 @@ When modifying game states, edit `source/shared/gamestates.jsonc`, then run `npm
 
 ### Testing
 
-Unit tests focus on pure functions in the client. Tests use uvu framework and are colocated with source files (\*.spec.ts).
+**Client-Side Testing:**
+
+- Tests use uvu framework and are colocated with source files (\*.spec.ts)
+- Run with: `npm test`
+
+**Server-Side Testing:**
+
+- PHPUnit tests for extracted business logic
+- Test files in `tests/Unit/` directory
+- Setup requires Composer: `composer install`
+- Run with: `./vendor/bin/phpunit`
+- BGA mock framework available at `node_modules/bga-ts-template/server/module/table/table.game.php`
+
+### PHP Code Architecture (Refactored for Testability)
+
+The server-side PHP code has been refactored to separate pure business logic from framework dependencies:
+
+**Extracted Logic Classes (Testable):**
+
+- `modules/php/GroupLogic.php` - Group dimension calculations and UI data transformation
+  - `calculateGroupDimensions()` - Pure function to calculate group sizes and coordinates
+  - `createGroupObjectForUI()` - Pure function to build nested array structure for client
+- `modules/php/ScoringLogic.php` - Scoring rules and end-game conditions
+  - `calculateScoringThreshold()` - Determines if group triggers scoring (6, 10, or 14)
+  - `calculateScores()` - Calculates points for horizontal/vertical players
+  - `checkEndGameCondition()` - Checks for game-ending conditions
+- `modules/php/CardUpdateHelper.php` - Bulk SQL query generation
+  - `buildCardUpdates()` - Builds update list from board state
+  - `generateBulkUpdateSQL()` - Creates single CASE-WHEN UPDATE query (fixes N+1 problem)
+
+**Framework Integration Layer:**
+
+- `modules/php/Game.php` - Main game class (extends BGA Table)
+  - Uses extracted logic classes for business rules
+  - Handles database operations, notifications, and state transitions
+  - Methods delegate to extracted classes where possible
+
+**Key Refactoring:**
+
+- `handleScoring()` - Now uses GroupLogic and ScoringLogic classes
+- `actConnectAstronauts()` - Now uses CardUpdateHelper for bulk updates (single query instead of N queries)
+- `createGroupObjectForUI()` - Delegates to GroupLogic class
+
+This architecture makes business logic testable in isolation while maintaining BGA framework compatibility.
