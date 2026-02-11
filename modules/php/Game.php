@@ -552,16 +552,16 @@ class Game extends \Table
                 $this->DbQuery($updateCards);
 
                 // Send notifications
-                $this->notifyAllPlayers('scoringTriggered', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} cards and triggered scoring.'), [
+                $this->bga->notify->all('scoringTriggered', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} cards and triggered scoring.'), [
                     'threshold' => $threshold,
                 ]);
-                $this->notifyAllPlayers('updateVScore', clienttranslate('The vertical player ${player_name} scored ${scored} points, bringing their total to ${new_total}'), [
+                $this->bga->notify->all('updateVScore', clienttranslate('The vertical player ${player_name} scored ${scored} points, bringing their total to ${new_total}'), [
                     'player_id' => $vPlayer["id"],
                     'player_name' => $vPlayer['playerName'],
                     'scored' => $vScore,
                     'new_total' => $updatedVScore
                 ]);
-                $this->notifyAllPlayers('updateHScore', clienttranslate('The horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.'), [
+                $this->bga->notify->all('updateHScore', clienttranslate('The horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.'), [
                     'player_id' => $hPlayer["id"],
                     'player_name' => $hPlayer['playerName'],
                     'scored' => $hScore,
@@ -576,12 +576,12 @@ class Game extends \Table
                 );
 
                 if ($endGameReason === 'GROUP_SIZE_14') {
-                    $this->notifyAllPlayers('endgame', clienttranslate('A group of 14 or more astronauts was created this round, so the game is now over.'), []);
+                    $this->bga->notify->all('endgame', clienttranslate('A group of 14 or more astronauts was created this round, so the game is now over.'), []);
                     $this->gamestate->nextState('goToGameEnd');
                     return;
                 }
                 if ($endGameReason === 'SCORE_DIFFERENCE_6') {
-                    $this->notifyAllPlayers('endgame', clienttranslate('A player has a 6 or more point lead against the other player, so the game is now over.'), []);
+                    $this->bga->notify->all('endgame', clienttranslate('A player has a 6 or more point lead against the other player, so the game is now over.'), []);
                     $this->gamestate->nextState('goToGameEnd');
                     return;
                 }
