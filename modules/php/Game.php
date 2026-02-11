@@ -120,7 +120,7 @@ class Game extends \Table
             FROM card 
             WHERE card_location = 'group'"
         );
-        $gameState['board'] = $this->createGroupObjectForUI($cardsByGroup);
+        $gameState['board'] = \Bga\Games\TetherGame\GroupLogic::createGroupObjectForUI($cardsByGroup);
 
         $this->notify->player($player_id, 'updateGameState', '', $gameState);
     }
@@ -184,18 +184,6 @@ class Game extends \Table
     }
 
     /*
-     *
-     */
-
-    /**
-     * @deprecated Use GroupLogic::createGroupObjectForUI() instead
-     */
-    protected function createGroupObjectForUI(array $cards): array
-    {
-        return \Bga\Games\TetherGame\GroupLogic::createGroupObjectForUI($cards);
-    }
-
-    /*
      * Gather all information about current game situation (visible by the current player).
      *
      * The method is called each time the game interface is displayed to a player, i.e.:
@@ -226,7 +214,7 @@ class Game extends \Table
             FROM card
             WHERE card_location = 'group'"
         );
-        $result['board'] = $this->createGroupObjectForUI($cardsByGroup);
+        $result['board'] = \Bga\Games\TetherGame\GroupLogic::createGroupObjectForUI($cardsByGroup);
 
         return $result;
     }
