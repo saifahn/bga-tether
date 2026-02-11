@@ -62,12 +62,12 @@ class Game extends \Table
             if (isset($args['player_id']) && !isset($args['player_name']) && str_contains($message, '${player_name}')) {
                 $args['player_name'] = $this->getPlayerNameById($args['player_id']);
             }
-        
+
             if (isset($args['card_id']) && !isset($args['card_name']) && str_contains($message, '${card_name}')) {
                 $args['card_name'] = self::$CARD_TYPES[$args['card_id']]['card_name'];
                 $args['i18n'][] = ['card_name'];
             }
-            
+
             return $args;
         });*/
     }
@@ -96,7 +96,7 @@ class Game extends \Table
      */
     public function stNextPlayer(): void
     {
-        $player_id = (int)$this->getActivePlayerId();
+        $player_id = (int) $this->getActivePlayerId();
         $this->giveExtraTime($player_id);
         $this->activeNextPlayer();
 
@@ -105,7 +105,7 @@ class Game extends \Table
 
     public function stPlayerTurn(): void
     {
-        $player_id = (int)$this->getActivePlayerId();
+        $player_id = (int) $this->getActivePlayerId();
 
         $gameState = [];
         $gameState['adrift'] = $this->getCollectionFromDB(
@@ -127,7 +127,7 @@ class Game extends \Table
 
     public function stDrawAtEndOfTurn(): void
     {
-        $current_player_id = (int)$this->getActivePlayerId();
+        $current_player_id = (int) $this->getActivePlayerId();
         $opponent_id = $this->getPlayerAfter($current_player_id);
 
         $hand = $this->cards->getCardsInLocation('hand', $current_player_id);
@@ -184,8 +184,8 @@ class Game extends \Table
     }
 
     /*
-    *
-    */
+     *
+     */
 
     /**
      * @deprecated Use GroupLogic::createGroupObjectForUI() instead
@@ -461,31 +461,31 @@ class Game extends \Table
 
             $opponent_id = $this->getPlayerAfter($current_player_id);
 
-            $this->notifyPlayer($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
+            $this->bga->notify->player($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
                 "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg'),
             ]);
-            $this->notifyPlayer($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
+            $this->bga->notify->player($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
                 "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg')
             ]);
             if (count($adriftDifferenceCards) > 0) {
-                $this->notifyPlayer($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
+                $this->bga->notify->player($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
                     "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
-                $this->notifyPlayer($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
+                $this->bga->notify->player($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
                     "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
             }
             if (count($groupsAndCardsPlayed) > 0) {
-                $this->notifyPlayer($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
+                $this->bga->notify->player($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
-                $this->notifyPlayer($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
+                $this->bga->notify->player($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
             }
@@ -618,9 +618,9 @@ class Game extends \Table
         if ($state["type"] === "activeplayer") {
             switch ($state_name) {
                 default: {
-                        $this->gamestate->nextState("zombiePass");
-                        break;
-                    }
+                    $this->gamestate->nextState("zombiePass");
+                    break;
+                }
             }
 
             return;
