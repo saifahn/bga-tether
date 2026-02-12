@@ -1,3 +1,8 @@
 sftp.json
 node_modules
 .DS_Store
+
+# PHP testing
+/vendor/
+composer.lock
+/tests/coverage/

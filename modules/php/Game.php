@@ -62,12 +62,12 @@ class Game extends \Table
             if (isset($args['player_id']) && !isset($args['player_name']) && str_contains($message, '${player_name}')) {
                 $args['player_name'] = $this->getPlayerNameById($args['player_id']);
             }
-        
+
             if (isset($args['card_id']) && !isset($args['card_name']) && str_contains($message, '${card_name}')) {
                 $args['card_name'] = self::$CARD_TYPES[$args['card_id']]['card_name'];
                 $args['i18n'][] = ['card_name'];
             }
-            
+
             return $args;
         });*/
     }
@@ -96,7 +96,7 @@ class Game extends \Table
      */
     public function stNextPlayer(): void
     {
-        $player_id = (int)$this->getActivePlayerId();
+        $player_id = (int) $this->getActivePlayerId();
         $this->giveExtraTime($player_id);
         $this->activeNextPlayer();
 
@@ -105,7 +105,7 @@ class Game extends \Table
 
     public function stPlayerTurn(): void
     {
-        $player_id = (int)$this->getActivePlayerId();
+        $player_id = (int) $this->getActivePlayerId();
 
         $gameState = [];
         $gameState['adrift'] = $this->getCollectionFromDB(
@@ -120,7 +120,8 @@ class Game extends \Table
             FROM card 
             WHERE card_location = 'group'"
         );
-        $groups = $this->createGroupObjectForUI($cardsByGroup);
+
+        $groups = \Bga\Games\TetherGame\GroupLogic::createGroupObjectForUI($cardsByGroup);
         $gameState['board'] = $groups;
         $gameState['latestGroup'] = count($groups) > 0 ? max(array_keys($groups)) : 0;
 
@@ -129,7 +130,7 @@ class Game extends \Table
 
     public function stDrawAtEndOfTurn(): void
     {
-        $current_player_id = (int)$this->getActivePlayerId();
+        $current_player_id = (int) $this->getActivePlayerId();
         $opponent_id = $this->getPlayerAfter($current_player_id);
 
         $hand = $this->cards->getCardsInLocation('hand', $current_player_id);
@@ -186,61 +187,6 @@ class Game extends \Table
     }
 
     /*
-    *
-    */
-
-    protected function createGroupObjectForUI(array $cards): array
-    {
-        $cardsByGroupAndCoords = array();
-        foreach ($cards as $card) {
-            $groupAndCoords = explode("_", $card["groupAndCoords"]);
-            // 0 is group number, 1 is x coord, 2 is y coord
-            $groupNum = $groupAndCoords[0];
-            $x = $groupAndCoords[1];
-            $y = $groupAndCoords[2];
-
-            $cardsByGroupAndCoords[$groupNum][$x][$y] = array(
-                "id" => $card['id'],
-                "lowNum" => $card['cardNum'],
-                "uprightFor" => $card['uprightFor'],
-            );
-
-            if (!isset($cardsByGroupAndCoords[$groupNum]["greatestX"])) {
-                $cardsByGroupAndCoords[$groupNum]["greatestX"] = 0;
-            }
-            if (!isset($cardsByGroupAndCoords[$groupNum]["greatestY"])) {
-                $cardsByGroupAndCoords[$groupNum]["greatestY"] = 0;
-            }
-
-
-            if ($x > $cardsByGroupAndCoords[$groupNum]["greatestX"]) {
-                $cardsByGroupAndCoords[$groupNum]["greatestX"] = $x;
-            }
-            if ($y > $cardsByGroupAndCoords[$groupNum]["greatestY"]) {
-                $cardsByGroupAndCoords[$groupNum]["greatestY"] = $y;
-            }
-        }
-
-        $groups = array();
-        foreach ($cardsByGroupAndCoords as $groupNum => $group) {
-            $groups[$groupNum] = array(
-                "id" => $groupNum,
-                "cards" => array(),
-            );
-            for ($x = 0; $x < $group["greatestX"] + 1; $x++) {
-                array_push($groups[$groupNum]["cards"], array());
-                for ($y = 0; $y < $group["greatestY"] + 1; $y++) {
-                    $this->debug("x: $x, y: $y");
-
-                    $itemToSet = $cardsByGroupAndCoords[$groupNum][$x][$y] ?? NULL;
-                    array_push($groups[$groupNum]["cards"][$x], $itemToSet);
-                }
-            }
-        }
-        return $groups;
-    }
-
-    /*
      * Gather all information about current game situation (visible by the current player).
      *
      * The method is called each time the game interface is displayed to a player, i.e.:
@@ -270,8 +216,8 @@ class Game extends \Table
             FROM card
             WHERE card_location = 'group'"
         );
-        $groups = $this->createGroupObjectForUI($cardsByGroup);
-        $this->dump('get all datas groups', $groups);
+
+        $groups = \Bga\Games\TetherGame\GroupLogic::createGroupObjectForUI($cardsByGroup);
         $result['board'] = $groups;
         $result['latestGroup'] = count($groups) > 0 ? max(array_keys($groups)) : 0;
 
@@ -489,26 +435,17 @@ class Game extends \Table
         $groupsPresent = array();
 
         try {
-            // TODO: make more efficient - one SQL query at the end
-            // groups
-            foreach ($gameStateJSON['board'] as $groupNum => $group) {
-                $groupsPresent[$groupNum] = $groupNum;
-                // get the cards
-                foreach ($group["cards"] as $xCoord => $cards) {
-                    $yCoord = 0;
-                    foreach ($cards as $card) {
-                        if ($card) {
-                            $orientation = $card['uprightFor'];
-                            $groupAndCoords = $groupNum . '_' . $xCoord . '_' . $yCoord;
-                            $id = $card['id'];
-                            $sql = "UPDATE card SET card_type='$orientation', card_location='group', card_location_arg='$groupAndCoords' WHERE card_id=$id";
-                            $this->DbQuery($sql);
-                        }
-                        // TODO: add validation to make sure that these are valid moves
-                        $yCoord++;
-                    }
-                }
+            // Use extracted helper to build card updates and execute single bulk query
+            $cardUpdates = \Bga\Games\TetherGame\CardUpdateHelper::buildCardUpdates($gameStateJSON['board']);
+
+            // Execute single bulk update instead of N queries (fixes N+1 problem)
+            if (!empty($cardUpdates)) {
+                $sql = \Bga\Games\TetherGame\CardUpdateHelper::generateBulkUpdateSQL($cardUpdates);
+                $this->DbQuery($sql);
             }
+
+            // Track which groups are present
+            $groupsPresent = array_flip(array_keys($gameStateJSON['board']));
 
             // see the keys that were deleted
             $groupNumsRemoved = array_diff_key($initialCardsByGroup, $groupsPresent);
@@ -517,31 +454,31 @@ class Game extends \Table
 
             $opponent_id = $this->getPlayerAfter($current_player_id);
 
-            $this->notifyPlayer($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
+            $this->bga->notify->player($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
                 "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg'),
             ]);
-            $this->notifyPlayer($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
+            $this->bga->notify->player($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
                 "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg')
             ]);
             if (count($adriftDifferenceCards) > 0) {
-                $this->notifyPlayer($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
+                $this->bga->notify->player($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
                     "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
-                $this->notifyPlayer($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
+                $this->bga->notify->player($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
                     "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
                 ]);
             }
             if (count($groupsAndCardsPlayed) > 0) {
-                $this->notifyPlayer($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
+                $this->bga->notify->player($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
                     "player_id" => $current_player_id,
                     "player_name" => $this->getPlayerNameById($current_player_id),
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
-                $this->notifyPlayer($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
+                $this->bga->notify->player($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
                     "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
                 ]);
             }
@@ -555,106 +492,96 @@ class Game extends \Table
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
-    function handleScoring()
+    function handleScoring(): void
     {
-        // grab the group that was updated - maybe we can't do this because we just send all the groups
-        // so grab all groups
-        // check all of their scored at values and compare with their counts
+        // Fetch all cards in groups
         $cards = $this->getCollectionFromDB(
             "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords, scored_at lastScored
             FROM card
             WHERE card_location = 'group'"
         );
-        $groupsBySizeAndLastScored = array();
-        foreach ($cards as $card) {
-            $groupAndCoords = explode("_", $card["groupAndCoords"]);
-            $groupNum = $groupAndCoords[0];
-            $x = $groupAndCoords[1];
-            $y = $groupAndCoords[2];
 
-            if (!isset($groupsBySizeAndLastScored[$groupNum]["greatestX"])) {
-                $groupsBySizeAndLastScored[$groupNum]["greatestX"] = 0;
-            }
-            if (!isset($groupsBySizeAndLastScored[$groupNum]["greatestY"])) {
-                $groupsBySizeAndLastScored[$groupNum]["greatestY"] = 0;
-            }
-            if ($x > $groupsBySizeAndLastScored[$groupNum]["greatestX"]) {
-                $groupsBySizeAndLastScored[$groupNum]["greatestX"] = $x;
-            }
-            if ($y > $groupsBySizeAndLastScored[$groupNum]["greatestY"]) {
-                $groupsBySizeAndLastScored[$groupNum]["greatestY"] = $y;
-            }
-
-            if (!isset($groupsBySizeAndLastScored[$groupNum]["size"])) {
-                $groupsBySizeAndLastScored[$groupNum]["size"] = 0;
-            }
-            $groupsBySizeAndLastScored[$groupNum]["size"]++;
-
-            if (!isset($groupsBySizeAndLastScored[$groupNum]["lastScoredAt"])) {
-                $groupsBySizeAndLastScored[$groupNum]["lastScoredAt"] = 0;
-            }
-            if ((int) $card["lastScored"] > $groupsBySizeAndLastScored[$groupNum]["lastScoredAt"]) {
-                $groupsBySizeAndLastScored[$groupNum]["lastScoredAt"] = (int) $card["lastScored"];
-            }
-        }
+        // Use extracted logic to calculate group dimensions
+        $groupsBySizeAndLastScored = \Bga\Games\TetherGame\GroupLogic::calculateGroupDimensions($cards);
 
         $hScore = 0;
         $vScore = 0;
         foreach ($groupsBySizeAndLastScored as $groupNum => $group) {
-            foreach ([14, 10, 6] as $threshold) {
-                if ($group["size"] >= $threshold && $group["lastScoredAt"] < $threshold) {
-                    // +1 because the coordinates start at 0
-                    $hScore = $group["greatestX"] + 1;
-                    $vScore = $group["greatestY"] + 1;
-                    // vertical player is player 1
-                    // TODO: improve SQL efficiency
-                    $players = $this->getCollectionFromDB("SELECT player_id id, player_name playerName, player_score score, player_no turnOrder FROM player");
-                    foreach ($players as $player) {
-                        if ($player["turnOrder"] == 1) {
-                            $vPlayer = $player;
-                        } else {
-                            $hPlayer = $player;
-                        }
-                    }
-                    $updatedVScore = $vPlayer["score"] + $vScore;
-                    $updatedHScore = $hPlayer["score"] + $hScore;
+            // Use extracted scoring logic to determine threshold
+            $threshold = \Bga\Games\TetherGame\ScoringLogic::calculateScoringThreshold(
+                $group["size"],
+                $group["lastScoredAt"]
+            );
 
-                    $updateVScore = "UPDATE player SET player_score=$updatedVScore WHERE player_no=1";
-                    $updateHSCore = "UPDATE player SET player_score=$updatedHScore WHERE player_no=2";
-                    $this->DbQuery($updateVScore);
-                    $this->DbQuery($updateHSCore);
+            if ($threshold !== null) {
+                // Use extracted logic to calculate scores
+                $scores = \Bga\Games\TetherGame\ScoringLogic::calculateScores(
+                    $group["greatestX"],
+                    $group["greatestY"]
+                );
+                $hScore = $scores['horizontal'];
+                $vScore = $scores['vertical'];
 
-                    $updateCards = "UPDATE card SET scored_at=$threshold WHERE card_location_arg LIKE '$groupNum\_%'";
-                    $this->DbQuery($updateCards);
-
-                    $this->notifyAllPlayers('scoringTriggered', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} cards and triggered scoring.'), [
-                        'threshold' => $threshold,
-                    ]);
-                    $this->notifyAllPlayers('updateVScore', clienttranslate('The vertical player ${player_name} scored ${scored} points, bringing their total to ${new_total}'), [
-                        'player_id' => $vPlayer["id"],
-                        'player_name' => $vPlayer['playerName'],
-                        'scored' => $vScore,
-                        'new_total' => $updatedVScore
-                    ]);
-                    $this->notifyAllPlayers('updateHScore', clienttranslate('The horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.'), [
-                        'player_id' => $hPlayer["id"],
-                        'player_name' => $hPlayer['playerName'],
-                        'scored' => $hScore,
-                        'new_total' => $updatedHScore,
-                    ]);
-                    if ($threshold == 14) {
-                        $this->notifyAllPlayers('endgame', clienttranslate('A group of 14 or more astronauts was created this round, so the game is now over.'), []);
-                        $this->gamestate->nextState('goToGameEnd');
-                        return;
+                // Fetch players
+                $players = $this->getCollectionFromDB("SELECT player_id id, player_name playerName, player_score score, player_no turnOrder FROM player");
+                foreach ($players as $player) {
+                    if ($player["turnOrder"] == 1) {
+                        $vPlayer = $player;
+                    } else {
+                        $hPlayer = $player;
                     }
-                    if (abs($updatedVScore - $updatedHScore) >= 6) {
-                        $this->notifyAllPlayers('endgame', clienttranslate('A player has a 6 or more point lead against the other player, so the game is now over.'), []);
-                        $this->gamestate->nextState('goToGameEnd');
-                        return;
-                    }
-                    break;
                 }
+                $updatedVScore = $vPlayer["score"] + $vScore;
+                $updatedHScore = $hPlayer["score"] + $hScore;
+
+                // Update scores in database
+                $updateVScore = "UPDATE player SET player_score=$updatedVScore WHERE player_no=1";
+                $updateHSCore = "UPDATE player SET player_score=$updatedHScore WHERE player_no=2";
+                $this->DbQuery($updateVScore);
+                $this->DbQuery($updateHSCore);
+
+                // Update cards scored_at threshold
+                $updateCards = "UPDATE card SET scored_at=$threshold WHERE card_location_arg LIKE '$groupNum\_%'";
+                $this->DbQuery($updateCards);
+
+                // Send notifications
+                $this->bga->notify->all('scoringTriggered', clienttranslate('The latest Connect Astronauts action brought the group above the threshold of ${threshold} cards and triggered scoring.'), [
+                    'threshold' => $threshold,
+                ]);
+                $this->bga->notify->all('updateVScore', clienttranslate('The vertical player ${player_name} scored ${scored} points, bringing their total to ${new_total}'), [
+                    'player_id' => $vPlayer["id"],
+                    'player_name' => $vPlayer['playerName'],
+                    'scored' => $vScore,
+                    'new_total' => $updatedVScore
+                ]);
+                $this->bga->notify->all('updateHScore', clienttranslate('The horizontal player ${player_name} scored ${scored} points, bringing their total to ${new_total}.'), [
+                    'player_id' => $hPlayer["id"],
+                    'player_name' => $hPlayer['playerName'],
+                    'scored' => $hScore,
+                    'new_total' => $updatedHScore,
+                ]);
+
+                // Use extracted logic to check end-game conditions
+                $endGameReason = \Bga\Games\TetherGame\ScoringLogic::checkEndGameCondition(
+                    $updatedVScore,
+                    $updatedHScore,
+                    $threshold
+                );
+
+                if ($endGameReason === 'GROUP_SIZE_14') {
+                    $this->bga->notify->all('endgame', clienttranslate('A group of 14 or more astronauts was created this round, so the game is now over.'), []);
+                    $this->gamestate->nextState('goToGameEnd');
+                    return;
+                }
+                if ($endGameReason === 'SCORE_DIFFERENCE_6') {
+                    $this->bga->notify->all('endgame', clienttranslate('A player has a 6 or more point lead against the other player, so the game is now over.'), []);
+                    $this->gamestate->nextState('goToGameEnd');
+                    return;
+                }
+
+                break;
             }
+
             if ($hScore > 0 && $vScore > 0) {
                 break;
             }
@@ -684,9 +611,9 @@ class Game extends \Table
         if ($state["type"] === "activeplayer") {
             switch ($state_name) {
                 default: {
-                        $this->gamestate->nextState("zombiePass");
-                        break;
-                    }
+                    $this->gamestate->nextState("zombiePass");
+                    break;
+                }
             }
 
             return;
