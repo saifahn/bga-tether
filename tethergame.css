@@ -61,6 +61,11 @@
 .group--flipped {
   transform: rotate(180deg);
 }
+.group--latest {
+  border: 3px solid #FFD700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 0 24px rgba(255, 215, 0, 0.3);
+  animation: subtle-pulse 2s ease-in-out infinite;
+}
 
 .column {
   display: flex;
@@ -400,4 +405,13 @@
 #card-89 {
   background-image: url("img/cards.jpg");
   background-position: left 57.1428571429% top 100%;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 0 24px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.8), 0 0 32px rgba(255, 215, 0, 0.4);
+  }
 }

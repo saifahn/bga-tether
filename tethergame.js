@@ -76,6 +76,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 define("connectCardToGroup", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -494,12 +503,18 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 throw new Error('groups not found');
             }
             groupsArea.innerHTML = '';
+            var groupIds = Object.keys(this.gameStateCurrent.board).map(function (k) { return parseInt(k); });
+            var latestGroupId = groupIds.length > 0 ? Math.max.apply(Math, __spreadArray([], __read(groupIds), false)) : 0;
             for (var group in this.gameStateCurrent.board) {
                 var generatedGroup = (0, generateGroupUI_1.generateGroupUI)(this.gameStateCurrent.board[group]);
                 var groupEl = document.createElement('div');
                 groupEl.classList.add('group');
+                groupEl.dataset['groupNum'] = group;
                 if (this.playerDirection === 'horizontal') {
                     groupEl.classList.add('group--flipped');
+                }
+                if (latestGroupId > 0 && parseInt(group) === latestGroupId) {
+                    groupEl.classList.add('group--latest');
                 }
                 try {
                     for (var _c = (e_6 = void 0, __values(generatedGroup.entries())), _d = _c.next(); !_d.done; _d = _c.next()) {

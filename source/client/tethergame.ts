@@ -185,6 +185,10 @@ class TetherGame extends Gamegui {
     }
     groupsArea.innerHTML = '';
 
+    // Calculate the latest group ID from current board state
+    const groupIds = Object.keys(this.gameStateCurrent.board).map(k => parseInt(k));
+    const latestGroupId = groupIds.length > 0 ? Math.max(...groupIds) : 0;
+
     for (const group in this.gameStateCurrent.board) {
       const generatedGroup = generateGroupUI(
         this.gameStateCurrent.board[group]!
@@ -192,8 +196,16 @@ class TetherGame extends Gamegui {
 
       const groupEl = document.createElement('div');
       groupEl.classList.add('group');
+      groupEl.dataset['groupNum'] = group;
+
+      // Add flipped modifier for horizontal players
       if (this.playerDirection === 'horizontal') {
         groupEl.classList.add('group--flipped');
+      }
+
+      // Highlight the latest group (most recently played during this turn)
+      if (latestGroupId > 0 && parseInt(group) === latestGroupId) {
+        groupEl.classList.add('group--latest');
       }
 
       for (const [x, col] of generatedGroup.entries()) {
