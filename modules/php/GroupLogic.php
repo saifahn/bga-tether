@@ -164,7 +164,7 @@ class GroupLogic
         foreach ($cardsByGroupAndCoords as $groupNum => $group) {
             // Initialize group structure
             $groups[$groupNum] = array(
-                "number" => $groupNum,  // Group identifier (e.g., "1")
+                "id" => $groupNum,  // Group identifier (e.g., "1")
                 "cards" => array(),     // Will contain 2D array of cards
             );
 

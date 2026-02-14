@@ -6,7 +6,7 @@ import * as assert from 'uvu/assert';
 // #region vertical connect
 test('can connect two simple groups vertically', () => {
   const group1: Group = {
-    id: '81ff95',
+    id: '23',
     cards: {
       0: [
         { id: '2', lowNum: '02', uprightFor: 'vertical' },
@@ -15,7 +15,7 @@ test('can connect two simple groups vertically', () => {
     },
   };
   const group2: Group = {
-    id: 'cf306b',
+    id: '24',
     cards: {
       0: [
         { id: '4', lowNum: '04', uprightFor: 'vertical' },
@@ -45,7 +45,7 @@ test('can connect two simple groups vertically', () => {
   });
 
   assert.equal(result, {
-    id: '81ff95',
+    id: '24',
     cards: {
       0: [
         { id: '4', lowNum: '04', uprightFor: 'vertical' },
@@ -58,7 +58,7 @@ test('can connect two simple groups vertically', () => {
 });
 test('can vertically connect two groups of different width with negative offset', () => {
   const group1: Group = {
-    id: 'cf306b',
+    id: '100',
     cards: {
       0: [
         { id: '58', lowNum: '58', uprightFor: 'vertical' },
@@ -90,7 +90,7 @@ test('can vertically connect two groups of different width with negative offset'
     },
   };
   const group2: Group = {
-    id: '81ff95',
+    id: '99',
     cards: {
       0: [null, { id: '69', lowNum: '69', uprightFor: 'vertical' }],
       1: [
@@ -121,7 +121,7 @@ test('can vertically connect two groups of different width with negative offset'
   });
 
   assert.equal(result, {
-    id: 'cf306b',
+    id: '100',
     cards: {
       0: [
         null,
@@ -169,7 +169,7 @@ test('can vertically connect two groups of different width with negative offset'
 
 test('can connect two groups vertically, with one extending past the beginning of the other, and either connection point can be used', () => {
   const group1: Group = {
-    id: 'cf306b',
+    id: '120',
     cards: {
       0: [
         { id: '59', lowNum: '59', uprightFor: 'vertical' },
@@ -185,7 +185,7 @@ test('can connect two groups vertically, with one extending past the beginning o
   };
 
   const group2: Group = {
-    id: '81ff95',
+    id: '24',
     cards: {
       0: [
         { id: '68', lowNum: '68', uprightFor: 'vertical' },
@@ -220,7 +220,7 @@ test('can connect two groups vertically, with one extending past the beginning o
     orientation: 'vertical',
   });
   const expected = {
-    id: 'cf306b',
+    id: '120',
     cards: {
       0: [
         null,
@@ -278,14 +278,14 @@ test('can connect two groups vertically, with one extending past the beginning o
 // #region horizontal connect
 test('can connect two simple groups horizontally successfully', () => {
   const group1: Group = {
-    id: 'cf306b',
+    id: '9',
     cards: {
       0: [{ id: '58', lowNum: '58', uprightFor: 'horizontal' }],
       1: [{ id: '57', lowNum: '57', uprightFor: 'horizontal' }],
     },
   };
   const group2: Group = {
-    id: '81ff95',
+    id: '10',
     cards: {
       0: [{ id: '6', lowNum: '06', uprightFor: 'vertical' }],
       1: [{ id: '59', lowNum: '59', uprightFor: 'horizontal' }],
@@ -313,7 +313,7 @@ test('can connect two simple groups horizontally successfully', () => {
   });
 
   assert.equal(result, {
-    id: 'cf306b',
+    id: '10',
     cards: {
       0: [{ id: '6', lowNum: '06', uprightFor: 'vertical' }],
       1: [{ id: '59', lowNum: '59', uprightFor: 'horizontal' }],
@@ -325,7 +325,7 @@ test('can connect two simple groups horizontally successfully', () => {
 
 test('can successfully connect two groups horizontally that are somewhat complex', () => {
   const group1: Group = {
-    id: '81ff95',
+    id: '29',
     cards: {
       0: [
         { id: '68', lowNum: '68', uprightFor: 'horizontal' },
@@ -335,7 +335,7 @@ test('can successfully connect two groups horizontally that are somewhat complex
     },
   };
   const group2: Group = {
-    id: 'cf306b',
+    id: '30',
     cards: {
       0: [null, { id: '5', lowNum: '05', uprightFor: 'vertical' }],
       1: [
@@ -365,7 +365,7 @@ test('can successfully connect two groups horizontally that are somewhat complex
   });
 
   assert.equal(res, {
-    id: '81ff95',
+    id: '30',
     cards: {
       0: [null, null, { id: '5', lowNum: '05', uprightFor: 'vertical' }],
       1: [
@@ -385,7 +385,7 @@ test('can successfully connect two groups horizontally that are somewhat complex
 
 test('can connect groups where cards replace null/blank spaces, with the second group extending further than the end of the first group from the vertical perspective', () => {
   const group1: Group = {
-    id: 'cf306b',
+    id: '31',
     cards: {
       0: [
         { id: '38', lowNum: '38', uprightFor: 'horizontal' },
@@ -399,7 +399,7 @@ test('can connect groups where cards replace null/blank spaces, with the second 
     },
   };
   const group2: Group = {
-    id: '81ff95',
+    id: '29',
     cards: {
       0: [
         { id: '47', lowNum: '47', uprightFor: 'horizontal' },
@@ -439,7 +439,7 @@ test('can connect groups where cards replace null/blank spaces, with the second 
   });
 
   const expected = {
-    id: 'cf306b',
+    id: '31',
     cards: {
       0: [
         null,
@@ -496,7 +496,7 @@ test('can connect groups where cards replace null/blank spaces, with the second 
 
 test("can connect two groups horizontally, replacing blank spaces, extending a new starting column from the vertical player's perspective (new column from the horizontal perspective)", () => {
   const connectGreater: Group = {
-    id: '81ff95',
+    id: '859',
     cards: {
       0: [
         { id: '39', lowNum: '39', uprightFor: 'horizontal' },
@@ -510,7 +510,7 @@ test("can connect two groups horizontally, replacing blank spaces, extending a n
     },
   };
   const connectLesser: Group = {
-    id: 'cf306b',
+    id: '1367',
     cards: {
       0: [
         {
@@ -572,7 +572,7 @@ test("can connect two groups horizontally, replacing blank spaces, extending a n
   });
 
   assert.equal(result, {
-    id: '81ff95',
+    id: '1367',
     cards: {
       0: [{ id: '05', lowNum: '05', uprightFor: 'vertical' }, null, null],
       1: [

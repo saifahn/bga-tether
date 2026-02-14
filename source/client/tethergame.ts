@@ -35,6 +35,7 @@ interface GameState {
   adrift: BGA.Gamedatas['adrift'];
   board: BGA.Gamedatas['board'];
   hand: BGA.Gamedatas['hand'];
+  latestGroup: number;
 }
 
 type ClientState =
@@ -80,12 +81,14 @@ class TetherGame extends Gamegui {
     adrift: {},
     board: {},
     hand: {},
+    latestGroup: 0,
   };
 
   gameStateCurrent: GameState = {
     adrift: {},
     board: {},
     hand: {},
+    latestGroup: 0,
   };
 
   playerDirection: 'horizontal' | 'vertical' | null = null;
@@ -182,6 +185,10 @@ class TetherGame extends Gamegui {
     }
     groupsArea.innerHTML = '';
 
+    // Calculate the latest group ID from current board state
+    const groupIds = Object.keys(this.gameStateCurrent.board).map(k => parseInt(k));
+    const latestGroupId = groupIds.length > 0 ? Math.max(...groupIds) : 0;
+
     for (const group in this.gameStateCurrent.board) {
       const generatedGroup = generateGroupUI(
         this.gameStateCurrent.board[group]!
@@ -189,8 +196,16 @@ class TetherGame extends Gamegui {
 
       const groupEl = document.createElement('div');
       groupEl.classList.add('group');
+      groupEl.dataset['groupNum'] = group;
+
+      // Add flipped modifier for horizontal players
       if (this.playerDirection === 'horizontal') {
         groupEl.classList.add('group--flipped');
+      }
+
+      // Highlight the latest group (most recently played during this turn)
+      if (latestGroupId > 0 && parseInt(group) === latestGroupId) {
+        groupEl.classList.add('group--latest');
       }
 
       for (const [x, col] of generatedGroup.entries()) {
@@ -265,6 +280,7 @@ class TetherGame extends Gamegui {
       ? {}
       : gamedatas.board;
     this.gameStateTurnStart.hand = gamedatas.hand;
+    this.gameStateTurnStart.latestGroup = gamedatas.latestGroup;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
 
     console.log('player direction', this.playerDirection);
@@ -272,6 +288,7 @@ class TetherGame extends Gamegui {
     this.generateCardMap();
     this.setInitialPlayableCards();
 
+    console.log('gamestate', gamedatas);
     this.updateBoardUI();
 
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -883,11 +900,11 @@ class TetherGame extends Gamegui {
         "handleChooseCardFromAdriftConnect called when it shouldn't have been"
       );
     }
-    const groupToConnect = e.target.dataset['groupNum'];
+    const groupToConnectId = e.target.dataset['groupNum'];
     const x = e.target.dataset['x'];
     const y = e.target.dataset['y'];
 
-    if (!groupToConnect || !x || !y) {
+    if (!groupToConnectId || !x || !y) {
       throw new Error(
         "handleConnectGroup couldn't get the right data from the card"
       );
@@ -911,7 +928,7 @@ class TetherGame extends Gamegui {
         connection: currentGroupConnectionPoint,
       },
       group2: {
-        group: this.gameStateCurrent.board[groupToConnect]!,
+        group: this.gameStateCurrent.board[groupToConnectId]!,
         connection: {
           card: cardToConnect,
           x: parseInt(x, 10),
@@ -921,10 +938,8 @@ class TetherGame extends Gamegui {
       orientation: this.playerDirection!,
     });
 
-    const toDeleteGroupId =
-      combinedGroup.id === groupToConnect ? this.currentGroup : groupToConnect;
-    // the higher group is now combined into the lower group, so we can get rid of the existing group
-    delete this.gameStateCurrent.board[toDeleteGroupId];
+    // the current group always has a higher ID, so we delete the lower one
+    delete this.gameStateCurrent.board[groupToConnectId];
     this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
     this.currentGroup = combinedGroup.id;
 
@@ -991,7 +1006,10 @@ class TetherGame extends Gamegui {
     const card = { id, number, flipped };
 
     if (first) {
-      const newGroupId = crypto.randomUUID().substring(0, 6);
+      const newGroupId = (
+        this.gameStateTurnStart['latestGroup'] + 1
+      ).toString();
+      console.log('first card played, the new group ID is', newGroupId);
       this.currentGroup = newGroupId;
       this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(
         card,
@@ -1191,6 +1209,8 @@ class TetherGame extends Gamegui {
     this.gameStateTurnStart.adrift = notif.args.adrift;
     this.gameStateTurnStart.board = notif.args.board;
     this.gameStateTurnStart.hand = notif.args.hand;
+    this.gameStateTurnStart.latestGroup = notif.args.latestGroup;
+    console.log('updated games state', notif.args);
     this.gameStateCurrent = clone(this.gameStateTurnStart);
     // these are put here because onUpdateActionButtons is called before the
     // state is updated here and we need the new state to calculate playable cards

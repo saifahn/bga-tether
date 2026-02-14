@@ -38,8 +38,11 @@ $card-height: math.div(1955px, 7);
   flex-wrap: wrap;
   justify-content: center;
   border-radius: 4px;
-  border: 2px dashed rgba(61, 61, 61, 0.5);
+  border: 2px solid rgba(61, 61, 61, 0.4);
   min-height: 150px;
+  box-shadow:
+    0 0 8px rgba(61, 61, 61, 0.3),
+    0 0 16px rgba(61, 61, 61, 0.15);
 }
 
 #hand {
@@ -61,13 +64,24 @@ $card-height: math.div(1955px, 7);
 
 .group {
   padding: 1rem;
-  border: 4px dashed rgba(72, 61, 139, 0.5);
+  border: 2px solid rgba(72, 61, 139, 0.4);
   border-radius: 4px;
   height: fit-content;
   display: flex;
+  box-shadow:
+    0 0 8px rgba(72, 61, 139, 0.3),
+    0 0 16px rgba(72, 61, 139, 0.15);
 
   &--flipped {
     transform: rotate(180deg);
+  }
+
+  &--latest {
+    border: 3px solid #FFD700;
+    box-shadow:
+      0 0 12px rgba(255, 215, 0, 0.6),
+      0 0 24px rgba(255, 215, 0, 0.3);
+    animation: subtle-pulse 2s ease-in-out infinite;
   }
 }
 
@@ -174,5 +188,18 @@ $id-list: '01', '02', '03', '04', '05', '06', '07', '08', '09', '11', '12', '13'
       calc($column / 7 * 100%)
       top
       calc($row / 6 * 100%);
+  }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(255, 215, 0, 0.6),
+      0 0 24px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 16px rgba(255, 215, 0, 0.8),
+      0 0 32px rgba(255, 215, 0, 0.4);
   }
 }

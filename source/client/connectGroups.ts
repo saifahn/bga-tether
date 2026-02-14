@@ -128,8 +128,13 @@ export function connectGroups({
   yOffset = yOffset * -1;
 
   // loop over the temporary combined group now using the xOffset to create a new group
+  const newGroupId = Math.max(
+    parseInt(group1.group.id, 10),
+    parseInt(group2.group.id, 10)
+  );
+
   const newGroup: Group = {
-    id: group1.group.id,
+    id: newGroupId.toString(),
     cards: {},
   };
   for (const oldX of Object.keys(temporaryCombinedGroup)) {
