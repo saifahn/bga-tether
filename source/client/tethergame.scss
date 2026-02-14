@@ -105,8 +105,12 @@ $card-height: math.div(1955px, 7);
   z-index: 10;
   border: 2px solid white;
 
-  // Counter-rotate for flipped groups to keep text upright
+  // For flipped groups, position at bottom-left so after rotation it appears at top-right, same as for vertical player
   .group--flipped & {
+    top: auto;
+    right: auto;
+    bottom: -8px;
+    left: -8px;
     transform: rotate(180deg);
   }
 

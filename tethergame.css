@@ -90,6 +90,10 @@
   border: 2px solid white;
 }
 .group--flipped .group__card-count {
+  top: auto;
+  right: auto;
+  bottom: -8px;
+  left: -8px;
   transform: rotate(180deg);
 }
 .group--latest .group__card-count {
