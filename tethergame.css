@@ -78,7 +78,7 @@
   height: 24px;
   padding: 4px 6px;
   border-radius: 50%;
-  background-color: #483D8B;
+  background-color: #323237;
   color: white;
   font-size: 14px;
   font-weight: bold;
@@ -95,11 +95,6 @@
   bottom: -8px;
   left: -8px;
   transform: rotate(180deg);
-}
-.group--latest .group__card-count {
-  background-color: #FFD700;
-  color: #1a1a1a;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(255, 215, 0, 0.4);
 }
 .group__card-count--threshold-6 {
   border-color: #32CD32;
