@@ -23,6 +23,7 @@ import { generateGroupUI } from './generateGroupUI';
 import { getConnectingNumbers } from './getConnectingNumbers';
 import { connectGroups } from './connectGroups';
 import { getConnection } from './getConnection';
+import { countCardsInGroup } from './countCardsInGroup';
 import { clone } from 'dojo';
 
 interface PlayedCard {
@@ -207,6 +208,23 @@ class TetherGame extends Gamegui {
       if (latestGroupId > 0 && parseInt(group) === latestGroupId) {
         groupEl.classList.add('group--latest');
       }
+
+      // Add card count badge
+      const cardCount = countCardsInGroup(this.gameStateCurrent.board[group]!);
+      const countBadge = document.createElement('div');
+      countBadge.classList.add('group__card-count');
+      countBadge.textContent = cardCount.toString();
+
+      // Add threshold classes for visual indicators
+      if (cardCount >= 14) {
+        countBadge.classList.add('group__card-count--threshold-14');
+      } else if (cardCount >= 10) {
+        countBadge.classList.add('group__card-count--threshold-10');
+      } else if (cardCount >= 6) {
+        countBadge.classList.add('group__card-count--threshold-6');
+      }
+
+      groupEl.appendChild(countBadge);
 
       for (const [x, col] of generatedGroup.entries()) {
         const columnEl = document.createElement('div');
