@@ -390,7 +390,36 @@ define("getConnection", ["require", "exports", "getConnectingNumbers"], function
         throw new Error('the card is not a valid option to connect to the group');
     }
 });
-define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "getConnectingNumbers", "connectGroups", "getConnection", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, getConnectingNumbers_2, connectGroups_1, getConnection_1, dojo_1) {
+define("countCardsInGroup", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.countCardsInGroup = countCardsInGroup;
+    function countCardsInGroup(group) {
+        var e_6, _a;
+        var count = 0;
+        for (var x in group.cards) {
+            if (!group.cards[x])
+                continue;
+            try {
+                for (var _b = (e_6 = void 0, __values(group.cards[x])), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var card = _c.value;
+                    if (card !== null) {
+                        count++;
+                    }
+                }
+            }
+            catch (e_6_1) { e_6 = { error: e_6_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_6) throw e_6.error; }
+            }
+        }
+        return count;
+    }
+});
+define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "getConnectingNumbers", "connectGroups", "getConnection", "countCardsInGroup", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, getConnectingNumbers_2, connectGroups_1, getConnection_1, countCardsInGroup_1, dojo_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var TetherGame = (function (_super) {
@@ -461,7 +490,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             return cardElement;
         };
         TetherGame.prototype.updateBoardUI = function () {
-            var e_6, _a, e_7, _b;
+            var e_7, _a, e_8, _b;
             var adriftZone = document.getElementById('adrift-zone');
             if (!adriftZone) {
                 throw new Error('adrift-zone not found');
@@ -516,13 +545,27 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 if (latestGroupId > 0 && parseInt(group) === latestGroupId) {
                     groupEl.classList.add('group--latest');
                 }
+                var cardCount = (0, countCardsInGroup_1.countCardsInGroup)(this.gameStateCurrent.board[group]);
+                var countBadge = document.createElement('div');
+                countBadge.classList.add('group__card-count');
+                countBadge.textContent = cardCount.toString();
+                if (cardCount >= 14) {
+                    countBadge.classList.add('group__card-count--threshold-14');
+                }
+                else if (cardCount >= 10) {
+                    countBadge.classList.add('group__card-count--threshold-10');
+                }
+                else if (cardCount >= 6) {
+                    countBadge.classList.add('group__card-count--threshold-6');
+                }
+                groupEl.appendChild(countBadge);
                 try {
-                    for (var _c = (e_6 = void 0, __values(generatedGroup.entries())), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    for (var _c = (e_7 = void 0, __values(generatedGroup.entries())), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var _e = __read(_d.value, 2), x = _e[0], col = _e[1];
                         var columnEl = document.createElement('div');
                         columnEl.classList.add('column');
                         try {
-                            for (var _f = (e_7 = void 0, __values(col.entries())), _g = _f.next(); !_g.done; _g = _f.next()) {
+                            for (var _f = (e_8 = void 0, __values(col.entries())), _g = _f.next(); !_g.done; _g = _f.next()) {
                                 var _h = __read(_g.value, 2), y = _h[0], card = _h[1];
                                 if (card) {
                                     var cardEl = this.createCardElement({
@@ -546,22 +589,22 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                                 columnEl.appendChild(blankCard);
                             }
                         }
-                        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+                        catch (e_8_1) { e_8 = { error: e_8_1 }; }
                         finally {
                             try {
                                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                             }
-                            finally { if (e_7) throw e_7.error; }
+                            finally { if (e_8) throw e_8.error; }
                         }
                         groupEl.appendChild(columnEl);
                     }
                 }
-                catch (e_6_1) { e_6 = { error: e_6_1 }; }
+                catch (e_7_1) { e_7 = { error: e_7_1 }; }
                 finally {
                     try {
                         if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                     }
-                    finally { if (e_6) throw e_6.error; }
+                    finally { if (e_7) throw e_7.error; }
                 }
                 groupsArea.appendChild(groupEl);
             }
@@ -606,7 +649,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             console.log('Ending game setup');
         };
         TetherGame.prototype.generateCardMap = function () {
-            var e_8, _a, e_9, _b, e_10, _c;
+            var e_9, _a, e_10, _b, e_11, _c;
             this.cardMap = {};
             for (var cardId in this.gameStateTurnStart.hand) {
                 var lowNum = this.gameStateTurnStart.hand[cardId].type_arg;
@@ -624,10 +667,10 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 for (var _d = __values(Object.values(this.gameStateTurnStart.board)), _e = _d.next(); !_e.done; _e = _d.next()) {
                     var group = _e.value;
                     try {
-                        for (var _f = (e_9 = void 0, __values(Object.values(group.cards))), _g = _f.next(); !_g.done; _g = _f.next()) {
+                        for (var _f = (e_10 = void 0, __values(Object.values(group.cards))), _g = _f.next(); !_g.done; _g = _f.next()) {
                             var column = _g.value;
                             try {
-                                for (var column_1 = (e_10 = void 0, __values(column)), column_1_1 = column_1.next(); !column_1_1.done; column_1_1 = column_1.next()) {
+                                for (var column_1 = (e_11 = void 0, __values(column)), column_1_1 = column_1.next(); !column_1_1.done; column_1_1 = column_1.next()) {
                                     var card = column_1_1.value;
                                     if (card === null) {
                                         continue;
@@ -638,30 +681,30 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                                     this.cardMap[uprightNum] = card.id;
                                 }
                             }
-                            catch (e_10_1) { e_10 = { error: e_10_1 }; }
+                            catch (e_11_1) { e_11 = { error: e_11_1 }; }
                             finally {
                                 try {
                                     if (column_1_1 && !column_1_1.done && (_c = column_1.return)) _c.call(column_1);
                                 }
-                                finally { if (e_10) throw e_10.error; }
+                                finally { if (e_11) throw e_11.error; }
                             }
                         }
                     }
-                    catch (e_9_1) { e_9 = { error: e_9_1 }; }
+                    catch (e_10_1) { e_10 = { error: e_10_1 }; }
                     finally {
                         try {
                             if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                         }
-                        finally { if (e_9) throw e_9.error; }
+                        finally { if (e_10) throw e_10.error; }
                     }
                 }
             }
-            catch (e_8_1) { e_8 = { error: e_8_1 }; }
+            catch (e_9_1) { e_9 = { error: e_9_1 }; }
             finally {
                 try {
                     if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
                 }
-                finally { if (e_8) throw e_8.error; }
+                finally { if (e_9) throw e_9.error; }
             }
         };
         TetherGame.prototype.onEnteringState = function () {
@@ -687,12 +730,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             }
         };
         TetherGame.prototype.setInitialPlayableCards = function () {
-            var e_11, _a, e_12, _b;
+            var e_12, _a, e_13, _b;
             var playableCardNums = [];
             for (var cardId in this.gameStateTurnStart.hand) {
                 var lowNum = this.gameStateTurnStart.hand[cardId].type_arg;
                 try {
-                    for (var _c = (e_11 = void 0, __values((0, getConnectingNumbers_2.getConnectingNumbers)(lowNum))), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    for (var _c = (e_12 = void 0, __values((0, getConnectingNumbers_2.getConnectingNumbers)(lowNum))), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var possibleConnectNum = _d.value;
                         if (this.cardMap[possibleConnectNum]) {
                             playableCardNums.push(lowNum);
@@ -700,16 +743,16 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                         }
                     }
                 }
-                catch (e_11_1) { e_11 = { error: e_11_1 }; }
+                catch (e_12_1) { e_12 = { error: e_12_1 }; }
                 finally {
                     try {
                         if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                     }
-                    finally { if (e_11) throw e_11.error; }
+                    finally { if (e_12) throw e_12.error; }
                 }
                 var numReversed = lowNum.split('').reverse().join('');
                 try {
-                    for (var _e = (e_12 = void 0, __values((0, getConnectingNumbers_2.getConnectingNumbers)(numReversed))), _f = _e.next(); !_f.done; _f = _e.next()) {
+                    for (var _e = (e_13 = void 0, __values((0, getConnectingNumbers_2.getConnectingNumbers)(numReversed))), _f = _e.next(); !_f.done; _f = _e.next()) {
                         var possibleConnectNum = _f.value;
                         if (this.cardMap[possibleConnectNum]) {
                             playableCardNums.push(numReversed);
@@ -717,12 +760,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                         }
                     }
                 }
-                catch (e_12_1) { e_12 = { error: e_12_1 }; }
+                catch (e_13_1) { e_13 = { error: e_13_1 }; }
                 finally {
                     try {
                         if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                     }
-                    finally { if (e_12) throw e_12.error; }
+                    finally { if (e_13) throw e_13.error; }
                 }
             }
             this.playableCardNumbers = playableCardNums;
@@ -841,19 +884,19 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             });
         };
         TetherGame.prototype.clearEventListeners = function () {
-            var e_13, _a;
+            var e_14, _a;
             try {
                 for (var _b = __values(this.eventHandlers), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var handler = _c.value;
                     handler.element.removeEventListener(handler.event, handler.handler);
                 }
             }
-            catch (e_13_1) { e_13 = { error: e_13_1 }; }
+            catch (e_14_1) { e_14 = { error: e_14_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_13) throw e_13.error; }
+                finally { if (e_14) throw e_14.error; }
             }
         };
         TetherGame.prototype.cancelSetAdriftAction = function () {
@@ -953,7 +996,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         };
         TetherGame.prototype.performAdriftAction = function (cardDrawnId, cardDrawnNum) {
             return __awaiter(this, void 0, void 0, function () {
-                var e_14;
+                var e_15;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -976,9 +1019,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                             _a.sent();
                             return [3, 4];
                         case 3:
-                            e_14 = _a.sent();
+                            e_15 = _a.sent();
                             this.restoreServerGameState();
-                            console.log('error while trying to perform actSetAdrift', e_14);
+                            console.log('error while trying to perform actSetAdrift', e_15);
                             return [3, 4];
                         case 4: return [2];
                     }
@@ -1164,7 +1207,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             };
         };
         TetherGame.prototype.updatePlayableCards = function () {
-            var e_15, _a, e_16, _b;
+            var e_16, _a, e_17, _b;
             var currentGroup = this.gameStateCurrent.board[this.currentGroup];
             if (!currentGroup) {
                 throw new Error('there was no current group found in updatePlayableCards');
@@ -1172,7 +1215,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             var playableNumbers = [];
             for (var col in currentGroup.cards) {
                 try {
-                    for (var _c = (e_15 = void 0, __values(currentGroup.cards[col])), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    for (var _c = (e_16 = void 0, __values(currentGroup.cards[col])), _d = _c.next(); !_d.done; _d = _c.next()) {
                         var card = _d.value;
                         if (!card)
                             continue;
@@ -1180,28 +1223,28 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                             ? card.lowNum
                             : card.lowNum.split('').toReversed().join('');
                         try {
-                            for (var _e = (e_16 = void 0, __values((0, getConnectingNumbers_2.getConnectingNumbers)(uprightNum))), _f = _e.next(); !_f.done; _f = _e.next()) {
+                            for (var _e = (e_17 = void 0, __values((0, getConnectingNumbers_2.getConnectingNumbers)(uprightNum))), _f = _e.next(); !_f.done; _f = _e.next()) {
                                 var possibleConnectNum = _f.value;
                                 if (this.cardMap[possibleConnectNum]) {
                                     playableNumbers.push(possibleConnectNum);
                                 }
                             }
                         }
-                        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+                        catch (e_17_1) { e_17 = { error: e_17_1 }; }
                         finally {
                             try {
                                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                             }
-                            finally { if (e_16) throw e_16.error; }
+                            finally { if (e_17) throw e_17.error; }
                         }
                     }
                 }
-                catch (e_15_1) { e_15 = { error: e_15_1 }; }
+                catch (e_16_1) { e_16 = { error: e_16_1 }; }
                 finally {
                     try {
                         if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                     }
-                    finally { if (e_15) throw e_15.error; }
+                    finally { if (e_16) throw e_16.error; }
                 }
             }
             this.playableCardNumbers = playableNumbers;
