@@ -22,7 +22,7 @@
   "bgg_id": 373544,
 
   // Players
-  "players": [2, 3, 4],
+  "players": [2],
   "player_colors": ["ff0000", "008000", "0000ff", "ffa500", "773300"],
   "favorite_colors_support": true,
   "suggest_player_number": null,
@@ -48,6 +48,6 @@
     // >= 320, <= 740
     "min": 740,
     // >= 740. null = no limit
-    "max": null
-  }
+    "max": null,
+  },
 }
