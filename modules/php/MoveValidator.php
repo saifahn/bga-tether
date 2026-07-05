@@ -128,18 +128,33 @@ class MoveValidator
      * Validates an actSetAdrift request against the state BEFORE the action:
      * the discarded card must be in the player's hand, and the drawn card
      * must be the deck or a card already in the adrift zone (you cannot take
-     * back the card you just set adrift).
+     * back the card you just set adrift). If the deck is empty, drawing from
+     * it is rejected; 'none' is only valid when the deck is empty and there
+     * is no other card in the adrift zone to draw.
      */
     public static function validateSetAdrift(
         string $cardSetAdriftId,
         string $cardDrawnId,
         array $hand,
-        array $adrift
+        array $adrift,
+        bool $deckEmpty = false
     ): void {
         if (!isset($hand[$cardSetAdriftId])) {
             throw new \InvalidArgumentException('The card to set adrift is not in your hand');
         }
+        if ($cardDrawnId === 'none') {
+            if (!$deckEmpty) {
+                throw new \InvalidArgumentException('You must draw a card while the deck still has cards remaining');
+            }
+            if (count($adrift) > 0) {
+                throw new \InvalidArgumentException('There are cards available to draw from the adrift zone');
+            }
+            return;
+        }
         if ($cardDrawnId === 'deck') {
+            if ($deckEmpty) {
+                throw new \InvalidArgumentException('The deck is empty, you cannot draw from it');
+            }
             return;
         }
         if ($cardDrawnId === $cardSetAdriftId) {

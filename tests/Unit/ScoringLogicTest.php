@@ -56,4 +56,47 @@ class ScoringLogicTest extends TestCase
         $result = ScoringLogic::checkEndGameCondition(5, 3, 6);
         $this->assertNull($result);
     }
+
+    public function testShouldTriggerFinalRound_WithEmptyDeckAndNotTriggered_ReturnsTrue(): void
+    {
+        $this->assertTrue(ScoringLogic::shouldTriggerFinalRound(0, -1));
+    }
+
+    public function testShouldTriggerFinalRound_WithNonEmptyDeck_ReturnsFalse(): void
+    {
+        $this->assertFalse(ScoringLogic::shouldTriggerFinalRound(5, -1));
+    }
+
+    public function testShouldTriggerFinalRound_WithAlreadyTriggered_ReturnsFalse(): void
+    {
+        $this->assertFalse(ScoringLogic::shouldTriggerFinalRound(0, 2));
+    }
+
+    public function testAdvanceFinalTurns_WithNotTriggered_PassesThroughUnchanged(): void
+    {
+        $result = ScoringLogic::advanceFinalTurns(-1);
+        $this->assertFalse($result['endGame']);
+        $this->assertEquals(-1, $result['value']);
+    }
+
+    public function testAdvanceFinalTurns_WithTwoRemaining_DecrementsToOne(): void
+    {
+        $result = ScoringLogic::advanceFinalTurns(2);
+        $this->assertFalse($result['endGame']);
+        $this->assertEquals(1, $result['value']);
+    }
+
+    public function testAdvanceFinalTurns_WithOneRemaining_DecrementsToZero(): void
+    {
+        $result = ScoringLogic::advanceFinalTurns(1);
+        $this->assertFalse($result['endGame']);
+        $this->assertEquals(0, $result['value']);
+    }
+
+    public function testAdvanceFinalTurns_WithZeroRemaining_EndsGame(): void
+    {
+        $result = ScoringLogic::advanceFinalTurns(0);
+        $this->assertTrue($result['endGame']);
+        $this->assertEquals(0, $result['value']);
+    }
 }

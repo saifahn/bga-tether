@@ -126,6 +126,9 @@ class TetherGame extends Gamegui {
 
   playerDirection: 'horizontal' | 'vertical' | null = null;
 
+  /** True once the deck has run out of cards; gates the "draw from deck" option in Set Adrift. */
+  deckEmpty = false;
+
   cardMap: Record<string, string> = {};
 
   playableCardNumbers: string[] = [];
@@ -335,6 +338,7 @@ class TetherGame extends Gamegui {
     this.gameStateTurnStart.hand = gamedatas.hand;
     this.gameStateTurnStart.latestGroup = gamedatas.latestGroup;
     this.gameStateCurrent = clone(this.gameStateTurnStart);
+    this.deckEmpty = gamedatas.deckEmpty;
 
     console.log('player direction', this.playerDirection);
 
@@ -489,13 +493,15 @@ class TetherGame extends Gamegui {
         break;
       // @ts-expect-error
       case 'client_setAdriftChooseDraw':
-        this.addActionButton(
-          'draw-from-deck-button',
-          _('Draw from deck'),
-          () => {
-            this.performAdriftAction('deck', 'deck');
-          }
-        );
+        if (!this.deckEmpty) {
+          this.addActionButton(
+            'draw-from-deck-button',
+            _('Draw from deck'),
+            () => {
+              this.performAdriftAction('deck', 'deck');
+            }
+          );
+        }
         this.addActionButton(
           'cancel-button',
           _('Restart turn'),
@@ -699,6 +705,15 @@ class TetherGame extends Gamegui {
     this.clearSelectableCards();
     this.clearEventListeners();
 
+    if (
+      this.deckEmpty &&
+      Object.keys(this.gameStateTurnStart.adrift).length === 0
+    ) {
+      // no card to draw from either the deck or the adrift zone
+      this.performAdriftAction('none', 'none');
+      return;
+    }
+
     this.setClientState('client_setAdriftChooseDraw', {
       // @ts-expect-error
       descriptionmyturn: _(
@@ -708,7 +723,7 @@ class TetherGame extends Gamegui {
 
     const deck = document.querySelector('.js-deck');
     const drawFromDeckHandler = () => this.performAdriftAction('deck', 'deck');
-    if (deck instanceof HTMLElement) {
+    if (!this.deckEmpty && deck instanceof HTMLElement) {
       deck.classList.add('card--selectable');
       deck.addEventListener('click', drawFromDeckHandler);
       this.eventHandlers.push({
@@ -1180,6 +1195,8 @@ class TetherGame extends Gamegui {
     dojo.subscribe('updateGameState', this, 'notif_updateGameState');
     this.notifqueue.setSynchronous('updateGameState', 500);
 
+    dojo.subscribe('deckEmpty', this, 'notif_deckEmpty');
+
     // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
     // dojo.subscribe( 'actionTaken', this, "ntf_actionTaken" );
     // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
@@ -1317,6 +1334,10 @@ class TetherGame extends Gamegui {
 
   notif_updatePlayerScore(notif: BGA.Notif<'updatePlayerScore'>) {
     this.scoreCtrl[notif.args.player_id]?.toValue(notif.args.new_total);
+  }
+
+  notif_deckEmpty(notif: BGA.Notif<'deckEmpty'>) {
+    this.deckEmpty = true;
   }
 }
 
