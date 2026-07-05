@@ -9,8 +9,8 @@ domain, not the implementation.
 - **Shown Number**: The number a card displays to a given player. A card
   upright for a player's orientation shows its low number to them; otherwise
   it shows the reversed digits.
-- **Orientation**: Which player a card is upright for: *vertical* (first
-  player) or *horizontal* (second player). Playing a card **flipped** makes it
+- **Orientation**: Which player a card is upright for: _vertical_ (first
+  player) or _horizontal_ (second player). Playing a card **flipped** makes it
   upright for the opponent.
 - **Connection**: The pairing of a played card with a specific card already in
   a group whose shown numbers differ by exactly 1. Any rules-valid connection
