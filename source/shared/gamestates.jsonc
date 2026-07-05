@@ -35,7 +35,7 @@
     "possibleactions": {
       "actConnectAstronauts": [
         {
-          "name": "gameStateJSON",
+          "name": "moves",
           "type": "AT_json"
         }
       ],

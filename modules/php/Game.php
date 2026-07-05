@@ -134,25 +134,33 @@ class Game extends \Table
         $opponent_id = $this->getPlayerAfter($current_player_id);
 
         $hand = $this->cards->getCardsInLocation('hand', $current_player_id);
-        if (count($hand) < 6) {
-            $newCardFromDeck = $this->cards->pickCardForLocation('deck', 'hand', $current_player_id);
-            $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
-            $this->notify->player($current_player_id, 'drawFromDeck', clienttranslate('You drew the card ${card} from the deck at the end of your turn.'), [
-                'card' => $newCardName,
-                'card_id' => $newCardFromDeck['id'],
-                'card_num' => $newCardFromDeck['type_arg'],
-            ]);
-            $this->notify->player($opponent_id, 'drawOtherPlayer', clienttranslate('${player_name} drew a card from the deck to end their turn.'), [
-                'player_id' => $current_player_id,
-                'player_name' => $this->getPlayerNameById($current_player_id),
-            ]);
-        } else {
+        if (count($hand) >= 6) {
             $this->notify->player($current_player_id, 'dontDrawHandLimit', clienttranslate('You didn\'t draw a card at the end of your turn because you already had 6 cards in hand.'));
             $this->notify->player($opponent_id, 'dontDrawHandLimit', clienttranslate('${player_name} already has 6 cards in hand so they don\'t draw a card at the end of their turn.'), [
                 'player_id' => $current_player_id,
                 'player_name' => $this->getPlayerNameById($current_player_id),
             ]);
+            $this->gamestate->nextState('nextPlayer');
+            return;
         }
+
+        $newCardFromDeck = $this->cards->pickCardForLocation('deck', 'hand', $current_player_id);
+        if ($newCardFromDeck === null) {
+            $this->notify->all('dontDrawDeckEmpty', clienttranslate('The deck is empty, so no card is drawn at the end of the turn.'), []);
+            $this->gamestate->nextState('nextPlayer');
+            return;
+        }
+
+        $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
+        $this->notify->player($current_player_id, 'drawFromDeck', clienttranslate('You drew the card ${card} from the deck at the end of your turn.'), [
+            'card' => $newCardName,
+            'card_id' => $newCardFromDeck['id'],
+            'card_num' => $newCardFromDeck['type_arg'],
+        ]);
+        $this->notify->player($opponent_id, 'drawOtherPlayer', clienttranslate('${player_name} drew a card from the deck to end their turn.'), [
+            'player_id' => $current_player_id,
+            'player_name' => $this->getPlayerNameById($current_player_id),
+        ]);
         $this->gamestate->nextState('nextPlayer');
     }
 
@@ -333,6 +341,20 @@ class Game extends \Table
         $current_player_id = (int) $this->getCurrentPlayerId();
         $opponent_id = $this->getPlayerAfter($current_player_id);
 
+        // validate against the state BEFORE the action so the discarded card
+        // must come from the hand and cannot be drawn straight back
+        $hand = $this->cards->getCardsInLocation('hand', $current_player_id);
+        $adrift = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type_arg lowNum
+            FROM card
+            WHERE card_location = 'adrift'"
+        );
+        try {
+            \Bga\Games\TetherGame\MoveValidator::validateSetAdrift($cardSetAdriftId, $cardDrawnId, $hand, $adrift);
+        } catch (\InvalidArgumentException $e) {
+            throw new \BgaUserException($e->getMessage());
+        }
+
         $this->cards->moveCard($cardSetAdriftId, 'adrift');
         $cardSetAdriftName = $this->formatCardName($cardSetAdriftNum);
         $this->notify->all('cardSetAdrift', clienttranslate('${player_name} sets ${card} adrift.'), [
@@ -413,81 +435,91 @@ class Game extends \Table
         return $groups;
     }
 
-    function actConnectAstronauts(#[JsonParam] array $gameStateJSON)
+    function actConnectAstronauts(#[JsonParam] array $moves)
     {
-        $initialAdriftState = $this->getCollectionFromDB(
-            "SELECT card_id id, card_type_arg cardNum
-            FROM card 
+        $current_player_id = (int) $this->getCurrentPlayerId();
+
+        // load the authoritative state from the database
+        $adrift = $this->getCollectionFromDB(
+            "SELECT card_id id, card_type_arg lowNum
+            FROM card
             WHERE card_location = 'adrift'"
         );
-        $current_player_id = (int) $this->getCurrentPlayerId();
-        $initialHandState = $this->cards->getCardsInLocation('hand', $current_player_id);
+        $handRows = $this->cards->getCardsInLocation('hand', $current_player_id);
+        $hand = array();
+        foreach ($handRows as $id => $handCard) {
+            $hand[$id] = ['id' => (string) $id, 'lowNum' => $handCard['type_arg']];
+        }
         $initialCardsInGroups = $this->getCollectionFromDB(
             "SELECT card_id id, card_type uprightFor, card_type_arg cardNum, card_location_arg groupAndCoords
             FROM card
             WHERE card_location = 'group'"
         );
         $initialCardsByGroup = $this->getCardsByGroup($initialCardsInGroups);
+        $board = \Bga\Games\TetherGame\GroupLogic::createGroupObjectForUI($initialCardsInGroups);
+        $latestGroup = count($board) > 0 ? (int) max(array_keys($board)) : 0;
 
-        $handDifferenceCards = array_diff_key($initialHandState, $gameStateJSON['hand']);
-        $adriftDifferenceCards = array_diff_key($initialAdriftState, $gameStateJSON['adrift']);
+        $playerNo = (int) $this->getUniqueValueFromDB(
+            "SELECT player_no FROM player WHERE player_id = $current_player_id"
+        );
+        $playerOrientation = $playerNo === 1 ? 'vertical' : 'horizontal';
 
-        $groupsPresent = array();
-
+        // replay the submitted moves server-side; the server - not the
+        // client - computes the resulting board and rejects illegal moves
         try {
-            // Use extracted helper to build card updates and execute single bulk query
-            $cardUpdates = \Bga\Games\TetherGame\CardUpdateHelper::buildCardUpdates($gameStateJSON['board']);
+            $result = \Bga\Games\TetherGame\MoveValidator::replayConnectMoves(
+                $moves,
+                $hand,
+                $adrift,
+                $board,
+                $playerOrientation,
+                $latestGroup
+            );
+        } catch (\InvalidArgumentException $e) {
+            throw new \BgaUserException($e->getMessage());
+        }
 
-            // Execute single bulk update instead of N queries (fixes N+1 problem)
-            if (!empty($cardUpdates)) {
-                $sql = \Bga\Games\TetherGame\CardUpdateHelper::generateBulkUpdateSQL($cardUpdates);
-                $this->DbQuery($sql);
-            }
+        $cardUpdates = \Bga\Games\TetherGame\CardUpdateHelper::buildCardUpdates($result['board']);
+        if (!empty($cardUpdates)) {
+            $sql = \Bga\Games\TetherGame\CardUpdateHelper::generateBulkUpdateSQL($cardUpdates);
+            $this->DbQuery($sql);
+        }
 
-            // Track which groups are present
-            $groupsPresent = array_flip(array_keys($gameStateJSON['board']));
+        // groups that no longer exist were merged into the played group
+        $groupNumsRemoved = array_diff_key($initialCardsByGroup, $result['board']);
+        $groupsAndCardsPlayed = array_intersect_key($initialCardsByGroup, $groupNumsRemoved);
 
-            // see the keys that were deleted
-            $groupNumsRemoved = array_diff_key($initialCardsByGroup, $groupsPresent);
-            // we need the cards by group
-            $groupsAndCardsPlayed = array_intersect_key($initialCardsByGroup, $groupNumsRemoved);
+        $opponent_id = $this->getPlayerAfter($current_player_id);
 
-            $opponent_id = $this->getPlayerAfter($current_player_id);
-
-            $this->bga->notify->player($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
+        $this->bga->notify->player($opponent_id, 'connectFromHandOpponent', clienttranslate('${player_name} connected astronauts by playing the card(s) ${cards} from their hand.'), [
+            "player_id" => $current_player_id,
+            "player_name" => $this->getPlayerNameById($current_player_id),
+            "cards" => $this->formatCardsIntoCommaSeparatedString($result['playedFromHand'], 'lowNum'),
+        ]);
+        $this->bga->notify->player($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
+            "cards" => $this->formatCardsIntoCommaSeparatedString($result['playedFromHand'], 'lowNum')
+        ]);
+        if (count($result['playedFromAdrift']) > 0) {
+            $this->bga->notify->player($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
                 "player_id" => $current_player_id,
                 "player_name" => $this->getPlayerNameById($current_player_id),
-                "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg'),
+                "cards" => $this->formatCardsIntoCommaSeparatedString($result['playedFromAdrift'], 'lowNum')
             ]);
-            $this->bga->notify->player($current_player_id, 'connectFromHandSelf', clienttranslate('You connected astronauts by playing the card(s) ${cards} from your hand.'), [
-                "cards" => $this->formatCardsIntoCommaSeparatedString($handDifferenceCards, 'type_arg')
+            $this->bga->notify->player($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
+                "cards" => $this->formatCardsIntoCommaSeparatedString($result['playedFromAdrift'], 'lowNum')
             ]);
-            if (count($adriftDifferenceCards) > 0) {
-                $this->bga->notify->player($opponent_id, 'connectFromAdriftOpponent', clienttranslate('${player_name} connected the card(s) ${cards} from the adrift zone.'), [
-                    "player_id" => $current_player_id,
-                    "player_name" => $this->getPlayerNameById($current_player_id),
-                    "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
-                ]);
-                $this->bga->notify->player($current_player_id, 'connectFromAdriftSelf', clienttranslate('You connected the card(s) ${cards} from the adrift zone.'), [
-                    "cards" => $this->formatCardsIntoCommaSeparatedString($adriftDifferenceCards, 'cardNum')
-                ]);
-            }
-            if (count($groupsAndCardsPlayed) > 0) {
-                $this->bga->notify->player($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
-                    "player_id" => $current_player_id,
-                    "player_name" => $this->getPlayerNameById($current_player_id),
-                    "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
-                ]);
-                $this->bga->notify->player($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
-                    "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
-                ]);
-            }
-            $this->handleScoring();
-        } catch (\Exception $e) {
-            $this->error("Error while connecting astronauts");
-            $this->dump('err', $e);
-            return;
         }
+        if (count($groupsAndCardsPlayed) > 0) {
+            $this->bga->notify->player($opponent_id, 'connectBoardOpponent', clienttranslate('${player_name} connected to the group(s) of cards: ${groups} from the board.'), [
+                "player_id" => $current_player_id,
+                "player_name" => $this->getPlayerNameById($current_player_id),
+                "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
+            ]);
+            $this->bga->notify->player($current_player_id, 'connectBoardSelf', clienttranslate('You connected to the group(s) of cards: ${groups} from the board.'), [
+                "groups" => $this->getGroupsByCommaSeparatedCardStrings($groupsAndCardsPlayed)
+            ]);
+        }
+        $this->handleScoring();
 
         $this->gamestate->nextState('drawAtEndOfTurn');
     }

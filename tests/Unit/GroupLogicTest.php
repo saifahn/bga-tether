@@ -62,7 +62,7 @@ class GroupLogicTest extends TestCase
         $group1 = $result['1'];
         $group2 = $result['2'];
 
-        $this->assertEquals('1', $group1['number']); // group number
+        $this->assertEquals('1', $group1['id']); // group number
         $this->assertIsArray($group1['cards']);
         $this->assertEquals('2', $group1['cards'][0][0]['id']);
         $this->assertEquals('02', $group1['cards'][0][0]['lowNum']);
