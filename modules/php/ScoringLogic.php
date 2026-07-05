@@ -55,6 +55,19 @@ class ScoringLogic {
     }
 
     /**
+     * Convert a player's hand count into the tiebreaker aux score.
+     *
+     * BGA compares player_aux_score descending (higher wins), so the player
+     * with the fewest cards in hand must get the highest aux score.
+     *
+     * @param int $handCount Number of cards in the player's hand
+     * @return int Aux score to store in the player table
+     */
+    public static function calculateTiebreakerAuxScore(int $handCount): int {
+        return -$handCount;
+    }
+
+    /**
      * Determine if drawing the last card from the deck should trigger the
      * final round (each player gets exactly one more turn, then game end).
      *

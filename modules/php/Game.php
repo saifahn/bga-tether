@@ -100,6 +100,7 @@ class Game extends \Table
         $advance = \Bga\Games\TetherGame\ScoringLogic::advanceFinalTurns($finalTurnsRemaining);
 
         if ($advance['endGame']) {
+            $this->updateTiebreakerScores();
             $this->notify->all('endgame', clienttranslate('The deck ran out of cards and each player has taken their final turn, so the game is now over.'), []);
             $this->gamestate->nextState('goToGameEnd');
             return;
@@ -573,6 +574,28 @@ class Game extends \Table
         $this->gamestate->nextState('drawAtEndOfTurn');
     }
 
+    /**
+     * Store each player's tiebreaker score (player_aux_score) so BGA can
+     * break tied final scores. Fewest cards in hand wins, so the aux score
+     * is the negated hand count. Called right before every transition to
+     * game end.
+     */
+    private function updateTiebreakerScores(): void
+    {
+        $handCounts = $this->getCollectionFromDB(
+            "SELECT card_location_arg player_id, COUNT(*) cnt
+            FROM card
+            WHERE card_location = 'hand'
+            GROUP BY card_location_arg"
+        );
+
+        foreach ($this->loadPlayersBasicInfos() as $playerId => $info) {
+            $count = isset($handCounts[$playerId]) ? (int) $handCounts[$playerId]['cnt'] : 0;
+            $aux = \Bga\Games\TetherGame\ScoringLogic::calculateTiebreakerAuxScore($count);
+            $this->DbQuery("UPDATE player SET player_aux_score = $aux WHERE player_id = $playerId");
+        }
+    }
+
     function handleScoring(): void
     {
         // Fetch all cards in groups
@@ -650,11 +673,13 @@ class Game extends \Table
                 );
 
                 if ($endGameReason === 'GROUP_SIZE_14') {
+                    $this->updateTiebreakerScores();
                     $this->bga->notify->all('endgame', clienttranslate('A group of 14 or more astronauts was created this round, so the game is now over.'), []);
                     $this->gamestate->nextState('goToGameEnd');
                     return;
                 }
                 if ($endGameReason === 'SCORE_DIFFERENCE_6') {
+                    $this->updateTiebreakerScores();
                     $this->bga->notify->all('endgame', clienttranslate('A player has a 6 or more point lead against the other player, so the game is now over.'), []);
                     $this->gamestate->nextState('goToGameEnd');
                     return;
