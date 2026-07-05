@@ -244,8 +244,7 @@
     "error": "The connecting card details are not correct"
   },
   {
-    "name": "rejects placement onto an occupied cell (server hardening, PHP only)",
-    "phpOnly": true,
+    "name": "rejects placement onto an occupied cell (vertical)",
     "orientation": "vertical",
     "group": {
       "id": "1",
@@ -259,6 +258,42 @@
     "card": { "id": "4", "lowNum": "04", "uprightFor": "vertical" },
     "connection": {
       "card": { "id": "5", "lowNum": "05", "uprightFor": "vertical" },
+      "x": 0,
+      "y": 0
+    },
+    "error": "The destination cell is already occupied"
+  },
+  {
+    "name": "rejects placement onto an occupied cell (horizontal, another column)",
+    "orientation": "horizontal",
+    "group": {
+      "id": "1",
+      "cards": {
+        "0": [{ "id": "03", "lowNum": "03", "uprightFor": "horizontal" }],
+        "1": [{ "id": "09", "lowNum": "09", "uprightFor": "horizontal" }]
+      }
+    },
+    "card": { "id": "02", "lowNum": "02", "uprightFor": "horizontal" },
+    "connection": {
+      "card": { "id": "03", "lowNum": "03", "uprightFor": "horizontal" },
+      "x": 0,
+      "y": 0
+    },
+    "error": "The destination cell is already occupied"
+  },
+  {
+    "name": "rejects a non-boundary connection instead of silently clobbering a further column",
+    "orientation": "horizontal",
+    "group": {
+      "id": "1",
+      "cards": {
+        "0": [{ "id": "09", "lowNum": "09", "uprightFor": "horizontal" }],
+        "2": [{ "id": "03", "lowNum": "03", "uprightFor": "horizontal" }]
+      }
+    },
+    "card": { "id": "08", "lowNum": "08", "uprightFor": "horizontal" },
+    "connection": {
+      "card": { "id": "09", "lowNum": "09", "uprightFor": "horizontal" },
       "x": 0,
       "y": 0
     },

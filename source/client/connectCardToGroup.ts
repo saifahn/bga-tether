@@ -49,6 +49,13 @@ export function connectCardToGroup({
   }
 
   if (orientation === 'vertical') {
+    const connectAfter = connectionCardNumShown > cardNumShown;
+    const targetY = connectAfter ? connection.y + 1 : connection.y - 1;
+
+    if (group.cards[connection.x]![targetY]) {
+      throw new Error('The destination cell is already occupied');
+    }
+
     for (let i = 0; i < numCols; i++) {
       // i is equal to x when we are in the right column/x coordinate.
       // In that column, we'll add the card, but for each other column we also
@@ -59,15 +66,12 @@ export function connectCardToGroup({
         );
       }
       const itemToAdd = i === connection.x ? card : null;
-      const connectAfter = connectionCardNumShown > cardNumShown;
       // We want to replace a null if it is present where we are inserting
       // the new card - it is an empty space that we can fill.
-      const itemAdjacentToConnectionIndex =
-        group.cards[i]![connectAfter ? connection.y + 1 : connection.y - 1];
+      const itemAdjacentToConnectionIndex = group.cards[i]![targetY];
 
       if (itemAdjacentToConnectionIndex === null) {
-        group.cards[i]![connectAfter ? connection.y + 1 : connection.y - 1] =
-          itemToAdd;
+        group.cards[i]![targetY] = itemToAdd;
       } else if (itemAdjacentToConnectionIndex === undefined) {
         if (connectAfter) {
           group.cards[i]?.push(itemToAdd);
@@ -86,12 +90,18 @@ export function connectCardToGroup({
   const connectAfter = connectionCardNumShown > cardNumShown;
 
   if (connectAfter) {
-    // if the place where we want to add the card is a null, the column already
-    // exists and can be replaced with the card we want
-
-    if (group.cards[connection.x + 1]?.[connection.y] === null) {
-      group.cards[connection.x + 1]![connection.y] = card;
+    const targetX = connection.x + 1;
+    // if the column already exists, the destination cell must be empty (a
+    // null) to be filled with the new card - otherwise it is occupied.
+    if (group.cards[targetX] !== undefined) {
+      if (group.cards[targetX]![connection.y] !== null) {
+        throw new Error('The destination cell is already occupied');
+      }
+      group.cards[targetX]![connection.y] = card;
       return;
+    }
+    if (connection.x !== numCols - 1) {
+      throw new Error('The destination cell is already occupied');
     }
     group.cards[numCols] = [];
     for (let i = 0; i < numRows; i++) {
@@ -102,9 +112,16 @@ export function connectCardToGroup({
     return;
   }
 
-  if (group.cards[connection.x - 1]?.[connection.y] === null) {
-    group.cards[connection.x - 1]![connection.y] = card;
+  const targetX = connection.x - 1;
+  if (group.cards[targetX] !== undefined) {
+    if (group.cards[targetX]![connection.y] !== null) {
+      throw new Error('The destination cell is already occupied');
+    }
+    group.cards[targetX]![connection.y] = card;
     return;
+  }
+  if (connection.x !== 0) {
+    throw new Error('The destination cell is already occupied');
   }
   // if adding at the beginning of the row, we need to shift all the other columns to the right
   for (let i = numCols; i >= 0; i--) {

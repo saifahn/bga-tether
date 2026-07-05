@@ -95,8 +95,7 @@
     "error": "The connecting card details are not correct"
   },
   {
-    "name": "rejects a merge where the groups would overlap (server hardening, PHP only)",
-    "phpOnly": true,
+    "name": "rejects a merge where the groups would overlap",
     "orientation": "vertical",
     "group1": {
       "group": {
