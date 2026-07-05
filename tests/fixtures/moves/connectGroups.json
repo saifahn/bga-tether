@@ -1,0 +1,135 @@
+[
+  {
+    "name": "merges two groups vertically, higher connecting number on top",
+    "orientation": "vertical",
+    "group1": {
+      "group": {
+        "id": "1",
+        "cards": { "0": [{ "id": "5", "lowNum": "05", "uprightFor": "vertical" }] }
+      },
+      "connection": {
+        "card": { "id": "5", "lowNum": "05", "uprightFor": "vertical" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "group2": {
+      "group": {
+        "id": "2",
+        "cards": { "0": [{ "id": "4", "lowNum": "04", "uprightFor": "vertical" }] }
+      },
+      "connection": {
+        "card": { "id": "4", "lowNum": "04", "uprightFor": "vertical" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "5", "lowNum": "05", "uprightFor": "vertical" },
+          { "id": "4", "lowNum": "04", "uprightFor": "vertical" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "merges two groups horizontally, lesser connecting number at greater x in the data",
+    "orientation": "horizontal",
+    "group1": {
+      "group": {
+        "id": "1",
+        "cards": { "0": [{ "id": "5", "lowNum": "05", "uprightFor": "horizontal" }] }
+      },
+      "connection": {
+        "card": { "id": "5", "lowNum": "05", "uprightFor": "horizontal" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "group2": {
+      "group": {
+        "id": "2",
+        "cards": { "0": [{ "id": "4", "lowNum": "04", "uprightFor": "horizontal" }] }
+      },
+      "connection": {
+        "card": { "id": "4", "lowNum": "04", "uprightFor": "horizontal" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [{ "id": "5", "lowNum": "05", "uprightFor": "horizontal" }],
+        "1": [{ "id": "4", "lowNum": "04", "uprightFor": "horizontal" }]
+      }
+    }
+  },
+  {
+    "name": "rejects a merge whose claimed connection cell holds a different card",
+    "orientation": "vertical",
+    "group1": {
+      "group": {
+        "id": "1",
+        "cards": { "0": [{ "id": "5", "lowNum": "05", "uprightFor": "vertical" }] }
+      },
+      "connection": {
+        "card": { "id": "9", "lowNum": "09", "uprightFor": "vertical" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "group2": {
+      "group": {
+        "id": "2",
+        "cards": { "0": [{ "id": "4", "lowNum": "04", "uprightFor": "vertical" }] }
+      },
+      "connection": {
+        "card": { "id": "4", "lowNum": "04", "uprightFor": "vertical" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "error": "The connecting card details are not correct"
+  },
+  {
+    "name": "rejects a merge where the groups would overlap (server hardening, PHP only)",
+    "phpOnly": true,
+    "orientation": "vertical",
+    "group1": {
+      "group": {
+        "id": "1",
+        "cards": {
+          "0": [
+            { "id": "5", "lowNum": "05", "uprightFor": "vertical" },
+            { "id": "3", "lowNum": "03", "uprightFor": "vertical" }
+          ]
+        }
+      },
+      "connection": {
+        "card": { "id": "5", "lowNum": "05", "uprightFor": "vertical" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "group2": {
+      "group": {
+        "id": "2",
+        "cards": {
+          "0": [
+            { "id": "6", "lowNum": "06", "uprightFor": "vertical" },
+            { "id": "4", "lowNum": "04", "uprightFor": "vertical" }
+          ]
+        }
+      },
+      "connection": {
+        "card": { "id": "6", "lowNum": "06", "uprightFor": "vertical" },
+        "x": 0,
+        "y": 0
+      }
+    },
+    "error": "The groups overlap and cannot be connected there"
+  }
+]

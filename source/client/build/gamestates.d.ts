@@ -66,7 +66,7 @@ interface GameStateArgs {}
 
 interface GameStatePossibleActions {
 	'actConnectAstronauts': {
-		'gameStateJSON': string,
+		'moves': string,
 	},
 	'actSetAdrift': {
 		'cardDrawnId': string,

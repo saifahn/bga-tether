@@ -1,0 +1,33 @@
+[
+  {
+    "name": "finds a connection using the orientation-adjusted shown number",
+    "card": { "id": "49", "lowNum": "49", "uprightFor": "vertical" },
+    "orientation": "vertical",
+    "group": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "15", "lowNum": "15", "uprightFor": "horizontal" },
+          { "id": "05", "lowNum": "05", "uprightFor": "horizontal" }
+        ]
+      }
+    },
+    "expected": {
+      "card": { "id": "05", "lowNum": "05", "uprightFor": "horizontal" },
+      "x": 0,
+      "y": 1
+    }
+  },
+  {
+    "name": "throws when no card in the group connects",
+    "card": { "id": "70", "lowNum": "07", "uprightFor": "vertical" },
+    "orientation": "vertical",
+    "group": {
+      "id": "1",
+      "cards": {
+        "0": [{ "id": "01", "lowNum": "01", "uprightFor": "vertical" }]
+      }
+    },
+    "error": "the card is not a valid option to connect to the group"
+  }
+]

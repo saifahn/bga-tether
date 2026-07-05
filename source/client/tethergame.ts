@@ -64,6 +64,38 @@ type ClientState =
       };
     };
 
+interface MoveConnection {
+  cardId: string;
+  x: number;
+  y: number;
+}
+
+/**
+ * The minimal description of one step of a Connect Astronauts turn. The
+ * ordered list of these is what gets sent to the server, which replays and
+ * validates them rather than trusting a client-computed board state.
+ */
+type ConnectMove =
+  | {
+      action: 'startGroup';
+      cardId: string;
+      from: 'hand' | 'adrift';
+      flipped: boolean;
+    }
+  | {
+      action: 'placeCard';
+      cardId: string;
+      from: 'hand' | 'adrift';
+      flipped: boolean;
+      connection: MoveConnection;
+    }
+  | {
+      action: 'mergeGroups';
+      otherGroupId: string;
+      currentConnection: MoveConnection;
+      otherConnection: MoveConnection;
+    };
+
 /** See {@link BGA.Gamegui} for more information. */
 class TetherGame extends Gamegui {
   eventHandlers: {
@@ -98,10 +130,13 @@ class TetherGame extends Gamegui {
 
   playableCardNumbers: string[] = [];
 
+  /** The moves made so far this turn, sent to the server on submit. */
+  turnMoves: ConnectMove[] = [];
+
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
     super();
-    console.log('tethergame constructor');
+    console.log('tethergame constructor is working');
   }
 
   createCardElement({
@@ -755,6 +790,7 @@ class TetherGame extends Gamegui {
 
   // #region Connect Astronauts Action methods
   cancelConnectAstronautsAction() {
+    this.turnMoves = [];
     this.clearSelectedCards();
     this.clearSelectableCards();
     this.clearEventListeners();
@@ -800,6 +836,7 @@ class TetherGame extends Gamegui {
     });
 
     if (this.clientState.status === 'choosingAction') {
+      this.turnMoves = [];
       this.clientState = { status: 'connectingAstronautsInitial' };
       this.setClientState('client_connectAstronautInitial', {
         // @ts-expect-error
@@ -956,6 +993,21 @@ class TetherGame extends Gamegui {
       orientation: this.playerDirection!,
     });
 
+    this.turnMoves.push({
+      action: 'mergeGroups',
+      otherGroupId: groupToConnectId,
+      currentConnection: {
+        cardId: currentGroupConnectionPoint.card.id,
+        x: currentGroupConnectionPoint.x,
+        y: currentGroupConnectionPoint.y,
+      },
+      otherConnection: {
+        cardId: cardToConnect.id,
+        x: parseInt(x, 10),
+        y: parseInt(y, 10),
+      },
+    });
+
     // the current group always has a higher ID, so we delete the lower one
     delete this.gameStateCurrent.board[groupToConnectId];
     this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
@@ -1033,6 +1085,7 @@ class TetherGame extends Gamegui {
         card,
         newGroupId
       );
+      this.turnMoves.push({ action: 'startGroup', cardId: id, from, flipped });
       this.updateBoardUI();
     } else {
       // connect card to that group
@@ -1055,11 +1108,27 @@ class TetherGame extends Gamegui {
         uprightFor,
       };
 
+      const connection = getConnection(
+        cardToConnect,
+        group,
+        this.playerDirection
+      );
       connectCardToGroup({
         group,
         card: cardToConnect,
-        connection: getConnection(cardToConnect, group, this.playerDirection),
+        connection,
         orientation: this.playerDirection,
+      });
+      this.turnMoves.push({
+        action: 'placeCard',
+        cardId: id,
+        from,
+        flipped,
+        connection: {
+          cardId: connection.card.id,
+          x: connection.x,
+          y: connection.y,
+        },
       });
       this.updateBoardUI();
     }
@@ -1070,8 +1139,9 @@ class TetherGame extends Gamegui {
 
   finishConnectingAstronauts() {
     this.bgaPerformAction('actConnectAstronauts', {
-      gameStateJSON: JSON.stringify(this.gameStateCurrent),
+      moves: JSON.stringify(this.turnMoves),
     });
+    this.turnMoves = [];
     this.clearSelectableCards();
   }
   // #endregion

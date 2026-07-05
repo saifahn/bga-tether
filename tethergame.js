@@ -446,6 +446,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             _this.playerDirection = null;
             _this.cardMap = {};
             _this.playableCardNumbers = [];
+            _this.turnMoves = [];
             _this.setupNotifications = function () {
                 console.log('notifications subscriptions setup');
                 dojo.subscribe('cardSetAdrift', _this, 'notif_cardSetAdrift');
@@ -464,7 +465,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 dojo.subscribe('updateGameState', _this, 'notif_updateGameState');
                 _this.notifqueue.setSynchronous('updateGameState', 500);
             };
-            console.log('tethergame constructor');
+            console.log('tethergame constructor is working');
             return _this;
         }
         TetherGame.prototype.createCardElement = function (_a) {
@@ -1033,6 +1034,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             this.updateBoardUI();
         };
         TetherGame.prototype.cancelConnectAstronautsAction = function () {
+            this.turnMoves = [];
             this.clearSelectedCards();
             this.clearSelectableCards();
             this.clearEventListeners();
@@ -1067,6 +1069,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 }
             });
             if (this.clientState.status === 'choosingAction') {
+                this.turnMoves = [];
                 this.clientState = { status: 'connectingAstronautsInitial' };
                 this.setClientState('client_connectAstronautInitial', {
                     descriptionmyturn: _('${you} must select an astronaut from your hand to begin connecting.'),
@@ -1187,6 +1190,20 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 },
                 orientation: this.playerDirection,
             });
+            this.turnMoves.push({
+                action: 'mergeGroups',
+                otherGroupId: groupToConnectId,
+                currentConnection: {
+                    cardId: currentGroupConnectionPoint.card.id,
+                    x: currentGroupConnectionPoint.x,
+                    y: currentGroupConnectionPoint.y,
+                },
+                otherConnection: {
+                    cardId: cardToConnect.id,
+                    x: parseInt(x, 10),
+                    y: parseInt(y, 10),
+                },
+            });
             delete this.gameStateCurrent.board[groupToConnectId];
             this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
             this.currentGroup = combinedGroup.id;
@@ -1262,6 +1279,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 console.log('first card played, the new group ID is', newGroupId);
                 this.currentGroup = newGroupId;
                 this.gameStateCurrent.board[this.currentGroup] = this.createGroupFromCard(card, newGroupId);
+                this.turnMoves.push({ action: 'startGroup', cardId: id, from: from, flipped: flipped });
                 this.updateBoardUI();
             }
             else {
@@ -1279,11 +1297,23 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     lowNum: card.number,
                     uprightFor: uprightFor,
                 };
+                var connection = (0, getConnection_1.getConnection)(cardToConnect, group, this.playerDirection);
                 (0, connectCardToGroup_1.connectCardToGroup)({
                     group: group,
                     card: cardToConnect,
-                    connection: (0, getConnection_1.getConnection)(cardToConnect, group, this.playerDirection),
+                    connection: connection,
                     orientation: this.playerDirection,
+                });
+                this.turnMoves.push({
+                    action: 'placeCard',
+                    cardId: id,
+                    from: from,
+                    flipped: flipped,
+                    connection: {
+                        cardId: connection.card.id,
+                        x: connection.x,
+                        y: connection.y,
+                    },
                 });
                 this.updateBoardUI();
             }
@@ -1292,8 +1322,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         };
         TetherGame.prototype.finishConnectingAstronauts = function () {
             this.bgaPerformAction('actConnectAstronauts', {
-                gameStateJSON: JSON.stringify(this.gameStateCurrent),
+                moves: JSON.stringify(this.turnMoves),
             });
+            this.turnMoves = [];
             this.clearSelectableCards();
         };
         TetherGame.prototype.notif_cardSetAdrift = function (notif) {

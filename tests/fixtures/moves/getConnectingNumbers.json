@@ -1,0 +1,27 @@
+[
+  {
+    "name": "returns the numbers one lower and one higher, zero-padded",
+    "num": "05",
+    "expected": ["04", "06"]
+  },
+  {
+    "name": "pads across the tens boundary",
+    "num": "10",
+    "expected": ["09", "11"]
+  },
+  {
+    "name": "rejects strings that are not exactly 2 characters",
+    "num": "1",
+    "error": "the number string should be exactly 2 characters long"
+  },
+  {
+    "name": "rejects numbers above 98",
+    "num": "99",
+    "error": "the number must be between 01 and 98"
+  },
+  {
+    "name": "rejects 00",
+    "num": "00",
+    "error": "the number must be between 01 and 98"
+  }
+]

@@ -1,0 +1,267 @@
+[
+  {
+    "name": "extends columns when connecting vertically at the end",
+    "orientation": "vertical",
+    "group": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "2", "lowNum": "02", "uprightFor": "vertical" },
+          { "id": "1", "lowNum": "01", "uprightFor": "vertical" }
+        ],
+        "1": [{ "id": "19", "lowNum": "19", "uprightFor": "horizontal" }, null]
+      }
+    },
+    "card": { "id": "3", "lowNum": "03", "uprightFor": "vertical" },
+    "connection": {
+      "card": { "id": "2", "lowNum": "02", "uprightFor": "vertical" },
+      "x": 0,
+      "y": 0
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "3", "lowNum": "03", "uprightFor": "vertical" },
+          { "id": "2", "lowNum": "02", "uprightFor": "vertical" },
+          { "id": "1", "lowNum": "01", "uprightFor": "vertical" }
+        ],
+        "1": [null, { "id": "19", "lowNum": "19", "uprightFor": "horizontal" }, null]
+      }
+    }
+  },
+  {
+    "name": "extends columns when connecting vertically at the beginning",
+    "orientation": "vertical",
+    "group": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "3", "lowNum": "03", "uprightFor": "vertical" },
+          { "id": "2", "lowNum": "02", "uprightFor": "vertical" }
+        ],
+        "1": [{ "id": "29", "lowNum": "29", "uprightFor": "horizontal" }, null]
+      }
+    },
+    "card": { "id": "1", "lowNum": "01", "uprightFor": "vertical" },
+    "connection": {
+      "card": { "id": "2", "lowNum": "02", "uprightFor": "vertical" },
+      "x": 0,
+      "y": 1
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "3", "lowNum": "03", "uprightFor": "vertical" },
+          { "id": "2", "lowNum": "02", "uprightFor": "vertical" },
+          { "id": "1", "lowNum": "01", "uprightFor": "vertical" }
+        ],
+        "1": [{ "id": "29", "lowNum": "29", "uprightFor": "horizontal" }, null, null]
+      }
+    }
+  },
+  {
+    "name": "connects a card of a different orientation vertically, filling a blank space",
+    "orientation": "vertical",
+    "group": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "15", "lowNum": "15", "uprightFor": "horizontal" },
+          { "id": "05", "lowNum": "05", "uprightFor": "horizontal" },
+          null
+        ],
+        "1": [
+          null,
+          { "id": "04", "lowNum": "04", "uprightFor": "horizontal" },
+          { "id": "39", "lowNum": "39", "uprightFor": "vertical" }
+        ]
+      }
+    },
+    "card": { "id": "49", "lowNum": "49", "uprightFor": "vertical" },
+    "connection": {
+      "card": { "id": "05", "lowNum": "05", "uprightFor": "horizontal" },
+      "x": 0,
+      "y": 1
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "15", "lowNum": "15", "uprightFor": "horizontal" },
+          { "id": "05", "lowNum": "05", "uprightFor": "horizontal" },
+          { "id": "49", "lowNum": "49", "uprightFor": "vertical" }
+        ],
+        "1": [
+          null,
+          { "id": "04", "lowNum": "04", "uprightFor": "horizontal" },
+          { "id": "39", "lowNum": "39", "uprightFor": "vertical" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "extends rows when connecting horizontally at the beginning",
+    "orientation": "horizontal",
+    "group": {
+      "id": "2",
+      "cards": {
+        "0": [null, { "id": "3", "lowNum": "03", "uprightFor": "horizontal" }],
+        "1": [
+          { "id": "12", "lowNum": "12", "uprightFor": "horizontal" },
+          { "id": "2", "lowNum": "02", "uprightFor": "horizontal" }
+        ]
+      }
+    },
+    "card": { "id": "1", "lowNum": "01", "uprightFor": "horizontal" },
+    "connection": {
+      "card": { "id": "2", "lowNum": "02", "uprightFor": "horizontal" },
+      "x": 1,
+      "y": 1
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [null, { "id": "3", "lowNum": "03", "uprightFor": "horizontal" }],
+        "1": [
+          { "id": "12", "lowNum": "12", "uprightFor": "horizontal" },
+          { "id": "2", "lowNum": "02", "uprightFor": "horizontal" }
+        ],
+        "2": [null, { "id": "1", "lowNum": "01", "uprightFor": "horizontal" }]
+      }
+    }
+  },
+  {
+    "name": "extends rows when connecting horizontally at the end",
+    "orientation": "horizontal",
+    "group": {
+      "id": "2",
+      "cards": {
+        "0": [null, { "id": "3", "lowNum": "03", "uprightFor": "horizontal" }],
+        "1": [
+          { "id": "12", "lowNum": "12", "uprightFor": "horizontal" },
+          { "id": "2", "lowNum": "02", "uprightFor": "horizontal" }
+        ]
+      }
+    },
+    "card": { "id": "4", "lowNum": "04", "uprightFor": "horizontal" },
+    "connection": {
+      "card": { "id": "3", "lowNum": "03", "uprightFor": "horizontal" },
+      "x": 0,
+      "y": 1
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [null, { "id": "4", "lowNum": "04", "uprightFor": "horizontal" }],
+        "1": [null, { "id": "3", "lowNum": "03", "uprightFor": "horizontal" }],
+        "2": [
+          { "id": "12", "lowNum": "12", "uprightFor": "horizontal" },
+          { "id": "2", "lowNum": "02", "uprightFor": "horizontal" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "connects a card horizontally at an earlier x coordinate, filling a blank space",
+    "orientation": "horizontal",
+    "group": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "34", "lowNum": "34", "uprightFor": "vertical" },
+          { "id": "33", "lowNum": "33", "uprightFor": "vertical" },
+          null,
+          null
+        ],
+        "1": [null, { "id": "23", "lowNum": "23", "uprightFor": "vertical" }, null, null],
+        "2": [
+          null,
+          { "id": "13", "lowNum": "13", "uprightFor": "vertical" },
+          { "id": "12", "lowNum": "12", "uprightFor": "vertical" },
+          { "id": "11", "lowNum": "11", "uprightFor": "vertical" }
+        ],
+        "3": [
+          null,
+          { "id": "03", "lowNum": "03", "uprightFor": "vertical" },
+          { "id": "02", "lowNum": "02", "uprightFor": "vertical" },
+          { "id": "01", "lowNum": "01", "uprightFor": "vertical" }
+        ]
+      }
+    },
+    "card": { "id": "22", "lowNum": "22", "uprightFor": "vertical" },
+    "connection": {
+      "card": { "id": "12", "lowNum": "12", "uprightFor": "vertical" },
+      "x": 2,
+      "y": 2
+    },
+    "expected": {
+      "id": "2",
+      "cards": {
+        "0": [
+          { "id": "34", "lowNum": "34", "uprightFor": "vertical" },
+          { "id": "33", "lowNum": "33", "uprightFor": "vertical" },
+          null,
+          null
+        ],
+        "1": [
+          null,
+          { "id": "23", "lowNum": "23", "uprightFor": "vertical" },
+          { "id": "22", "lowNum": "22", "uprightFor": "vertical" },
+          null
+        ],
+        "2": [
+          null,
+          { "id": "13", "lowNum": "13", "uprightFor": "vertical" },
+          { "id": "12", "lowNum": "12", "uprightFor": "vertical" },
+          { "id": "11", "lowNum": "11", "uprightFor": "vertical" }
+        ],
+        "3": [
+          null,
+          { "id": "03", "lowNum": "03", "uprightFor": "vertical" },
+          { "id": "02", "lowNum": "02", "uprightFor": "vertical" },
+          { "id": "01", "lowNum": "01", "uprightFor": "vertical" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "rejects a claimed connection whose cell holds a different card",
+    "orientation": "vertical",
+    "group": {
+      "id": "1",
+      "cards": {
+        "0": [{ "id": "5", "lowNum": "05", "uprightFor": "vertical" }]
+      }
+    },
+    "card": { "id": "4", "lowNum": "04", "uprightFor": "vertical" },
+    "connection": {
+      "card": { "id": "6", "lowNum": "06", "uprightFor": "vertical" },
+      "x": 0,
+      "y": 0
+    },
+    "error": "The connecting card details are not correct"
+  },
+  {
+    "name": "rejects placement onto an occupied cell (server hardening, PHP only)",
+    "phpOnly": true,
+    "orientation": "vertical",
+    "group": {
+      "id": "1",
+      "cards": {
+        "0": [
+          { "id": "5", "lowNum": "05", "uprightFor": "vertical" },
+          { "id": "44", "lowNum": "44", "uprightFor": "vertical" }
+        ]
+      }
+    },
+    "card": { "id": "4", "lowNum": "04", "uprightFor": "vertical" },
+    "connection": {
+      "card": { "id": "5", "lowNum": "05", "uprightFor": "vertical" },
+      "x": 0,
+      "y": 0
+    },
+    "error": "The destination cell is already occupied"
+  }
+]
