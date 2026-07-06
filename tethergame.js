@@ -88,23 +88,42 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 define("connectCardToGroup", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.shownNum = shownNum;
+    exports.getLandingCell = getLandingCell;
     exports.connectCardToGroup = connectCardToGroup;
+    function shownNum(card, orientation) {
+        return card.uprightFor === orientation
+            ? card.lowNum
+            : card.lowNum.split('').toReversed().join('');
+    }
+    function getLandingCell(card, connection, orientation) {
+        var cardNumShown = parseInt(shownNum(card, orientation), 10);
+        var connectionCardNumShown = parseInt(shownNum(connection.card, orientation), 10);
+        var connectAfter = connectionCardNumShown > cardNumShown;
+        if (orientation === 'vertical') {
+            return {
+                x: connection.x,
+                y: connectAfter ? connection.y + 1 : connection.y - 1,
+            };
+        }
+        return {
+            x: connectAfter ? connection.x + 1 : connection.x - 1,
+            y: connection.y,
+        };
+    }
     function connectCardToGroup(_a) {
         var _b, _c, _d, _e;
         var group = _a.group, card = _a.card, connection = _a.connection, orientation = _a.orientation;
-        var cardNumShown = card.uprightFor === orientation
-            ? parseInt(card.lowNum)
-            : parseInt(card.lowNum.split('').reverse().join(''));
-        var connectionCardNumShown = connection.card.uprightFor === orientation
-            ? parseInt(connection.card.lowNum)
-            : parseInt(connection.card.lowNum.split('').reverse().join(''));
+        var cardNumShown = parseInt(shownNum(card, orientation), 10);
+        var connectionCardNumShown = parseInt(shownNum(connection.card, orientation), 10);
         var numCols = Object.keys(group.cards).length;
         if (((_c = (_b = group.cards[connection.x]) === null || _b === void 0 ? void 0 : _b[connection.y]) === null || _c === void 0 ? void 0 : _c.id) !== connection.card.id) {
             throw new Error('The connecting card details are not correct');
         }
+        var landingCell = getLandingCell(card, connection, orientation);
         if (orientation === 'vertical') {
             var connectAfter_1 = connectionCardNumShown > cardNumShown;
-            var targetY = connectAfter_1 ? connection.y + 1 : connection.y - 1;
+            var targetY = landingCell.y;
             if (group.cards[connection.x][targetY]) {
                 throw new Error('The destination cell is already occupied');
             }
@@ -131,7 +150,7 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
         var numRows = group.cards[0].length;
         var connectAfter = connectionCardNumShown > cardNumShown;
         if (connectAfter) {
-            var targetX_1 = connection.x + 1;
+            var targetX_1 = landingCell.x;
             if (group.cards[targetX_1] !== undefined) {
                 if (group.cards[targetX_1][connection.y] !== null) {
                     throw new Error('The destination cell is already occupied');
@@ -149,7 +168,7 @@ define("connectCardToGroup", ["require", "exports"], function (require, exports)
             }
             return;
         }
-        var targetX = connection.x - 1;
+        var targetX = landingCell.x;
         if (group.cards[targetX] !== undefined) {
             if (group.cards[targetX][connection.y] !== null) {
                 throw new Error('The destination cell is already occupied');
@@ -388,19 +407,13 @@ define("connectGroups", ["require", "exports"], function (require, exports) {
         return newGroup;
     }
 });
-define("getConnections", ["require", "exports", "getConnectingNumbers"], function (require, exports, getConnectingNumbers_1) {
+define("getConnections", ["require", "exports", "connectCardToGroup", "getConnectingNumbers"], function (require, exports, connectCardToGroup_1, getConnectingNumbers_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.findMatchingConnections = findMatchingConnections;
-    exports.getLandingCell = getLandingCell;
     exports.getConnections = getConnections;
-    function shownNum(card, orientation) {
-        return card.uprightFor === orientation
-            ? card.lowNum
-            : card.lowNum.split('').toReversed().join('');
-    }
     function findMatchingConnections(card, group, orientation) {
-        var possibleNumbers = (0, getConnectingNumbers_1.getConnectingNumbers)(shownNum(card, orientation));
+        var possibleNumbers = (0, getConnectingNumbers_1.getConnectingNumbers)((0, connectCardToGroup_1.shownNum)(card, orientation));
         var matches = [];
         for (var x in group.cards) {
             for (var y = 0; y < group.cards[x].length; y++) {
@@ -408,27 +421,12 @@ define("getConnections", ["require", "exports", "getConnectingNumbers"], functio
                 if (groupCard === null) {
                     continue;
                 }
-                if (possibleNumbers.includes(shownNum(groupCard, orientation))) {
+                if (possibleNumbers.includes((0, connectCardToGroup_1.shownNum)(groupCard, orientation))) {
                     matches.push({ card: groupCard, x: parseInt(x, 10), y: y });
                 }
             }
         }
         return matches;
-    }
-    function getLandingCell(card, connection, orientation) {
-        var cardNumShown = parseInt(shownNum(card, orientation), 10);
-        var connectionCardNumShown = parseInt(shownNum(connection.card, orientation), 10);
-        var connectAfter = connectionCardNumShown > cardNumShown;
-        if (orientation === 'vertical') {
-            return {
-                x: connection.x,
-                y: connectAfter ? connection.y + 1 : connection.y - 1,
-            };
-        }
-        return {
-            x: connectAfter ? connection.x + 1 : connection.x - 1,
-            y: connection.y,
-        };
     }
     function isLandingCellOccupied(group, landingCell) {
         var _a;
@@ -442,7 +440,7 @@ define("getConnections", ["require", "exports", "getConnectingNumbers"], functio
         try {
             for (var matches_1 = __values(matches), matches_1_1 = matches_1.next(); !matches_1_1.done; matches_1_1 = matches_1.next()) {
                 var connection = matches_1_1.value;
-                var landingCell = getLandingCell(card, connection, orientation);
+                var landingCell = (0, connectCardToGroup_1.getLandingCell)(card, connection, orientation);
                 if (isLandingCellOccupied(group, landingCell)) {
                     continue;
                 }
@@ -493,7 +491,7 @@ define("countCardsInGroup", ["require", "exports"], function (require, exports) 
         return count;
     }
 });
-define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "getConnectingNumbers", "connectGroups", "getConnections", "countCardsInGroup", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_1, generateGroupUI_1, getConnectingNumbers_2, connectGroups_1, getConnections_1, countCardsInGroup_1, dojo_1) {
+define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connectCardToGroup", "generateGroupUI", "getConnectingNumbers", "connectGroups", "getConnections", "countCardsInGroup", "dojo", "ebg/counter"], function (require, exports, Gamegui, connectCardToGroup_2, generateGroupUI_1, getConnectingNumbers_2, connectGroups_1, getConnections_1, countCardsInGroup_1, dojo_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var TetherGame = (function (_super) {
@@ -1285,8 +1283,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                             orientation: this.playerDirection,
                         });
                     }
-                    catch (_d) {
-                        continue;
+                    catch (err) {
+                        if (err instanceof Error &&
+                            err.message === 'The groups overlap and cannot be connected there') {
+                            continue;
+                        }
+                        throw err;
                     }
                     var shapeKey = JSON.stringify(mergedGroup.cards);
                     if (seenShapes.has(shapeKey))
@@ -1303,10 +1305,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 finally { if (e_17) throw e_17.error; }
             }
             if (results.length === 0) {
-                throw new Error('the groups do not have a valid connection');
+                this.showMessage(_('That connection is not physically possible - please try another.'), 'error');
+                this.cancelConnectAstronautsAction();
+                return;
             }
             var completeMerge = function (chosenCurrentConnection) {
-                var chosen = results.find(function (r) { return r.currentConnection.card.id === chosenCurrentConnection.card.id; });
+                var chosen = results.find(function (r) { return r.currentConnection === chosenCurrentConnection; });
                 _this.turnMoves.push({
                     action: 'mergeGroups',
                     otherGroupId: groupToConnectId,
@@ -1469,10 +1473,12 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             };
             var candidates = (0, getConnections_1.getConnections)(cardToConnect, group, playerDirection);
             if (candidates.length === 0) {
-                throw new Error('the card is not a valid option to connect to the group');
+                this.showMessage(_('That connection is not physically possible - please try another.'), 'error');
+                this.cancelConnectAstronautsAction();
+                return;
             }
             var completePlaceCard = function (connection) {
-                (0, connectCardToGroup_1.connectCardToGroup)({
+                (0, connectCardToGroup_2.connectCardToGroup)({
                     group: group,
                     card: cardToConnect,
                     connection: connection,

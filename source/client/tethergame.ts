@@ -1038,8 +1038,17 @@ class TetherGame extends Gamegui {
           group2: { group: otherGroup, connection: otherConnection },
           orientation: this.playerDirection!,
         });
-      } catch {
-        continue;
+      } catch (err) {
+        // an overlapping candidate is expected and simply dropped; any
+        // other error (e.g. mismatched connecting card details) is a real
+        // bug and should not be silently swallowed alongside it.
+        if (
+          err instanceof Error &&
+          err.message === 'The groups overlap and cannot be connected there'
+        ) {
+          continue;
+        }
+        throw err;
       }
       const shapeKey = JSON.stringify(mergedGroup.cards);
       if (seenShapes.has(shapeKey)) continue;
@@ -1048,12 +1057,24 @@ class TetherGame extends Gamegui {
     }
 
     if (results.length === 0) {
-      throw new Error('the groups do not have a valid connection');
+      // The clicked card was only shown as clickable via numeric adjacency;
+      // it turns out every candidate connection would overlap the groups.
+      // Recover instead of leaving the player stuck on a dead click.
+      this.showMessage(
+        _('That connection is not physically possible - please try another.'),
+        'error'
+      );
+      this.cancelConnectAstronautsAction();
+      return;
     }
 
     const completeMerge = (chosenCurrentConnection: Connection) => {
+      // chosenCurrentConnection is always one of the exact Connection objects
+      // from `results` (either results[0] directly, or the candidate object
+      // enterChoosingConnectionSpot passed through unchanged), so reference
+      // equality is enough - no need to re-derive identity from card id.
       const chosen = results.find(
-        (r) => r.currentConnection.card.id === chosenCurrentConnection.card.id
+        (r) => r.currentConnection === chosenCurrentConnection
       )!;
 
       this.turnMoves.push({
@@ -1249,7 +1270,15 @@ class TetherGame extends Gamegui {
 
     const candidates = getConnections(cardToConnect, group, playerDirection);
     if (candidates.length === 0) {
-      throw new Error('the card is not a valid option to connect to the group');
+      // The card was only shown as playable via numeric adjacency; it turns
+      // out every candidate connection's landing cell is occupied. Recover
+      // instead of leaving the player stuck on a dead click.
+      this.showMessage(
+        _('That connection is not physically possible - please try another.'),
+        'error'
+      );
+      this.cancelConnectAstronautsAction();
+      return;
     }
 
     const completePlaceCard = (connection: Connection) => {

@@ -1,11 +1,12 @@
-import { Card, Connection, Group, Orientation } from './connectCardToGroup';
+import {
+  Card,
+  Connection,
+  Group,
+  Orientation,
+  getLandingCell,
+  shownNum,
+} from './connectCardToGroup';
 import { getConnectingNumbers } from './getConnectingNumbers';
-
-function shownNum(card: Card, orientation: Orientation): string {
-  return card.uprightFor === orientation
-    ? card.lowNum
-    : card.lowNum.split('').toReversed().join('');
-}
 
 /**
  * Finds every card in the group whose shown number connects to the given
@@ -33,36 +34,6 @@ export function findMatchingConnections(
   }
 
   return matches;
-}
-
-/**
- * The grid cell the given card would land in for the given connection, i.e.
- * directly on the far side of the connection card (see CONTEXT.md's
- * "Landing Cell" definition). Mirrors the placement math in
- * connectCardToGroup without mutating anything.
- */
-export function getLandingCell(
-  card: Card,
-  connection: Connection,
-  orientation: Orientation
-): { x: number; y: number } {
-  const cardNumShown = parseInt(shownNum(card, orientation), 10);
-  const connectionCardNumShown = parseInt(
-    shownNum(connection.card, orientation),
-    10
-  );
-  const connectAfter = connectionCardNumShown > cardNumShown;
-
-  if (orientation === 'vertical') {
-    return {
-      x: connection.x,
-      y: connectAfter ? connection.y + 1 : connection.y - 1,
-    };
-  }
-  return {
-    x: connectAfter ? connection.x + 1 : connection.x - 1,
-    y: connection.y,
-  };
 }
 
 function isLandingCellOccupied(
