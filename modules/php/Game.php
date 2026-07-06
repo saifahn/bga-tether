@@ -44,10 +44,7 @@ class Game extends \Table
         parent::__construct();
 
         $this->initGameStateLabels([
-            "my_first_global_variable" => 10,
-            "my_second_global_variable" => 11,
-            "my_first_game_variant" => 100,
-            "my_second_game_variant" => 101,
+            "final_turns_remaining" => 10,
         ]);
 
         $this->cards = $this->getNew("module.common.deck");
@@ -98,7 +95,29 @@ class Game extends \Table
     {
         $player_id = (int) $this->getActivePlayerId();
         $this->giveExtraTime($player_id);
+
+        $finalTurnsRemaining = (int) $this->getGameStateValue('final_turns_remaining');
+        $advance = \Bga\Games\TetherGame\ScoringLogic::advanceFinalTurns($finalTurnsRemaining);
+
+        if ($advance['endGame']) {
+            $this->notify->all('endgame', clienttranslate('The deck ran out of cards and each player has taken their final turn, so the game is now over.'), []);
+            $this->gamestate->nextState('goToGameEnd');
+            return;
+        }
+
+        if ($advance['value'] !== $finalTurnsRemaining) {
+            $this->setGameStateValue('final_turns_remaining', $advance['value']);
+        }
+
         $this->activeNextPlayer();
+
+        if ($finalTurnsRemaining !== -1) {
+            $incoming_player_id = (int) $this->getActivePlayerId();
+            $this->notify->all('finalTurn', clienttranslate('${player_name} takes their final turn before the game ends.'), [
+                'player_id' => $incoming_player_id,
+                'player_name' => $this->getPlayerNameById($incoming_player_id),
+            ]);
+        }
 
         $this->gamestate->nextState('goToNextPlayerTurn');
     }
@@ -147,9 +166,12 @@ class Game extends \Table
         $newCardFromDeck = $this->cards->pickCardForLocation('deck', 'hand', $current_player_id);
         if ($newCardFromDeck === null) {
             $this->notify->all('dontDrawDeckEmpty', clienttranslate('The deck is empty, so no card is drawn at the end of the turn.'), []);
+            $this->checkDeckEmptyTrigger();
             $this->gamestate->nextState('nextPlayer');
             return;
         }
+
+        $this->checkDeckEmptyTrigger();
 
         $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
         $this->notify->player($current_player_id, 'drawFromDeck', clienttranslate('You drew the card ${card} from the deck at the end of your turn.'), [
@@ -162,6 +184,24 @@ class Game extends \Table
             'player_name' => $this->getPlayerNameById($current_player_id),
         ]);
         $this->gamestate->nextState('nextPlayer');
+    }
+
+    /**
+     * Checks whether the deck has just become empty and, if so, starts the
+     * final round: each player gets exactly one more turn before the game
+     * ends. No-op if the final round has already been triggered.
+     */
+    private function checkDeckEmptyTrigger(): void
+    {
+        $deckCount = $this->cards->countCardInLocation('deck');
+        $finalTurnsRemaining = (int) $this->getGameStateValue('final_turns_remaining');
+
+        if (!\Bga\Games\TetherGame\ScoringLogic::shouldTriggerFinalRound($deckCount, $finalTurnsRemaining)) {
+            return;
+        }
+
+        $this->setGameStateValue('final_turns_remaining', 2);
+        $this->notify->all('deckEmpty', clienttranslate('The deck is empty! Each player takes one more turn, then the game ends.'), []);
     }
 
     /**
@@ -228,6 +268,7 @@ class Game extends \Table
         $groups = \Bga\Games\TetherGame\GroupLogic::createGroupObjectForUI($cardsByGroup);
         $result['board'] = $groups;
         $result['latestGroup'] = count($groups) > 0 ? max(array_keys($groups)) : 0;
+        $result['deckEmpty'] = $this->cards->countCardInLocation('deck') === 0;
 
         return $result;
     }
@@ -279,6 +320,7 @@ class Game extends \Table
         $this->reloadPlayersBasicInfos();
 
         // Init global values with their initial values.
+        $this->setGameStateInitialValue('final_turns_remaining', -1);
 
         // Init game statistics.
         //
@@ -349,8 +391,9 @@ class Game extends \Table
             FROM card
             WHERE card_location = 'adrift'"
         );
+        $deckEmpty = $this->cards->countCardInLocation('deck') === 0;
         try {
-            \Bga\Games\TetherGame\MoveValidator::validateSetAdrift($cardSetAdriftId, $cardDrawnId, $hand, $adrift);
+            \Bga\Games\TetherGame\MoveValidator::validateSetAdrift($cardSetAdriftId, $cardDrawnId, $hand, $adrift, $deckEmpty);
         } catch (\InvalidArgumentException $e) {
             throw new \BgaUserException($e->getMessage());
         }
@@ -365,8 +408,14 @@ class Game extends \Table
             'card_num' => $cardSetAdriftNum,
         ]);
 
-        if ($cardDrawnId == 'deck') {
+        if ($cardDrawnId === 'none') {
+            $this->notify->all('noCardToDraw', clienttranslate('${player_name} has no card to draw, so their turn ends without drawing.'), [
+                'player_id' => $current_player_id,
+                'player_name' => $this->getPlayerNameById($current_player_id),
+            ]);
+        } elseif ($cardDrawnId == 'deck') {
             $newCardFromDeck = $this->cards->pickCard('deck', $current_player_id);
+            $this->checkDeckEmptyTrigger();
             $newCardName = $this->formatCardName($newCardFromDeck['type_arg']);
             $this->notify->player($current_player_id, 'drawFromDeck', clienttranslate('You drew the card ${card} from the deck.'), [
                 'card' => $newCardName,

@@ -444,6 +444,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 latestGroup: 0,
             };
             _this.playerDirection = null;
+            _this.deckEmpty = false;
             _this.cardMap = {};
             _this.playableCardNumbers = [];
             _this.turnMoves = [];
@@ -464,6 +465,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                 _this.notifqueue.setSynchronous('updateVScore', 500);
                 dojo.subscribe('updateGameState', _this, 'notif_updateGameState');
                 _this.notifqueue.setSynchronous('updateGameState', 500);
+                dojo.subscribe('deckEmpty', _this, 'notif_deckEmpty');
             };
             console.log('tethergame constructor is working');
             return _this;
@@ -641,6 +643,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             this.gameStateTurnStart.hand = gamedatas.hand;
             this.gameStateTurnStart.latestGroup = gamedatas.latestGroup;
             this.gameStateCurrent = (0, dojo_1.clone)(this.gameStateTurnStart);
+            this.deckEmpty = gamedatas.deckEmpty;
             console.log('player direction', this.playerDirection);
             this.generateCardMap();
             this.setInitialPlayableCards();
@@ -808,9 +811,11 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
                     }, undefined, false, 'red');
                     break;
                 case 'client_setAdriftChooseDraw':
-                    this.addActionButton('draw-from-deck-button', _('Draw from deck'), function () {
-                        _this.performAdriftAction('deck', 'deck');
-                    });
+                    if (!this.deckEmpty) {
+                        this.addActionButton('draw-from-deck-button', _('Draw from deck'), function () {
+                            _this.performAdriftAction('deck', 'deck');
+                        });
+                    }
                     this.addActionButton('cancel-button', _('Restart turn'), function () {
                         _this.cancelSetAdriftAction();
                     }, undefined, false, 'red');
@@ -947,12 +952,17 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             };
             this.clearSelectableCards();
             this.clearEventListeners();
+            if (this.deckEmpty &&
+                Object.keys(this.gameStateTurnStart.adrift).length === 0) {
+                this.performAdriftAction('none', 'none');
+                return;
+            }
             this.setClientState('client_setAdriftChooseDraw', {
                 descriptionmyturn: _('${you} must choose to take an astronaut from the adrift zone or draw from the deck.'),
             });
             var deck = document.querySelector('.js-deck');
             var drawFromDeckHandler = function () { return _this.performAdriftAction('deck', 'deck'); };
-            if (deck instanceof HTMLElement) {
+            if (!this.deckEmpty && deck instanceof HTMLElement) {
                 deck.classList.add('card--selectable');
                 deck.addEventListener('click', drawFromDeckHandler);
                 this.eventHandlers.push({
@@ -1409,6 +1419,9 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
         TetherGame.prototype.notif_updatePlayerScore = function (notif) {
             var _a;
             (_a = this.scoreCtrl[notif.args.player_id]) === null || _a === void 0 ? void 0 : _a.toValue(notif.args.new_total);
+        };
+        TetherGame.prototype.notif_deckEmpty = function (_notif) {
+            this.deckEmpty = true;
         };
         return TetherGame;
     }(Gamegui));

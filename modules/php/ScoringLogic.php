@@ -53,4 +53,34 @@ class ScoringLogic {
 
         return null;
     }
+
+    /**
+     * Determine if drawing the last card from the deck should trigger the
+     * final round (each player gets exactly one more turn, then game end).
+     *
+     * @param int $deckCount Number of cards remaining in the deck
+     * @param int $finalTurnsRemaining Current value of the final_turns_remaining global (-1 = not triggered)
+     * @return bool True if the final round should now be triggered
+     */
+    public static function shouldTriggerFinalRound(int $deckCount, int $finalTurnsRemaining): bool {
+        return $finalTurnsRemaining === -1 && $deckCount === 0;
+    }
+
+    /**
+     * Advance the final-round countdown by one player turn.
+     *
+     * @param int $finalTurnsRemaining Current value of the final_turns_remaining global
+     * @return array{endGame: bool, value: int} Whether the game should now end, and the new value to store
+     */
+    public static function advanceFinalTurns(int $finalTurnsRemaining): array {
+        if ($finalTurnsRemaining === 0) {
+            return ['endGame' => true, 'value' => 0];
+        }
+
+        if ($finalTurnsRemaining > 0) {
+            return ['endGame' => false, 'value' => $finalTurnsRemaining - 1];
+        }
+
+        return ['endGame' => false, 'value' => $finalTurnsRemaining];
+    }
 }

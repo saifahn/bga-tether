@@ -314,5 +314,29 @@ class MoveValidatorTest extends TestCase
         MoveValidator::validateSetAdrift('11', '12', self::HAND, self::ADRIFT);
     }
 
+    public function testSetAdriftRejectsDeckDrawWhenDeckEmpty(): void
+    {
+        $this->expectExceptionMessage('The deck is empty, you cannot draw from it');
+        MoveValidator::validateSetAdrift('11', 'deck', self::HAND, self::ADRIFT, true);
+    }
+
+    public function testSetAdriftAllowsNoneWhenDeckEmptyAndAdriftEmpty(): void
+    {
+        MoveValidator::validateSetAdrift('11', 'none', self::HAND, [], true);
+        $this->assertTrue(true);
+    }
+
+    public function testSetAdriftRejectsNoneWhenDeckNotEmpty(): void
+    {
+        $this->expectExceptionMessage('You must draw a card while the deck still has cards remaining');
+        MoveValidator::validateSetAdrift('11', 'none', self::HAND, [], false);
+    }
+
+    public function testSetAdriftRejectsNoneWhenAdriftHasOtherCards(): void
+    {
+        $this->expectExceptionMessage('There are cards available to draw from the adrift zone');
+        MoveValidator::validateSetAdrift('11', 'none', self::HAND, self::ADRIFT, true);
+    }
+
     // #endregion
 }

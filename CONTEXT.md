@@ -31,7 +31,15 @@ domain, not the implementation.
 - **Adrift Zone**: The shared face-up pool of cards. **Setting Adrift** is the
   alternative turn action: discard a card from hand to the adrift zone, then
   draw either from the deck or from the adrift zone — but never the card just
-  set adrift.
+  set adrift. Once the deck is empty, the draw can only come from the adrift
+  zone; if no other card is there to draw, the draw is skipped and the player
+  ends the turn a card down.
 - **Scoring Threshold**: A group triggers scoring when it reaches 6, 10, or 14
   cards. The horizontal player scores the group's width, the vertical player
   its height.
+- **Deck Exhaustion / Final Round**: The moment the last card is drawn from
+  the deck (whether by the automatic end-of-turn draw or a Set Adrift
+  replacement draw), each player takes exactly one more turn (starting with
+  the opponent of whoever emptied the deck), then the game ends and the
+  higher score wins. The 14-card group and 6-point lead end conditions still
+  end the game immediately if they occur during the final round.
