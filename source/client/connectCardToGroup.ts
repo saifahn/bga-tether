@@ -26,6 +26,47 @@ interface ConnectingCardLocation {
   orientation: Orientation;
 }
 
+/**
+ * The number a card shows for the given orientation: its lowNum if the card
+ * is upright for that orientation, otherwise the digits reversed.
+ */
+export function shownNum(card: Card, orientation: Orientation): string {
+  return card.uprightFor === orientation
+    ? card.lowNum
+    : card.lowNum.split('').toReversed().join('');
+}
+
+/**
+ * The grid cell the given card would land in for the given connection, i.e.
+ * directly on the far side of the connection card (see CONTEXT.md's
+ * "Landing Cell" definition). The single source of truth for this placement
+ * direction - both connectCardToGroup (which mutates the grid) and
+ * getConnections (which only needs to predict occupancy) go through this.
+ */
+export function getLandingCell(
+  card: Card,
+  connection: Connection,
+  orientation: Orientation
+): { x: number; y: number } {
+  const cardNumShown = parseInt(shownNum(card, orientation), 10);
+  const connectionCardNumShown = parseInt(
+    shownNum(connection.card, orientation),
+    10
+  );
+  const connectAfter = connectionCardNumShown > cardNumShown;
+
+  if (orientation === 'vertical') {
+    return {
+      x: connection.x,
+      y: connectAfter ? connection.y + 1 : connection.y - 1,
+    };
+  }
+  return {
+    x: connectAfter ? connection.x + 1 : connection.x - 1,
+    y: connection.y,
+  };
+}
+
 export function connectCardToGroup({
   group,
   card,
@@ -33,14 +74,11 @@ export function connectCardToGroup({
   orientation,
 }: ConnectingCardLocation) {
   // if the number of the card we are adding is greater than the card we are connecting to, it will go at the end of the row or column
-  const cardNumShown =
-    card.uprightFor === orientation
-      ? parseInt(card.lowNum)
-      : parseInt(card.lowNum.split('').reverse().join(''));
-  const connectionCardNumShown =
-    connection.card.uprightFor === orientation
-      ? parseInt(connection.card.lowNum)
-      : parseInt(connection.card.lowNum.split('').reverse().join(''));
+  const cardNumShown = parseInt(shownNum(card, orientation), 10);
+  const connectionCardNumShown = parseInt(
+    shownNum(connection.card, orientation),
+    10
+  );
 
   const numCols = Object.keys(group.cards).length;
 
@@ -48,7 +86,16 @@ export function connectCardToGroup({
     throw new Error('The connecting card details are not correct');
   }
 
+  const landingCell = getLandingCell(card, connection, orientation);
+
   if (orientation === 'vertical') {
+    const connectAfter = connectionCardNumShown > cardNumShown;
+    const targetY = landingCell.y;
+
+    if (group.cards[connection.x]![targetY]) {
+      throw new Error('The destination cell is already occupied');
+    }
+
     for (let i = 0; i < numCols; i++) {
       // i is equal to x when we are in the right column/x coordinate.
       // In that column, we'll add the card, but for each other column we also
@@ -59,15 +106,12 @@ export function connectCardToGroup({
         );
       }
       const itemToAdd = i === connection.x ? card : null;
-      const connectAfter = connectionCardNumShown > cardNumShown;
       // We want to replace a null if it is present where we are inserting
       // the new card - it is an empty space that we can fill.
-      const itemAdjacentToConnectionIndex =
-        group.cards[i]![connectAfter ? connection.y + 1 : connection.y - 1];
+      const itemAdjacentToConnectionIndex = group.cards[i]![targetY];
 
       if (itemAdjacentToConnectionIndex === null) {
-        group.cards[i]![connectAfter ? connection.y + 1 : connection.y - 1] =
-          itemToAdd;
+        group.cards[i]![targetY] = itemToAdd;
       } else if (itemAdjacentToConnectionIndex === undefined) {
         if (connectAfter) {
           group.cards[i]?.push(itemToAdd);
@@ -86,12 +130,18 @@ export function connectCardToGroup({
   const connectAfter = connectionCardNumShown > cardNumShown;
 
   if (connectAfter) {
-    // if the place where we want to add the card is a null, the column already
-    // exists and can be replaced with the card we want
-
-    if (group.cards[connection.x + 1]?.[connection.y] === null) {
-      group.cards[connection.x + 1]![connection.y] = card;
+    const targetX = landingCell.x;
+    // if the column already exists, the destination cell must be empty (a
+    // null) to be filled with the new card - otherwise it is occupied.
+    if (group.cards[targetX] !== undefined) {
+      if (group.cards[targetX]![connection.y] !== null) {
+        throw new Error('The destination cell is already occupied');
+      }
+      group.cards[targetX]![connection.y] = card;
       return;
+    }
+    if (connection.x !== numCols - 1) {
+      throw new Error('The destination cell is already occupied');
     }
     group.cards[numCols] = [];
     for (let i = 0; i < numRows; i++) {
@@ -102,9 +152,16 @@ export function connectCardToGroup({
     return;
   }
 
-  if (group.cards[connection.x - 1]?.[connection.y] === null) {
-    group.cards[connection.x - 1]![connection.y] = card;
+  const targetX = landingCell.x;
+  if (group.cards[targetX] !== undefined) {
+    if (group.cards[targetX]![connection.y] !== null) {
+      throw new Error('The destination cell is already occupied');
+    }
+    group.cards[targetX]![connection.y] = card;
     return;
+  }
+  if (connection.x !== 0) {
+    throw new Error('The destination cell is already occupied');
   }
   // if adding at the beginning of the row, we need to shift all the other columns to the right
   for (let i = numCols; i >= 0; i--) {

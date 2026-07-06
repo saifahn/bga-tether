@@ -9,12 +9,20 @@ domain, not the implementation.
 - **Shown Number**: The number a card displays to a given player. A card
   upright for a player's orientation shows its low number to them; otherwise
   it shows the reversed digits.
-- **Orientation**: Which player a card is upright for: *vertical* (first
-  player) or *horizontal* (second player). Playing a card **flipped** makes it
+- **Orientation**: Which player a card is upright for: _vertical_ (first
+  player) or _horizontal_ (second player). Playing a card **flipped** makes it
   upright for the opponent.
 - **Connection**: The pairing of a played card with a specific card already in
   a group whose shown numbers differ by exactly 1. Any rules-valid connection
-  point is legal — not only the first one a UI happens to find.
+  point is legal — not only the first one a UI happens to find. A connection
+  is rules-valid only if it is also physically placeable: the played card's
+  **landing cell** must be empty, and a merge must not make the two groups
+  overlap.
+- **Landing Cell**: The grid cell a played card would occupy for a given
+  connection — directly on the far side of the connection card (above/below
+  for the vertical player, left/right for the horizontal player, higher shown
+  number on the higher side). Two connections with the same landing cell are
+  the same choice.
 - **Group**: A set of connected cards laid out on a rectangular grid. The grid
   is always described from the vertical player's perspective; the higher shown
   number sits above (vertical) or to the right (horizontal) of its connection.

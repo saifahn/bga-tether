@@ -448,4 +448,7 @@ test('can connect a card that fills in a blank space (null), and the card is con
 });
 // #endregion
 
+// Occupied-landing-cell rejection is covered by the shared fixtures in
+// tests/fixtures/moves/connectCardToGroup.json (see fixtures.spec.ts).
+
 test.run();

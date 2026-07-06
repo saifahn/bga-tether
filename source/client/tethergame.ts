@@ -18,11 +18,11 @@
 
 import Gamegui = require('ebg/core/gamegui');
 import 'ebg/counter';
-import { Group, connectCardToGroup } from './connectCardToGroup';
+import { Connection, Group, connectCardToGroup } from './connectCardToGroup';
 import { generateGroupUI } from './generateGroupUI';
 import { getConnectingNumbers } from './getConnectingNumbers';
 import { connectGroups } from './connectGroups';
-import { getConnection } from './getConnection';
+import { findMatchingConnections, getConnections } from './getConnections';
 import { countCardsInGroup } from './countCardsInGroup';
 import { clone } from 'dojo';
 
@@ -62,6 +62,13 @@ type ClientState =
         number: string;
         numReversed: string;
       };
+    }
+  | {
+      status: 'choosingConnectionSpot';
+      /** The current-group cards the player may click, one per candidate. */
+      candidates: Connection[];
+      /** Resolves the choice: applies it and finishes the move in progress. */
+      resolve: (connection: Connection) => void;
     };
 
 interface MoveConnection {
@@ -579,6 +586,19 @@ class TetherGame extends Gamegui {
         );
         break;
       // @ts-expect-error
+      case 'client_chooseConnectionSpot':
+        this.addActionButton(
+          'cancel-button',
+          _('Restart turn'),
+          () => {
+            this.cancelConnectAstronautsAction();
+          },
+          undefined,
+          false,
+          'red'
+        );
+        break;
+      // @ts-expect-error
       case 'client_connectAstronautChooseNextCard':
         this.addActionButton(
           'finish-connecting-button',
@@ -989,54 +1009,170 @@ class TetherGame extends Gamegui {
       lowNum: e.target.dataset['cardNumber']!,
       uprightFor: e.target.dataset['uprightFor'] as 'vertical' | 'horizontal',
     };
-    // find connection point between current group and selected group
-    const currentGroupConnectionPoint = getConnection(
+    const otherConnection: Connection = {
+      card: cardToConnect,
+      x: parseInt(x, 10),
+      y: parseInt(y, 10),
+    };
+
+    const currentGroup = this.gameStateCurrent.board[this.currentGroup]!;
+    const otherGroup = this.gameStateCurrent.board[groupToConnectId]!;
+
+    // Every card in the current group that could connect to the clicked
+    // card may produce a different merged shape; a merge landing that would
+    // overlap the two groups is invalid and dropped. Distinct by resulting
+    // shape, since (unlike placeCard) there is no single landing cell to
+    // dedupe by.
+    const results: { currentConnection: Connection; mergedGroup: Group }[] =
+      [];
+    const seenShapes = new Set<string>();
+    for (const currentConnection of findMatchingConnections(
       cardToConnect,
-      this.gameStateCurrent.board[this.currentGroup]!,
+      currentGroup,
       this.playerDirection!
-    );
+    )) {
+      let mergedGroup: Group;
+      try {
+        mergedGroup = connectGroups({
+          group1: { group: currentGroup, connection: currentConnection },
+          group2: { group: otherGroup, connection: otherConnection },
+          orientation: this.playerDirection!,
+        });
+      } catch (err) {
+        // an overlapping candidate is expected and simply dropped; any
+        // other error (e.g. mismatched connecting card details) is a real
+        // bug and should not be silently swallowed alongside it.
+        if (
+          err instanceof Error &&
+          err.message === 'The groups overlap and cannot be connected there'
+        ) {
+          continue;
+        }
+        throw err;
+      }
+      const shapeKey = JSON.stringify(mergedGroup.cards);
+      if (seenShapes.has(shapeKey)) continue;
+      seenShapes.add(shapeKey);
+      results.push({ currentConnection, mergedGroup });
+    }
 
-    const combinedGroup = connectGroups({
-      group1: {
-        group: this.gameStateCurrent.board[this.currentGroup]!,
-        connection: currentGroupConnectionPoint,
-      },
-      group2: {
-        group: this.gameStateCurrent.board[groupToConnectId]!,
-        connection: {
-          card: cardToConnect,
-          x: parseInt(x, 10),
-          y: parseInt(y, 10),
+    if (results.length === 0) {
+      // The clicked card was only shown as clickable via numeric adjacency;
+      // it turns out every candidate connection would overlap the groups.
+      // Recover instead of leaving the player stuck on a dead click.
+      this.showMessage(
+        _('That connection is not physically possible - please try another.'),
+        'error'
+      );
+      this.cancelConnectAstronautsAction();
+      return;
+    }
+
+    const completeMerge = (chosenCurrentConnection: Connection) => {
+      // chosenCurrentConnection is always one of the exact Connection objects
+      // from `results` (either results[0] directly, or the candidate object
+      // enterChoosingConnectionSpot passed through unchanged), so reference
+      // equality is enough - no need to re-derive identity from card id.
+      const chosen = results.find(
+        (r) => r.currentConnection === chosenCurrentConnection
+      )!;
+
+      this.turnMoves.push({
+        action: 'mergeGroups',
+        otherGroupId: groupToConnectId,
+        currentConnection: {
+          cardId: chosen.currentConnection.card.id,
+          x: chosen.currentConnection.x,
+          y: chosen.currentConnection.y,
         },
-      },
-      orientation: this.playerDirection!,
-    });
+        otherConnection: {
+          cardId: cardToConnect.id,
+          x: otherConnection.x,
+          y: otherConnection.y,
+        },
+      });
 
-    this.turnMoves.push({
-      action: 'mergeGroups',
-      otherGroupId: groupToConnectId,
-      currentConnection: {
-        cardId: currentGroupConnectionPoint.card.id,
-        x: currentGroupConnectionPoint.x,
-        y: currentGroupConnectionPoint.y,
-      },
-      otherConnection: {
-        cardId: cardToConnect.id,
-        x: parseInt(x, 10),
-        y: parseInt(y, 10),
-      },
-    });
+      // the current group always has a higher ID, so we delete the lower one
+      delete this.gameStateCurrent.board[groupToConnectId];
+      this.gameStateCurrent.board[chosen.mergedGroup.id] = chosen.mergedGroup;
+      this.currentGroup = chosen.mergedGroup.id;
 
-    // the current group always has a higher ID, so we delete the lower one
-    delete this.gameStateCurrent.board[groupToConnectId];
-    this.gameStateCurrent.board[combinedGroup.id] = combinedGroup;
-    this.currentGroup = combinedGroup.id;
+      this.clearSelectableCards();
+      this.clearEventListeners();
+      this.updateBoardUI();
+      this.updatePlayableCards();
+      this.highlightPlayableAstronauts();
+    };
 
+    if (results.length === 1) {
+      completeMerge(results[0]!.currentConnection);
+    } else {
+      this.enterChoosingConnectionSpot(
+        results.map((r) => r.currentConnection),
+        completeMerge
+      );
+    }
+  }
+
+  /**
+   * Enters the choosingConnectionSpot client state: highlights each
+   * candidate card in the current group as selectable and waits for the
+   * player to click one, resolving the in-progress placeCard/mergeGroups
+   * move with the chosen connection.
+   */
+  enterChoosingConnectionSpot(
+    candidates: Connection[],
+    resolve: (connection: Connection) => void
+  ) {
     this.clearSelectableCards();
     this.clearEventListeners();
-    this.updateBoardUI();
-    this.updatePlayableCards();
-    this.highlightPlayableAstronauts();
+    this.clientState = {
+      status: 'choosingConnectionSpot',
+      candidates,
+      resolve,
+    };
+    this.setClientState('client_chooseConnectionSpot', {
+      // @ts-expect-error
+      descriptionmyturn: _(
+        '${you} must choose which astronaut to connect to.'
+      ),
+    });
+
+    const candidateIds = new Set(candidates.map((c) => c.card.id));
+    const handler = (e: Event) => this.handleChooseConnectionSpot(e);
+    document.querySelectorAll('.js-group-card').forEach((cardEl) => {
+      if (!(cardEl instanceof HTMLElement)) return;
+      const cardId = cardEl.dataset['cardId'];
+      if (!cardId || !candidateIds.has(cardId)) return;
+      cardEl.classList.add('card--selectable');
+      cardEl.addEventListener('click', handler);
+      this.eventHandlers.push({ element: cardEl, event: 'click', handler });
+    });
+  }
+
+  handleChooseConnectionSpot(e: Event) {
+    if (!(e.target instanceof HTMLElement)) {
+      throw new Error(
+        "handleChooseConnectionSpot called when it shouldn't have been"
+      );
+    }
+    if (this.clientState.status !== 'choosingConnectionSpot') {
+      throw new Error(
+        'handleChooseConnectionSpot called in the wrong client state'
+      );
+    }
+    const cardId = e.target.dataset['cardId'];
+    const candidate = this.clientState.candidates.find(
+      (c) => c.card.id === cardId
+    );
+    if (!candidate) {
+      throw new Error('the clicked card is not a valid connection candidate');
+    }
+
+    const resolve = this.clientState.resolve;
+    this.clearSelectableCards();
+    this.clearEventListeners();
+    resolve(candidate);
   }
 
   /**
@@ -1106,37 +1242,51 @@ class TetherGame extends Gamegui {
       );
       this.turnMoves.push({ action: 'startGroup', cardId: id, from, flipped });
       this.updateBoardUI();
-    } else {
-      // connect card to that group
-      const group = this.gameStateCurrent.board[this.currentGroup];
-      if (!group) {
-        throw new Error('current group not found');
-      }
+      this.updatePlayableCards();
+      this.highlightPlayableAstronauts();
+      return;
+    }
 
-      if (!this.playerDirection) {
-        throw new Error('something is wrong, playerDirection was null');
-      }
+    // connect card to that group
+    const group = this.gameStateCurrent.board[this.currentGroup];
+    if (!group) {
+      throw new Error('current group not found');
+    }
 
-      const otherDirection =
-        this.playerDirection === 'vertical' ? 'horizontal' : 'vertical';
-      const uprightFor = card.flipped ? otherDirection : this.playerDirection;
+    if (!this.playerDirection) {
+      throw new Error('something is wrong, playerDirection was null');
+    }
+    const playerDirection = this.playerDirection;
 
-      const cardToConnect = {
-        id: card.id,
-        lowNum: card.number,
-        uprightFor,
-      };
+    const otherDirection =
+      playerDirection === 'vertical' ? 'horizontal' : 'vertical';
+    const uprightFor = card.flipped ? otherDirection : playerDirection;
 
-      const connection = getConnection(
-        cardToConnect,
-        group,
-        this.playerDirection
+    const cardToConnect = {
+      id: card.id,
+      lowNum: card.number,
+      uprightFor,
+    };
+
+    const candidates = getConnections(cardToConnect, group, playerDirection);
+    if (candidates.length === 0) {
+      // The card was only shown as playable via numeric adjacency; it turns
+      // out every candidate connection's landing cell is occupied. Recover
+      // instead of leaving the player stuck on a dead click.
+      this.showMessage(
+        _('That connection is not physically possible - please try another.'),
+        'error'
       );
+      this.cancelConnectAstronautsAction();
+      return;
+    }
+
+    const completePlaceCard = (connection: Connection) => {
       connectCardToGroup({
         group,
         card: cardToConnect,
         connection,
-        orientation: this.playerDirection,
+        orientation: playerDirection,
       });
       this.turnMoves.push({
         action: 'placeCard',
@@ -1150,10 +1300,18 @@ class TetherGame extends Gamegui {
         },
       });
       this.updateBoardUI();
-    }
+      this.updatePlayableCards();
+      this.highlightPlayableAstronauts();
+    };
 
-    this.updatePlayableCards();
-    this.highlightPlayableAstronauts();
+    if (candidates.length === 1) {
+      completePlaceCard(candidates[0]!.connection);
+    } else {
+      this.enterChoosingConnectionSpot(
+        candidates.map((c) => c.connection),
+        completePlaceCard
+      );
+    }
   }
 
   finishConnectingAstronauts() {

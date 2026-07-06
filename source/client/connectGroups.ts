@@ -86,13 +86,16 @@ export function connectGroups({
   for (const [x, column] of Object.entries(groupFrom.group.cards)) {
     for (const [y, card] of column.entries()) {
       if (!card) continue;
-      if (!temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift]) {
-        temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift] = {};
-      }
+      const offsetX = parseInt(x, 10) + fromGroupXShift;
       const offsetY = y + fromGroupYShift;
+      if (!temporaryCombinedGroup[offsetX]) {
+        temporaryCombinedGroup[offsetX] = {};
+      }
+      if (temporaryCombinedGroup[offsetX]![offsetY]) {
+        throw new Error('The groups overlap and cannot be connected there');
+      }
       rows.add(offsetY);
-      temporaryCombinedGroup[parseInt(x, 10) + fromGroupXShift]![offsetY] =
-        card;
+      temporaryCombinedGroup[offsetX]![offsetY] = card;
     }
   }
 
@@ -101,12 +104,16 @@ export function connectGroups({
   for (const [x, column] of Object.entries(groupTo.group.cards)) {
     for (const [y, card] of column.entries()) {
       if (!card) continue;
-      if (!temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift]) {
-        temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift] = {};
-      }
+      const offsetX = parseInt(x, 10) + toGroupXShift;
       const offsetY = y + toGroupYShift;
+      if (!temporaryCombinedGroup[offsetX]) {
+        temporaryCombinedGroup[offsetX] = {};
+      }
+      if (temporaryCombinedGroup[offsetX]![offsetY]) {
+        throw new Error('The groups overlap and cannot be connected there');
+      }
       rows.add(offsetY);
-      temporaryCombinedGroup[parseInt(x, 10) + toGroupXShift]![offsetY] = card;
+      temporaryCombinedGroup[offsetX]![offsetY] = card;
     }
   }
 

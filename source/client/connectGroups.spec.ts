@@ -595,4 +595,7 @@ test("can connect two groups horizontally, replacing blank spaces, extending a n
 });
 // #endregion
 
+// Overlap rejection is covered by the shared fixture in
+// tests/fixtures/moves/connectGroups.json (see fixtures.spec.ts).
+
 test.run();

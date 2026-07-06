@@ -9,7 +9,6 @@ import {
   Orientation,
 } from './connectCardToGroup';
 import { connectGroups } from './connectGroups';
-import { getConnection } from './getConnection';
 import { getConnectingNumbers } from './getConnectingNumbers';
 
 // These JSON fixtures are shared with the server: the same scenarios are run
@@ -51,23 +50,9 @@ for (const c of loadFixtures<BaseCase & { num: string; expected?: string[] }>(
   });
 }
 
-for (const c of loadFixtures<
-  BaseCase & {
-    card: Card;
-    group: Group;
-    orientation: Orientation;
-    expected?: { card: Card; x: number; y: number };
-  }
->('getConnection.json')) {
-  if (c.phpOnly) continue;
-  test(`fixture: getConnection - ${c.name}`, () => {
-    if (c.error !== undefined) {
-      throwsWithMessage(() => getConnection(c.card, c.group, c.orientation), c.error);
-    } else {
-      assert.equal(getConnection(c.card, c.group, c.orientation), c.expected);
-    }
-  });
-}
+// getConnection.json is exercised only by tests/Unit/BoardLogicTest.php now -
+// the client no longer has a getConnection function (findMatchingConnections/
+// getConnections in getConnections.ts replaced it; see docs/multiple-connection-spots-ui.md).
 
 for (const c of loadFixtures<
   BaseCase & {
