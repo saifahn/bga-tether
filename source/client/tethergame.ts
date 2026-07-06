@@ -705,11 +705,14 @@ class TetherGame extends Gamegui {
     this.clearSelectableCards();
     this.clearEventListeners();
 
+    // The adrift zone can be emptied by playing astronauts from it, so with
+    // the deck also empty there may be nothing to draw. Turn-start adrift
+    // state is the right check here: it matches what the server validates
+    // against (the adrift zone before this discard lands in it).
     if (
       this.deckEmpty &&
       Object.keys(this.gameStateTurnStart.adrift).length === 0
     ) {
-      // no card to draw from either the deck or the adrift zone
       this.performAdriftAction('none', 'none');
       return;
     }
@@ -1336,7 +1339,7 @@ class TetherGame extends Gamegui {
     this.scoreCtrl[notif.args.player_id]?.toValue(notif.args.new_total);
   }
 
-  notif_deckEmpty(notif: BGA.Notif<'deckEmpty'>) {
+  notif_deckEmpty(_notif: BGA.Notif<'deckEmpty'>) {
     this.deckEmpty = true;
   }
 }

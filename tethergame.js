@@ -1420,7 +1420,7 @@ define("bgagame/tethergame", ["require", "exports", "ebg/core/gamegui", "connect
             var _a;
             (_a = this.scoreCtrl[notif.args.player_id]) === null || _a === void 0 ? void 0 : _a.toValue(notif.args.new_total);
         };
-        TetherGame.prototype.notif_deckEmpty = function (notif) {
+        TetherGame.prototype.notif_deckEmpty = function (_notif) {
             this.deckEmpty = true;
         };
         return TetherGame;
