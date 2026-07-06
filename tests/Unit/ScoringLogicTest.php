@@ -99,4 +99,25 @@ class ScoringLogicTest extends TestCase
         $this->assertTrue($result['endGame']);
         $this->assertEquals(0, $result['value']);
     }
+
+    public function testCalculateTiebreakerAuxScore_FewerCardsRanksHigher(): void
+    {
+        $this->assertGreaterThan(
+            ScoringLogic::calculateTiebreakerAuxScore(4),
+            ScoringLogic::calculateTiebreakerAuxScore(2)
+        );
+    }
+
+    public function testCalculateTiebreakerAuxScore_EqualHandCountsAreEqual(): void
+    {
+        $this->assertEquals(
+            ScoringLogic::calculateTiebreakerAuxScore(3),
+            ScoringLogic::calculateTiebreakerAuxScore(3)
+        );
+    }
+
+    public function testCalculateTiebreakerAuxScore_WithEmptyHand_ReturnsZero(): void
+    {
+        $this->assertEquals(0, ScoringLogic::calculateTiebreakerAuxScore(0));
+    }
 }

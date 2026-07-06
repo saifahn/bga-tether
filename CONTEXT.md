@@ -37,6 +37,9 @@ domain, not the implementation.
 - **Scoring Threshold**: A group triggers scoring when it reaches 6, 10, or 14
   cards. The horizontal player scores the group's width, the vertical player
   its height.
+- **Tiebreaker**: When the game ends with equal scores, the player with the
+  fewest cards in hand wins. If hand counts are also equal, the game is a
+  tie. Applies to every end condition.
 - **Deck Exhaustion / Final Round**: The moment the last card is drawn from
   the deck (whether by the automatic end-of-turn draw or a Set Adrift
   replacement draw), each player takes exactly one more turn (starting with

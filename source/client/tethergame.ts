@@ -713,6 +713,7 @@ class TetherGame extends Gamegui {
       this.deckEmpty &&
       Object.keys(this.gameStateTurnStart.adrift).length === 0
     ) {
+      // no card to draw from either the deck or the adrift zone
       this.performAdriftAction('none', 'none');
       return;
     }
